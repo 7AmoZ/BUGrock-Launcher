@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
@@ -159,10 +159,12 @@ namespace MCLauncher {
             await _versions.LoadImported();
 
             LoadingProgressGrid.Visibility = Visibility.Collapsed;
+            UpdateQuickPlayStatus();
         }
 
         private void VersionEntryPropertyChanged(object? sender, PropertyChangedEventArgs e) {
             RefreshLists();
+            UpdateQuickPlayStatus();
         }
 
         private async void ImportButtonClicked(object sender, RoutedEventArgs e) {
@@ -1286,6 +1288,33 @@ namespace MCLauncher {
                 VersionTabs.SelectedItem = ReleaseTab;
             }
             RewritePrefs();
+        }
+
+        private void TabNav_Checked(object sender, RoutedEventArgs e) {
+            if (PlayViewGrid == null || InstallationsViewGrid == null || PatchNotesViewGrid == null) return;
+            PlayViewGrid.Visibility = (TabNavPlay.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
+            InstallationsViewGrid.Visibility = (TabNavInstallations.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
+            PatchNotesViewGrid.Visibility = (TabNavPatchNotes.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void QuickPlayButton_Click(object sender, RoutedEventArgs e) {
+            var installed = _versions.FirstOrDefault(v => v.IsInstalled);
+            if (installed != null) {
+                InvokeLaunch(installed);
+            } else {
+                MessageBox.Show("No version is currently installed. Please select a version in the Installations tab to download and install it.", "BUGrock Launcher", MessageBoxButton.OK, MessageBoxImage.Information);
+                TabNavInstallations.IsChecked = true;
+            }
+        }
+
+        private void UpdateQuickPlayStatus() {
+            if (QuickPlayVersionLabel == null) return;
+            var installed = _versions.FirstOrDefault(v => v.IsInstalled);
+            if (installed != null) {
+                QuickPlayVersionLabel.Text = $"Ready to Play: {installed.DisplayName}";
+            } else {
+                QuickPlayVersionLabel.Text = "No version installed (open Installations tab to download)";
+            }
         }
     }
 
