@@ -109,6 +109,7 @@ namespace MCLauncher {
                 _userVersionDownloader.EnableUserAuthorization();
             });
             Dispatcher.Invoke(LoadVersionList);
+            Loaded += (s, e) => InitSteveHead();
         }
 
         private async void LoadVersionList() {
@@ -1297,6 +1298,21 @@ namespace MCLauncher {
             PatchNotesViewGrid.Visibility = (TabNavPatchNotes.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
         }
 
+        private void SubFilter_Checked(object sender, RoutedEventArgs e) {
+            if (VersionTabs == null) return;
+            if (SubFilterAll != null && SubFilterAll.IsChecked == true) {
+                VersionTabs.SelectedItem = ReleaseTab;
+            } else if (SubFilterRelease != null && SubFilterRelease.IsChecked == true) {
+                VersionTabs.SelectedItem = ReleaseTab;
+            } else if (SubFilterPreview != null && SubFilterPreview.IsChecked == true) {
+                VersionTabs.SelectedItem = PreviewTab;
+            } else if (SubFilterBeta != null && SubFilterBeta.IsChecked == true) {
+                VersionTabs.SelectedItem = BetaTab;
+            } else if (SubFilterImported != null && SubFilterImported.IsChecked == true) {
+                VersionTabs.SelectedItem = ImportedTab;
+            }
+        }
+
         private void QuickPlayButton_Click(object sender, RoutedEventArgs e) {
             var installed = _versions.FirstOrDefault(v => v.IsInstalled);
             if (installed != null) {
@@ -1311,9 +1327,92 @@ namespace MCLauncher {
             if (QuickPlayVersionLabel == null) return;
             var installed = _versions.FirstOrDefault(v => v.IsInstalled);
             if (installed != null) {
-                QuickPlayVersionLabel.Text = $"Ready to Play: {installed.DisplayName}";
+                QuickPlayVersionLabel.Text = $"{installed.DisplayName} Release";
             } else {
-                QuickPlayVersionLabel.Text = "No version installed (open Installations tab to download)";
+                QuickPlayVersionLabel.Text = "No version installed";
+            }
+        }
+
+        private void Window_MouseMove(object sender, MouseEventArgs e) {
+            if (SteveHeadRotationYaw == null || SteveHeadRotationPitch == null || HeadViewport == null) return;
+            try {
+                Point mousePos = e.GetPosition(HeadViewport);
+                double centerX = HeadViewport.ActualWidth / 2.0;
+                double centerY = HeadViewport.ActualHeight / 2.0;
+
+                double deltaX = mousePos.X - centerX;
+                double deltaY = mousePos.Y - centerY;
+
+                // Yaw: look left/right (limit to +/- 45 degrees)
+                double targetYaw = Math.Clamp(deltaX * 0.12, -45.0, 45.0);
+                // Pitch: look up/down (limit to +/- 30 degrees, note Y goes down in WPF)
+                double targetPitch = Math.Clamp(-deltaY * 0.12, -30.0, 30.0);
+
+                SteveHeadRotationYaw.Angle = targetYaw;
+                SteveHeadRotationPitch.Angle = targetPitch;
+            } catch {
+            }
+        }
+
+        private void InitSteveHead() {
+            try {
+                LoadSkinByPath("pack://application:,,,/Assets/steve_skin.png", "Steve (Classic)");
+            } catch {
+                try {
+                    string localSkin = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "steve_skin.png");
+                    if (System.IO.File.Exists(localSkin)) {
+                        LoadSkinByPath(localSkin, "Steve (Classic)");
+                    }
+                } catch { }
+            }
+        }
+
+        private void LoadSkinByPath(string uriOrPath, string displayName) {
+            try {
+                BitmapImage bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.UriSource = new Uri(uriOrPath, UriKind.RelativeOrAbsolute);
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+                bmp.Freeze();
+
+                ApplySkin(bmp, displayName);
+            } catch { }
+        }
+
+        private void ApplySkin(ImageSource skinImage, string displayName) {
+            if (HeadModelGroup == null) return;
+            HeadModelGroup.Children.Clear();
+            var headModel = SteveHeadHelper.CreateHeadModel(skinImage);
+            HeadModelGroup.Children.Add(headModel);
+            if (SkinNameLabel != null) {
+                SkinNameLabel.Text = displayName;
+            }
+        }
+
+        private void PresetSteve_Click(object sender, RoutedEventArgs e) {
+            InitSteveHead();
+        }
+
+        private void PresetGlitched_Click(object sender, RoutedEventArgs e) {
+            try {
+                LoadSkinByPath("pack://application:,,,/Assets/bugrock_block.png", "BUGrock Glitched");
+            } catch { }
+        }
+
+        private void UploadSkinButton_Click(object sender, RoutedEventArgs e) {
+            var ofd = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Minecraft Skin (*.png)|*.png|All Files (*.*)|*.*",
+                Title = "Select Minecraft Skin"
+            };
+            if (ofd.ShowDialog() == true) {
+                try {
+                    var bmp = SteveHeadHelper.LoadSkinFromFile(ofd.FileName);
+                    ApplySkin(bmp, System.IO.Path.GetFileNameWithoutExtension(ofd.FileName));
+                } catch (Exception ex) {
+                    MessageBox.Show("Failed to load skin image: " + ex.Message, "Skin Upload", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             }
         }
     }
