@@ -1338,7 +1338,7 @@ namespace MCLauncher {
         private void Window_MouseMove(object sender, MouseEventArgs e) {
             if (SteveHeadRotationYaw == null || SteveHeadRotationPitch == null || HeadViewport == null) return;
             try {
-                Point mousePos = e.GetPosition(HeadViewport);
+                System.Windows.Point mousePos = e.GetPosition(HeadViewport);
                 double centerX = HeadViewport.ActualWidth / 2.0;
                 double centerY = HeadViewport.ActualHeight / 2.0;
 
