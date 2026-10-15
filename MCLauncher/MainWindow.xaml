@@ -425,7 +425,7 @@
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="12,0,12,0">
                             <!-- GAMES Header -->
-                            <TextBlock Text="GAMES" Foreground="#666670" FontSize="10" FontWeight="Bold" Margin="4,6,0,8" LetterSpacing="0.5"/>
+                            <TextBlock Text="GAMES" Foreground="#666670" FontSize="10" FontWeight="Bold" Margin="4,6,0,8"/>
 
                             <!-- Bedrock Edition (The only active game - no fake Java/Dungeons buttons!) -->
                             <Border Background="#18181E" CornerRadius="6" Margin="0,0,0,14" BorderBrush="#222228" BorderThickness="1">
@@ -449,7 +449,7 @@
                                 <StackPanel>
                                     <!-- Header -->
                                     <Grid Margin="0,0,0,6">
-                                        <TextBlock Text="SKIN MANAGER" Foreground="#888892" FontSize="10" FontWeight="Bold" LetterSpacing="0.5"/>
+                                        <TextBlock Text="SKIN MANAGER" Foreground="#888892" FontSize="10" FontWeight="Bold"/>
                                         <TextBlock Text="&#x26F6;" HorizontalAlignment="Right" Foreground="#666670" FontSize="11"/>
                                     </Grid>
 
