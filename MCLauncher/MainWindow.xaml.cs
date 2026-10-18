@@ -1345,10 +1345,10 @@ namespace MCLauncher {
                 double deltaX = mousePos.X - centerX;
                 double deltaY = mousePos.Y - centerY;
 
-                // Yaw: look left/right (limit to +/- 45 degrees)
-                double targetYaw = Math.Clamp(deltaX * 0.12, -45.0, 45.0);
-                // Pitch: look up/down (limit to +/- 30 degrees, note Y goes down in WPF)
-                double targetPitch = Math.Clamp(-deltaY * 0.12, -30.0, 30.0);
+                // Yaw: look left/right (limit to +/- 48 degrees)
+                double targetYaw = Math.Clamp(deltaX * 0.12, -48.0, 48.0);
+                // Pitch: look up/down (deltaY is negative when mouse moves UP, tilting face UP)
+                double targetPitch = Math.Clamp(deltaY * 0.12, -34.0, 34.0);
 
                 SteveHeadRotationYaw.Angle = targetYaw;
                 SteveHeadRotationPitch.Angle = targetPitch;
@@ -1358,18 +1358,18 @@ namespace MCLauncher {
 
         private void InitSteveHead() {
             try {
-                LoadSkinByPath("pack://application:,,,/Assets/steve_skin.png", "Steve (Classic)");
+                LoadSkinByPath("pack://application:,,,/Assets/bugrock_block.png", "BUGrock (Glitched)", isBlock: true);
             } catch {
                 try {
-                    string localSkin = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "steve_skin.png");
-                    if (System.IO.File.Exists(localSkin)) {
-                        LoadSkinByPath(localSkin, "Steve (Classic)");
+                    string localBlock = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "bugrock_block.png");
+                    if (System.IO.File.Exists(localBlock)) {
+                        LoadSkinByPath(localBlock, "BUGrock (Glitched)", isBlock: true);
                     }
                 } catch { }
             }
         }
 
-        private void LoadSkinByPath(string uriOrPath, string displayName) {
+        private void LoadSkinByPath(string uriOrPath, string displayName, bool isBlock = false) {
             try {
                 BitmapImage bmp = new BitmapImage();
                 bmp.BeginInit();
@@ -1378,28 +1378,29 @@ namespace MCLauncher {
                 bmp.EndInit();
                 bmp.Freeze();
 
-                ApplySkin(bmp, displayName);
+                ApplySkin(bmp, displayName, isBlock);
             } catch { }
         }
 
-        private void ApplySkin(ImageSource skinImage, string displayName) {
+        private void ApplySkin(BitmapSource skinImage, string displayName, bool isBlock = false) {
             if (HeadModelGroup == null) return;
             HeadModelGroup.Children.Clear();
-            var headModel = SteveHeadHelper.CreateHeadModel(skinImage);
+            var headModel = SteveHeadHelper.CreateHeadModel(skinImage, isBlock);
             HeadModelGroup.Children.Add(headModel);
             if (SkinNameLabel != null) {
                 SkinNameLabel.Text = displayName;
+                SkinNameLabel.Foreground = isBlock ? (SolidColorBrush)FindResource("AccentMagenta") : (SolidColorBrush)FindResource("AccentGreen");
             }
         }
 
         private void PresetSteve_Click(object sender, RoutedEventArgs e) {
-            InitSteveHead();
+            try {
+                LoadSkinByPath("pack://application:,,,/Assets/steve_skin.png", "Steve (Classic)", isBlock: false);
+            } catch { }
         }
 
         private void PresetGlitched_Click(object sender, RoutedEventArgs e) {
-            try {
-                LoadSkinByPath("pack://application:,,,/Assets/bugrock_block.png", "BUGrock Glitched");
-            } catch { }
+            InitSteveHead();
         }
 
         private void UploadSkinButton_Click(object sender, RoutedEventArgs e) {
@@ -1411,7 +1412,7 @@ namespace MCLauncher {
             if (ofd.ShowDialog() == true) {
                 try {
                     var bmp = SteveHeadHelper.LoadSkinFromFile(ofd.FileName);
-                    ApplySkin(bmp, System.IO.Path.GetFileNameWithoutExtension(ofd.FileName));
+                    ApplySkin(bmp, System.IO.Path.GetFileNameWithoutExtension(ofd.FileName), isBlock: false);
                 } catch (Exception ex) {
                     MessageBox.Show("Failed to load skin image: " + ex.Message, "Skin Upload", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }

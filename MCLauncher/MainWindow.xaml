@@ -358,15 +358,56 @@
                     <Menu.Resources>
                         <Style TargetType="MenuItem">
                             <Setter Property="Foreground" Value="#8E92A4"/>
-                            <Setter Property="Background" Value="#13141A"/>
+                            <Setter Property="Background" Value="Transparent"/>
                             <Setter Property="BorderThickness" Value="0"/>
                             <Setter Property="Padding" Value="8,4"/>
                             <Setter Property="FontSize" Value="12"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Foreground" Value="#FFFFFF"/>
-                                </Trigger>
-                            </Style.Triggers>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="MenuItem">
+                                        <Grid>
+                                            <Border x:Name="border" Background="{TemplateBinding Background}" BorderThickness="0" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                <Grid>
+                                                    <ContentPresenter ContentSource="Header" HorizontalAlignment="Left" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                                                    <Popup x:Name="PART_Popup" AllowsTransparency="True" Focusable="False" IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}" Placement="Bottom" PopupAnimation="Fade">
+                                                        <Border Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="6" Padding="4" SnapsToDevicePixels="True">
+                                                            <Border.Effect>
+                                                                <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="4" Opacity="0.6"/>
+                                                            </Border.Effect>
+                                                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                                        </Border>
+                                                    </Popup>
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="Role" Value="SubmenuItem">
+                                                <Setter TargetName="border" Property="Padding" Value="12,6"/>
+                                            </Trigger>
+                                            <Trigger Property="IsHighlighted" Value="True">
+                                                <Setter TargetName="border" Property="Background" Value="#21222D"/>
+                                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                            </Trigger>
+                                            <Trigger Property="IsSubmenuOpen" Value="True">
+                                                <Setter TargetName="border" Property="Background" Value="#21222D"/>
+                                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                            </Trigger>
+                                            <Trigger Property="IsEnabled" Value="False">
+                                                <Setter Property="Foreground" Value="#606478"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                        <Style TargetType="Separator">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Separator">
+                                        <Border Height="1" Background="#232530" Margin="4,3"/>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
                         </Style>
                     </Menu.Resources>
                     <MenuItem Header="_File">
@@ -490,8 +531,8 @@
 
                                     <!-- Skin Name Status -->
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                        <Ellipse Width="6" Height="6" Fill="#38A169" Margin="0,0,6,0"/>
-                                        <TextBlock x:Name="SkinNameLabel" Text="Steve (Classic)" Foreground="#38A169" FontSize="11" FontWeight="SemiBold"/>
+                                        <Ellipse Width="6" Height="6" Fill="#D05CE3" Margin="0,0,6,0"/>
+                                        <TextBlock x:Name="SkinNameLabel" Text="BUGrock (Glitched)" Foreground="#D05CE3" FontSize="11" FontWeight="SemiBold"/>
                                     </StackPanel>
 
                                     <!-- 3D Interactive Head Viewport -->
@@ -538,7 +579,7 @@
                                         <Button x:Name="PresetSteveBtn" Click="PresetSteve_Click" Width="24" Height="24" Margin="0,0,8,0" Cursor="Hand" ToolTip="Classic Steve">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="Button">
-                                                    <Border CornerRadius="12" BorderBrush="#38A169" BorderThickness="2" Background="#1D2E1F">
+                                                    <Border CornerRadius="12" BorderBrush="#232530" BorderThickness="1" Background="#1D2E1F">
                                                         <Ellipse Width="14" Height="14" Fill="#38A169"/>
                                                     </Border>
                                                 </ControlTemplate>
@@ -547,7 +588,7 @@
                                         <Button x:Name="PresetGlitchedBtn" Click="PresetGlitched_Click" Width="24" Height="24" Cursor="Hand" ToolTip="BUGrock Glitched">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="Button">
-                                                    <Border CornerRadius="12" BorderBrush="#232530" BorderThickness="1" Background="#26152B">
+                                                    <Border CornerRadius="12" BorderBrush="#D05CE3" BorderThickness="2" Background="#26152B">
                                                         <Ellipse Width="14" Height="14" Fill="#D05CE3"/>
                                                     </Border>
                                                 </ControlTemplate>
