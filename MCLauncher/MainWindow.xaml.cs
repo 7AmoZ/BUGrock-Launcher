@@ -378,12 +378,27 @@ namespace MCLauncher {
                 }
                 string destination = Path.Combine(to, Path.GetFileName(source));
                 Trace.WriteLine(source + " -> " + destination);
-                File.Copy(source, destination);
+                File.Copy(source, destination, true);
             }
             foreach (var source in Directory.EnumerateDirectories(from)) {
                 string destination = Path.Combine(to, Path.GetFileName(source));
                 RecursiveCopyDirectory(source, destination, skip);
             }
+        }
+
+        private static string SafeReadAllText(string path) {
+            if (string.IsNullOrEmpty(path) || !File.Exists(path)) return "";
+            for (int retry = 0; retry < 10; retry++) {
+                try {
+                    using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (var sr = new StreamReader(fs)) {
+                        return sr.ReadToEnd();
+                    }
+                } catch {
+                    System.Threading.Thread.Sleep(100);
+                }
+            }
+            return "";
         }
 
         private async Task<bool> ExtractMsixvc(string filePath, string directory, Version versionEntry, bool isPreview) {
@@ -514,7 +529,7 @@ namespace MCLauncher {
                     Trace.WriteLine("Process output:" + process.StandardOutput.ReadToEnd());
                     Trace.WriteLine("Process errors:" + process.StandardError.ReadToEnd());
                 } catch (Exception ex) {
-                    Trace.WriteLine("Decrypt helper log output: " + File.ReadAllText(decryptHelperLogFile));
+                    Trace.WriteLine("Decrypt helper log output: " + SafeReadAllText(decryptHelperLogFile));
                     InstallError(
                         "Failed to run PowerShell to copy the Minecraft executable out of the staged package",
                         "Failed running PowerShell for exe extraction",
@@ -531,7 +546,7 @@ namespace MCLauncher {
                     await Task.Delay(100);
                 }
 
-                Trace.WriteLine("Decrypt helper log output: " + File.ReadAllText(decryptHelperLogFile));
+                Trace.WriteLine("Decrypt helper log output: " + SafeReadAllText(decryptHelperLogFile));
 
                 if (!File.Exists(exeTmpPath)) {
                     Trace.WriteLine("Src path: " + exeSrcPath);
@@ -565,8 +580,16 @@ namespace MCLauncher {
 
 
                     Trace.WriteLine("Moving decrypted exe into place");
-                    File.Delete(exeDstPath);
-                    File.Move(exeTmpPath, exeDstPath);
+                    if (File.Exists(exeDstPath)) {
+                        File.Delete(exeDstPath);
+                    }
+                    if (File.Exists(exeTmpPath)) {
+                        File.Move(exeTmpPath, exeDstPath);
+                    }
+                    try {
+                        if (File.Exists(donePath)) File.Delete(donePath);
+                        if (File.Exists(decryptHelperLogFile)) File.Delete(decryptHelperLogFile);
+                    } catch { }
                 } catch (Exception ex) {
                     InstallError(
                         "Failed copying/moving game files to the destination folder",

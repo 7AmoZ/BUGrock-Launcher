@@ -14,6 +14,18 @@ namespace MCLauncher {
             Trace.Listeners.Add(new TextWriterTraceListener("Log.txt"));
             Trace.AutoFlush = true;
 
+            DispatcherUnhandledException += (sender, args) => {
+                Trace.WriteLine("Unhandled Dispatcher Exception:\n" + args.Exception);
+                try {
+                    ThemedMessageBox.Show("An unexpected error occurred:\n" + args.Exception.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                } catch { }
+                args.Handled = true;
+            };
+
+            AppDomain.CurrentDomain.UnhandledException += (sender, args) => {
+                Trace.WriteLine("Unhandled Domain Exception:\n" + args.ExceptionObject);
+            };
+
             var splash = new SplashScreenWindow();
             splash.Show();
 
