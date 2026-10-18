@@ -250,15 +250,20 @@ namespace MCLauncher
             return result;
         }
 
-        public static BitmapImage LoadSkinFromFile(string filePath)
+        public static BitmapSource LoadSkinFromFile(string filePath)
         {
-            var bmp = new BitmapImage();
-            bmp.BeginInit();
-            bmp.UriSource = new Uri(filePath, UriKind.Absolute);
-            bmp.CacheOption = BitmapCacheOption.OnLoad;
-            bmp.EndInit();
-            bmp.Freeze();
-            return bmp;
+            byte[] bytes = File.ReadAllBytes(filePath);
+            using (var ms = new MemoryStream(bytes))
+            {
+                var bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+                bmp.StreamSource = ms;
+                bmp.EndInit();
+                bmp.Freeze();
+                return bmp;
+            }
         }
     }
 }

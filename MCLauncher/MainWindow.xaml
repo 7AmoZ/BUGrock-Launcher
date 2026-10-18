@@ -554,6 +554,11 @@
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
                                         <!-- Custom Skin Dot (Green) -->
                                         <Button x:Name="PresetCustomBtn" Click="PresetCustom_Click" Width="26" Height="26" Margin="0,0,10,0" Cursor="Hand" ToolTip="My Custom Skin" Background="Transparent" BorderThickness="0">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </ControlTemplate>
+                                            </Button.Template>
                                             <Grid>
                                                 <Border x:Name="PresetCustomRing" Width="24" Height="24" CornerRadius="12" BorderBrush="Transparent" BorderThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 <Ellipse Width="14" Height="14" Fill="#38A169" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -562,6 +567,11 @@
 
                                         <!-- Default Missing Texture Glitched Skin Dot (Purple) -->
                                         <Button x:Name="PresetGlitchedBtn" Click="PresetGlitched_Click" Width="26" Height="26" Cursor="Hand" ToolTip="Default BUGrock Glitched Skin" Background="Transparent" BorderThickness="0">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </ControlTemplate>
+                                            </Button.Template>
                                             <Grid>
                                                 <Border x:Name="PresetGlitchedRing" Width="24" Height="24" CornerRadius="12" BorderBrush="#D05CE3" BorderThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 <Ellipse Width="14" Height="14" Fill="#D05CE3" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -650,13 +660,13 @@
 
                                 <!-- Integrated BUGrock Launcher 3D Stone Title Logo -->
                                 <Image Source="Assets/bugrock_logo.png" 
-                                       Height="125" 
+                                       Height="165" 
                                        HorizontalAlignment="Center" 
                                        VerticalAlignment="Top" 
-                                       Margin="0,20,0,0"
+                                       Margin="0,15,0,0"
                                        RenderOptions.BitmapScalingMode="HighQuality">
                                     <Image.Effect>
-                                        <DropShadowEffect Color="#000000" BlurRadius="22" ShadowDepth="4" Opacity="0.6"/>
+                                        <DropShadowEffect Color="#000000" BlurRadius="28" ShadowDepth="4" Opacity="0.65"/>
                                     </Image.Effect>
                                 </Image>
 

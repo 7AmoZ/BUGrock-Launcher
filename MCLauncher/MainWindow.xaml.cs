@@ -1438,12 +1438,15 @@ namespace MCLauncher {
             };
             if (ofd.ShowDialog() == true) {
                 try {
+                    var newSkin = SteveHeadHelper.LoadSkinFromFile(ofd.FileName);
+
                     string cacheDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "skin_cache");
                     if (!Directory.Exists(cacheDir)) {
                         Directory.CreateDirectory(cacheDir);
                     }
                     string cachedFile = System.IO.Path.Combine(cacheDir, "cached_skin.png");
-                    File.Copy(ofd.FileName, cachedFile, true);
+                    byte[] skinBytes = File.ReadAllBytes(ofd.FileName);
+                    File.WriteAllBytes(cachedFile, skinBytes);
 
                     string skinName = System.IO.Path.GetFileNameWithoutExtension(ofd.FileName);
                     if (string.IsNullOrWhiteSpace(skinName)) skinName = "Custom Skin";
@@ -1453,8 +1456,7 @@ namespace MCLauncher {
                     UserPrefs.CustomSkinName = skinName;
                     RewritePrefs();
 
-                    var bmp = SteveHeadHelper.LoadSkinFromFile(cachedFile);
-                    ApplySkin(bmp, skinName, isBlock: false, isBugrock: false);
+                    ApplySkin(newSkin, skinName, isBlock: false, isBugrock: false);
                     UpdateSkinSelectionUI(isCustom: true);
                 } catch (Exception ex) {
                     ThemedMessageBox.Show("Failed to load skin image: " + ex.Message, "Skin Upload", MessageBoxButton.OK, MessageBoxImage.Warning);
