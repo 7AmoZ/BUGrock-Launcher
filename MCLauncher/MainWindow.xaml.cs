@@ -287,8 +287,50 @@ namespace MCLauncher {
             versionEntry.StateChangeInfo = new VersionStateChangeInfo(VersionState.Extracting);
             try {
                 await Task.Run(() => {
-                    ZipFile.ExtractToDirectory(filePath, directory);
-                    File.Delete(Path.Combine(directory, "AppxSignature.p7x"));
+                    using (var archive = ZipFile.OpenRead(filePath)) {
+                        int totalEntries = archive.Entries.Count;
+                        Dispatcher.BeginInvoke(() => {
+                            if (versionEntry.StateChangeInfo != null) {
+                                versionEntry.StateChangeInfo.MaxProgress = totalEntries;
+                            }
+                        });
+
+                        int current = 0;
+                        string fullTargetDir = Path.GetFullPath(directory);
+                        Directory.CreateDirectory(fullTargetDir);
+
+                        foreach (var entry in archive.Entries) {
+                            string destinationPath = Path.GetFullPath(Path.Combine(fullTargetDir, entry.FullName));
+                            if (!destinationPath.StartsWith(fullTargetDir, StringComparison.OrdinalIgnoreCase)) {
+                                continue;
+                            }
+
+                            if (string.IsNullOrEmpty(entry.Name)) {
+                                Directory.CreateDirectory(destinationPath);
+                            } else {
+                                string? parentDir = Path.GetDirectoryName(destinationPath);
+                                if (!string.IsNullOrEmpty(parentDir)) {
+                                    Directory.CreateDirectory(parentDir);
+                                }
+                                entry.ExtractToFile(destinationPath, overwrite: true);
+                            }
+
+                            current++;
+                            if (current % 15 == 0 || current == totalEntries) {
+                                int progressVal = current;
+                                Dispatcher.BeginInvoke(() => {
+                                    if (versionEntry.StateChangeInfo != null) {
+                                        versionEntry.StateChangeInfo.Progress = progressVal;
+                                    }
+                                });
+                            }
+                        }
+                    }
+
+                    string sigPath = Path.Combine(directory, "AppxSignature.p7x");
+                    if (File.Exists(sigPath)) {
+                        File.Delete(sigPath);
+                    }
                 });
 
                 versionEntry.UpdateInstallStatus();
@@ -417,7 +459,10 @@ namespace MCLauncher {
                 // XVC are encrypted containers, I don't currently know of any way to extract them to an arbitrary directory
                 // For now we just stage the package in XboxGames, and then move the files to the launcher data directory
 
-                versionEntry.StateChangeInfo = new VersionStateChangeInfo(VersionState.Staging);
+                versionEntry.StateChangeInfo = new VersionStateChangeInfo(VersionState.Staging) {
+                    MaxProgress = 100,
+                    Progress = 0
+                };
 
                 var packageManager = new PackageManager();
 
@@ -672,6 +717,14 @@ namespace MCLauncher {
             TaskCompletionSource<int> src = new TaskCompletionSource<int>();
             t.Progress += (v, p) => {
                 Trace.WriteLine("Deployment progress: " + p.state + " " + p.percentage + "%");
+                if (version?.StateChangeInfo != null) {
+                    Dispatcher.BeginInvoke(() => {
+                        if (version.StateChangeInfo != null) {
+                            version.StateChangeInfo.MaxProgress = 100;
+                            version.StateChangeInfo.Progress = (long)p.percentage;
+                        }
+                    });
+                }
             };
             t.Completed += (v, p) => {
                 if (p == AsyncStatus.Error) {
@@ -1754,6 +1807,8 @@ namespace MCLauncher {
                     OnPropertyChanged("SpeedVisibility");
                     OnPropertyChanged("IsProgressIndeterminate");
                     OnPropertyChanged("DisplayStatus");
+                    OnPropertyChanged("StateAccentBrush");
+                    OnPropertyChanged("StateBadgeBackgroundBrush");
                 }
             }
 
@@ -1852,16 +1907,65 @@ namespace MCLauncher {
                                 return $"Downloading... {progMB:0.0} MB / {maxMB:0.0} MB ({percent}%)";
                             }
                             return $"Downloading... {((double)Progress / (1024.0 * 1024.0)):0.0} MB";
-                        case VersionState.Extracting: return "Extracting...";
+                        case VersionState.Extracting:
+                            if (MaxProgress > 0) {
+                                int percent = (int)Math.Clamp((Progress * 100.0) / MaxProgress, 0, 100);
+                                int remaining = 100 - percent;
+                                return $"Extracting... {percent}% ({remaining}% remaining)";
+                            }
+                            return "Extracting...";
                         case VersionState.Registering: return "Registering package...";
                         case VersionState.Launching: return "Launching...";
                         case VersionState.Unregistering: return "Unregistering package...";
                         case VersionState.CleaningUp: return "Cleaning up...";
-                        case VersionState.Staging: return "Staging package... (this might take a few minutes)";
+                        case VersionState.Staging:
+                            if (MaxProgress > 0) {
+                                int percent = (int)Math.Clamp((Progress * 100.0) / MaxProgress, 0, 100);
+                                int remaining = 100 - percent;
+                                return $"Staging package... {percent}% ({remaining}% remaining)";
+                            }
+                            return "Staging package... (this might take a few minutes)";
                         case VersionState.Decrypting: return "Copying decrypted Minecraft.Windows.exe...";
                         case VersionState.Moving: return "Copying other game files...";
                         case VersionState.MovingData: return "Restoring Minecraft worlds...";
                         default: return "Processing...";
+                    }
+                }
+            }
+
+            private static readonly SolidColorBrush _greenBrush = new(Color.FromRgb(0x38, 0xA1, 0x69));
+            private static readonly SolidColorBrush _greenBadgeBrush = new(Color.FromRgb(0x1C, 0x2E, 0x22));
+            private static readonly SolidColorBrush _magentaBrush = new(Color.FromRgb(0xD0, 0x5C, 0xE3));
+            private static readonly SolidColorBrush _magentaBadgeBrush = new(Color.FromRgb(0x2B, 0x15, 0x30));
+
+            public Brush StateAccentBrush {
+                get {
+                    switch (_versionState) {
+                        case VersionState.Extracting:
+                        case VersionState.Staging:
+                        case VersionState.Decrypting:
+                        case VersionState.Moving:
+                        case VersionState.Registering:
+                        case VersionState.Launching:
+                            return _greenBrush;
+                        default:
+                            return _magentaBrush;
+                    }
+                }
+            }
+
+            public Brush StateBadgeBackgroundBrush {
+                get {
+                    switch (_versionState) {
+                        case VersionState.Extracting:
+                        case VersionState.Staging:
+                        case VersionState.Decrypting:
+                        case VersionState.Moving:
+                        case VersionState.Registering:
+                        case VersionState.Launching:
+                            return _greenBadgeBrush;
+                        default:
+                            return _magentaBadgeBrush;
                     }
                 }
             }

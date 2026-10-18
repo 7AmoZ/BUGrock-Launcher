@@ -137,7 +137,7 @@
 
         <!-- Secondary Dark Button Style -->
         <Style x:Key="DarkButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#181921"/>
+            <Setter Property="Background" Value="#1C1E2A"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
@@ -147,15 +147,15 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="#282A36" BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="#323548" BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="btnBorder" Property="Background" Value="#21222D"/>
+                                <Setter TargetName="btnBorder" Property="Background" Value="#282B3C"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="btnBorder" Property="Background" Value="#13141A"/>
+                                <Setter TargetName="btnBorder" Property="Background" Value="#161722"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -189,9 +189,9 @@
             </Setter>
         </Style>
 
-        <!-- Template for Version Not Installed (Mockup Style: Dark card, gray RELEASE badge, DOWNLOAD button) -->
+        <!-- Template for Version Not Installed (Clean Card with Subtle Contrast, Bedrock Block Icon, Gray RELEASE badge, DOWNLOAD button) -->
         <DataTemplate x:Key="templateVersionNotInstalled" DataType="{x:Type local:Version}">
-            <Border Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="8" Margin="0,0,0,10" Padding="16,14">
+            <Border Background="#1C1E2A" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="8" Margin="0,0,0,10" Padding="16,14">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -199,19 +199,19 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     
-                    <!-- Box/Package Icon -->
-                    <Border Grid.Column="0" Width="38" Height="38" Background="#0B0C0F" BorderBrush="#232530" BorderThickness="1" CornerRadius="6" Margin="0,0,14,0" VerticalAlignment="Center">
-                        <TextBlock Text="&#x1F4E6;" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <!-- Meaningful & Visible Minecraft Block Icon -->
+                    <Border Grid.Column="0" Width="40" Height="40" Background="#14151F" BorderBrush="#35384D" BorderThickness="1.5" CornerRadius="8" Margin="0,0,14,0" VerticalAlignment="Center">
+                        <Image Source="Assets/bugrock_block.png" Width="24" Height="24" RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Border>
                     
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="{Binding DisplayName}" FontWeight="Bold" FontSize="14" Foreground="#FFFFFF" VerticalAlignment="Center"/>
-                            <Border Background="#21222D" BorderBrush="#282A36" BorderThickness="1" CornerRadius="4" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
-                                <TextBlock Text="RELEASE" Foreground="#8E92A4" FontSize="10" FontWeight="Bold"/>
+                            <Border Background="#242636" BorderBrush="#32354A" BorderThickness="1" CornerRadius="4" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
+                                <TextBlock Text="RELEASE" Foreground="#A0A5BD" FontSize="10" FontWeight="Bold"/>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="Not installed &#x2022; Online Repository" Foreground="#606478" FontSize="11" Margin="0,4,0,0"/>
+                        <TextBlock Text="Not installed &#x2022; Online Repository" Foreground="#767A92" FontSize="11" Margin="0,4,0,0"/>
                     </StackPanel>
 
                     <Button x:Name="DownloadButton" Grid.Column="2" Style="{StaticResource DarkButtonStyle}" Content="&#x21E9; DOWNLOAD" Command="{Binding DownloadCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" MinWidth="124" Height="38" Padding="16,6" FontSize="12" FontWeight="Bold"/>
@@ -219,9 +219,9 @@
             </Border>
         </DataTemplate>
 
-        <!-- Template for Version Installed (Mockup Style: Green accent border, green badge, PLAY + Trash buttons) -->
+        <!-- Template for Version Installed (Clean Card with Subtle Contrast, Green accent border, green badge, PLAY + Trash buttons) -->
         <DataTemplate x:Key="templateVersionInstalled" DataType="{x:Type local:Version}">
-            <Border Background="#181921" BorderBrush="#38A169" BorderThickness="1.5" CornerRadius="8" Margin="0,0,0,10" Padding="16,14">
+            <Border Background="#1C1E2A" BorderBrush="#38A169" BorderThickness="1.5" CornerRadius="8" Margin="0,0,0,10" Padding="16,14">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -231,8 +231,8 @@
                     </Grid.ColumnDefinitions>
                     
                     <!-- Green Block Icon -->
-                    <Border Grid.Column="0" Width="38" Height="38" Background="#0B0C0F" BorderBrush="#38A169" BorderThickness="1" CornerRadius="6" Margin="0,0,14,0" VerticalAlignment="Center">
-                        <Image Source="Assets/bugrock_block.png" Width="22" Height="22" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <Border Grid.Column="0" Width="40" Height="40" Background="#14151F" BorderBrush="#38A169" BorderThickness="1.5" CornerRadius="8" Margin="0,0,14,0" VerticalAlignment="Center">
+                        <Image Source="Assets/bugrock_block.png" Width="24" Height="24" RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Border>
                     
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -242,7 +242,7 @@
                                 <TextBlock Text="RELEASE" Foreground="#38A169" FontSize="10" FontWeight="Bold"/>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="{Binding DisplayInstallStatus}" Foreground="#8E92A4" FontSize="11" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding DisplayInstallStatus}" Foreground="#A0A5BD" FontSize="11" Margin="0,4,0,0"/>
                     </StackPanel>
 
                     <Button x:Name="DownloadButton" Grid.Column="2" Style="{StaticResource GiantPlayButtonStyle}" Content="PLAY" Command="{Binding LaunchCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" MinWidth="96" Height="38" Padding="20,6" FontSize="14" FontWeight="Bold" Margin="0,0,10,0"/>
@@ -251,9 +251,9 @@
             </Border>
         </DataTemplate>
 
-        <!-- Template for Version Downloading (Mockup Style: Magenta border, progress bar, cancel button, download speed indicator) -->
+        <!-- Template for Version Downloading (Mockup Style: Dynamic Accent border, progress bar, cancel button, download speed indicator) -->
         <DataTemplate x:Key="templateVersionDownloading" DataType="{x:Type local:Version}">
-            <Border Background="#181921" BorderBrush="#D05CE3" BorderThickness="1.5" CornerRadius="8" Margin="0,0,0,10" Padding="16,14">
+            <Border Background="#1C1E2A" BorderBrush="{Binding StateChangeInfo.StateAccentBrush}" BorderThickness="1.5" CornerRadius="8" Margin="0,0,0,10" Padding="16,14">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -266,16 +266,16 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     
-                    <!-- Magenta Flask Icon -->
-                    <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Width="38" Height="38" Background="#0B0C0F" BorderBrush="#D05CE3" BorderThickness="1" CornerRadius="6" Margin="0,0,14,0" VerticalAlignment="Top">
-                        <TextBlock Text="&#x2697;" FontSize="18" Foreground="#D05CE3" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <!-- Version Block Icon with dynamic accent border -->
+                    <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Width="40" Height="40" Background="#14151F" BorderBrush="{Binding StateChangeInfo.StateAccentBrush}" BorderThickness="1.5" CornerRadius="8" Margin="0,0,14,0" VerticalAlignment="Top">
+                        <Image Source="Assets/bugrock_block.png" Width="24" Height="24" RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Border>
                     
                     <!-- Row 0: Version Title & Type Badge -->
                     <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="{Binding DisplayName}" FontWeight="Bold" FontSize="14" Foreground="#FFFFFF" VerticalAlignment="Center"/>
-                        <Border Background="#2B1530" BorderBrush="#D05CE3" BorderThickness="1" CornerRadius="4" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding DisplayVersionType}" Foreground="#D05CE3" FontSize="10" FontWeight="Bold"/>
+                        <Border Background="{Binding StateChangeInfo.StateBadgeBackgroundBrush}" BorderBrush="{Binding StateChangeInfo.StateAccentBrush}" BorderThickness="1" CornerRadius="4" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding DisplayVersionType}" Foreground="{Binding StateChangeInfo.StateAccentBrush}" FontSize="10" FontWeight="Bold"/>
                         </Border>
                     </StackPanel>
 
@@ -283,7 +283,7 @@
 
                     <!-- Row 1: Status on Left, Download Speed on Right (Directly Above Progress Bar) -->
                     <Grid Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,6,0,4">
-                        <TextBlock Text="{Binding StateChangeInfo.DisplayStatus}" Foreground="#D05CE3" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding StateChangeInfo.DisplayStatus}" Foreground="{Binding StateChangeInfo.StateAccentBrush}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center"/>
 
                         <!-- Speed Badge (e.g. ⚡ 14.8 MB/s) -->
                         <Border Visibility="{Binding StateChangeInfo.SpeedVisibility}" Background="#2B1530" BorderBrush="#D05CE3" BorderThickness="1" CornerRadius="4" Padding="6,2" HorizontalAlignment="Right" VerticalAlignment="Center">
@@ -294,9 +294,9 @@
                         </Border>
                     </Grid>
 
-                    <!-- Row 2: Thin Magenta Progress Bar (4px) -->
+                    <!-- Row 2: Thin Progress Bar (4px) with dynamic Accent (Green for extracting/staging) -->
                     <Canvas Name="progressSizeHack" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Height="4" Margin="0,4,0,0">
-                        <ProgressBar Width="{Binding Path=ActualWidth, ElementName=progressSizeHack, Mode=OneWay}" Height="{Binding Path=ActualHeight, ElementName=progressSizeHack, Mode=OneWay}" Minimum="0" Maximum="{Binding StateChangeInfo.MaxProgress}" Value="{Binding StateChangeInfo.Progress}" IsIndeterminate="{Binding StateChangeInfo.IsProgressIndeterminate}" Foreground="#D05CE3" Background="#13141A" BorderThickness="0"/>
+                        <ProgressBar Width="{Binding Path=ActualWidth, ElementName=progressSizeHack, Mode=OneWay}" Height="{Binding Path=ActualHeight, ElementName=progressSizeHack, Mode=OneWay}" Minimum="0" Maximum="{Binding StateChangeInfo.MaxProgress}" Value="{Binding StateChangeInfo.Progress}" IsIndeterminate="{Binding StateChangeInfo.IsProgressIndeterminate}" Foreground="{Binding StateChangeInfo.StateAccentBrush}" Background="#12131A" BorderThickness="0"/>
                     </Canvas>
                 </Grid>
             </Border>
@@ -391,7 +391,7 @@
                                                     </Border>
                                                     <ContentPresenter Grid.Column="1" ContentSource="Header" HorizontalAlignment="Left" VerticalAlignment="Center" RecognizesAccessKey="True"/>
                                                     <Popup x:Name="PART_Popup" AllowsTransparency="True" Focusable="False" IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}" Placement="Bottom" PopupAnimation="Fade">
-                                                        <Border Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="6" Padding="4" SnapsToDevicePixels="True">
+                                                        <Border Background="#1C1E2A" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="6" Padding="4" SnapsToDevicePixels="True">
                                                             <Border.Effect>
                                                                 <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="4" Opacity="0.6"/>
                                                             </Border.Effect>
@@ -409,11 +409,11 @@
                                                 <Setter TargetName="checkMarkBorder" Property="Visibility" Value="Visible"/>
                                             </Trigger>
                                             <Trigger Property="IsHighlighted" Value="True">
-                                                <Setter TargetName="border" Property="Background" Value="#21222D"/>
+                                                <Setter TargetName="border" Property="Background" Value="#252838"/>
                                                 <Setter Property="Foreground" Value="#FFFFFF"/>
                                             </Trigger>
                                             <Trigger Property="IsSubmenuOpen" Value="True">
-                                                <Setter TargetName="border" Property="Background" Value="#21222D"/>
+                                                <Setter TargetName="border" Property="Background" Value="#252838"/>
                                                 <Setter Property="Foreground" Value="#FFFFFF"/>
                                             </Trigger>
                                             <Trigger Property="IsEnabled" Value="False">
@@ -428,7 +428,7 @@
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="Separator">
-                                        <Border Height="1" Background="#232530" Margin="4,3"/>
+                                        <Border Height="1" Background="#2D3042" Margin="4,3"/>
                                     </ControlTemplate>
                                 </Setter.Value>
                             </Setter>
@@ -499,7 +499,7 @@
                     <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="14,14,14,0">
                             <!-- SKIN MANAGER Card with 3D Head Widget -->
-                            <Border Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
+                            <Border Background="#1C1E2A" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                                 <StackPanel>
                                     <!-- Header -->
                                     <Grid Margin="0,0,0,6">
@@ -622,7 +622,7 @@
                         </StackPanel>
 
                         <!-- Right Architecture Badge -->
-                        <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="4" Padding="8,3">
+                        <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="#1C1E2A" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="4" Padding="8,3">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="Architecture: " Foreground="#606478" FontSize="11"/>
                                 <TextBlock Text="x64 UWP Bridge" Foreground="#8E92A4" FontSize="11" FontWeight="Medium"/>
@@ -679,7 +679,7 @@
                                     </Grid.ColumnDefinitions>
 
                                     <!-- Version Selector Box -->
-                                    <Border Grid.Column="0" Background="#181921" BorderBrush="#282A36" BorderThickness="1" CornerRadius="6" Padding="14,10" MinWidth="200">
+                                    <Border Grid.Column="0" Background="#1C1E2A" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="6" Padding="14,10" MinWidth="200">
                                         <StackPanel>
                                             <TextBlock Text="SELECTED VERSION" Foreground="#8E92A4" FontSize="10" FontWeight="Bold" Margin="0,0,0,4"/>
                                             <StackPanel Orientation="Horizontal">
@@ -712,7 +712,7 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Card 1: What's new in 1.21? -->
-                        <Border Grid.Column="0" Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="8" Padding="12">
+                        <Border Grid.Column="0" Background="#1C1E2A" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="8" Padding="12">
                             <StackPanel>
                                 <Border Height="110" CornerRadius="6" Margin="0,0,0,10" ClipToBounds="True">
                                     <Image Source="Assets/news_update.png" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
@@ -729,7 +729,7 @@
                         </Border>
 
                         <!-- Card 2: Manage Your Realm -->
-                        <Border Grid.Column="2" Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="8" Padding="12">
+                        <Border Grid.Column="2" Background="#1C1E2A" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="8" Padding="12">
                             <StackPanel>
                                 <Border Height="110" CornerRadius="6" Margin="0,0,0,10" ClipToBounds="True">
                                     <Image Source="Assets/news_realms.png" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
@@ -746,7 +746,7 @@
                         </Border>
 
                         <!-- Card 3: Explore Marketplace -->
-                        <Border Grid.Column="4" Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="8" Padding="12">
+                        <Border Grid.Column="4" Background="#1C1E2A" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="8" Padding="12">
                             <StackPanel>
                                 <Border Height="110" CornerRadius="6" Margin="0,0,0,10" ClipToBounds="True">
                                     <Image Source="Assets/news_addons.png" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>

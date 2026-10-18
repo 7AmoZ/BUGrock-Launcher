@@ -91,6 +91,36 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="DialogCloseButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#8E92A4"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#E53E3E"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#C53030"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid Margin="16">
@@ -117,7 +147,7 @@
 
                         <TextBlock Grid.Column="0" Text="🔗" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
                         <TextBlock Grid.Column="1" Text="Set Version Data Endpoints" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
-                        <Button Grid.Column="2" Click="cancelButton_Click" Width="28" Height="28" Background="Transparent" Foreground="#8E92A4" BorderThickness="0" Content="&#x2715;" FontSize="13" Cursor="Hand"/>
+                        <Button Grid.Column="2" Style="{StaticResource DialogCloseButtonStyle}" Click="cancelButton_Click" Content="&#x2715;"/>
                     </Grid>
                 </Border>
 
