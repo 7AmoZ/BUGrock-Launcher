@@ -860,18 +860,13 @@ namespace MCLauncher {
                 Trace.WriteLine("Can't automatically restore Minecraft data - multiple locations with worlds found:" + messageString);
 
                 string destinationFolder = destinationType == PackageType.UWP ? uwpDataDir : Path.Combine(gdkRoot, "Users");
-                //TODO: we could allow this to proceed anyway, with a warning instead of an error?
-                var result = MessageBox.Show(
-                    "Worlds were found in multiple locations, and the launcher doesn't know which to use.\n"
-                        + messageString
-                        + "\n\nThe version you're trying to launch will look for your worlds in: " + destinationFolder
-                        + "\n\nPlease resolve the conflicts manually by copying worlds into the desired location."
-                        + "\n\nAlternatively, you can proceed to launch, but please note that some of your worlds may not be visible to the game."
-                        + "\nDo you want to continue anyway?",
-                    "Data restore error",
-                    MessageBoxButton.OKCancel
-                );
-                return result == MessageBoxResult.OK;
+                
+                bool proceed = Dispatcher.Invoke(() => {
+                    var dialog = new WorldConflictDialog(dataLocations, destinationFolder);
+                    dialog.Owner = this;
+                    return dialog.ShowDialog() == true;
+                });
+                return proceed;
             }
 
             string dataLocation = dataLocations.Keys.First();
