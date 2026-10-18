@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 
 namespace MCLauncher {
     public class Preferences {
@@ -14,5 +14,9 @@ namespace MCLauncher {
         public bool HasPreviouslyUsedGDK { get; set; } = false;
 
         public bool ShowLegacyBetaTab { get; set; } = false;
+
+        public string CustomSkinPath { get; set; } = "";
+
+        public string CustomSkinName { get; set; } = "";
     }
 }

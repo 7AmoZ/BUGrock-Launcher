@@ -489,60 +489,15 @@
             <Border Grid.Column="0" Background="#13141A" BorderBrush="#232530" BorderThickness="0,0,1,0">
                 <Grid>
                     <Grid.RowDefinitions>
-                        <!-- Profile Card -->
-                        <RowDefinition Height="Auto"/>
-                        <!-- Navigation Items -->
+                        <!-- Main Sidebar Content (Skin Manager) -->
                         <RowDefinition Height="*"/>
                         <!-- Local Data Directory Footer Link -->
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Profile Card (Steve_The_Glitched + Microsoft Account) -->
-                    <Border Grid.Row="0" Margin="14,14,14,14" Background="#181921" CornerRadius="8" Padding="10,10" BorderBrush="#232530" BorderThickness="1">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <!-- Bugrock Avatar Cube -->
-                            <Border Grid.Column="0" Width="36" Height="36" CornerRadius="6" Background="#0B0C0F" BorderBrush="#282A36" BorderThickness="1" Margin="0,0,10,0">
-                                <Image Source="Assets/bugrock_block.png" Width="26" Height="26" RenderOptions.BitmapScalingMode="HighQuality"/>
-                            </Border>
-
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="Steve_The_Glitched" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13" TextTrimming="CharacterEllipsis"/>
-                                <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                                    <Ellipse Width="6" Height="6" Fill="#38A169" Margin="0,0,6,0"/>
-                                    <TextBlock Text="Microsoft Account" Foreground="#8E92A4" FontSize="11"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <!-- Sidebar Center: Games List + 3D Skin Manager -->
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="12,0,12,0">
-                            <!-- GAMES Header -->
-                            <TextBlock Text="GAMES" Foreground="#606478" FontSize="10" FontWeight="Bold" Margin="4,4,0,8"/>
-
-                            <!-- Bedrock Edition (The only active game - no fake Java/Dungeons buttons!) -->
-                            <Border Background="#181921" CornerRadius="6" Margin="0,0,0,14" BorderBrush="#232530" BorderThickness="1">
-                                <Grid Height="46">
-                                    <!-- Green active indicator line on left edge -->
-                                    <Border HorizontalAlignment="Left" Width="3.5" Background="#38A169" CornerRadius="2,0,0,2"/>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
-                                        <Border Width="26" Height="26" Background="#0F1015" BorderBrush="#282A36" BorderThickness="1" CornerRadius="4" Margin="0,0,10,0">
-                                            <Image Source="Assets/bugrock_block.png" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                        </Border>
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="MINECRAFT:" Foreground="#8E92A4" FontSize="10" FontWeight="Bold"/>
-                                            <TextBlock Text="Bedrock Edition" Foreground="#FFFFFF" FontSize="12" FontWeight="Bold"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-
+                    <!-- Sidebar Center: 3D Skin Manager -->
+                    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="14,14,14,0">
                             <!-- SKIN MANAGER Card with 3D Head Widget -->
                             <Border Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                                 <StackPanel>
@@ -559,11 +514,11 @@
                                     </StackPanel>
 
                                     <!-- 3D Interactive Head Viewport -->
-                                    <Border Height="120" Background="#0B0C0F" CornerRadius="6" BorderBrush="#1C1D24" BorderThickness="1" Margin="0,0,0,10" ClipToBounds="True">
+                                    <Border Height="140" Background="#0B0C0F" CornerRadius="6" BorderBrush="#1C1D24" BorderThickness="1" Margin="0,0,0,10" ClipToBounds="True">
                                         <Grid>
                                             <Viewport3D x:Name="HeadViewport">
                                                 <Viewport3D.Camera>
-                                                    <PerspectiveCamera Position="0, 0, 2.2" LookDirection="0, 0, -1" UpDirection="0, 1, 0" FieldOfView="45"/>
+                                                    <PerspectiveCamera Position="0, 0, 2.85" LookDirection="0, 0, -1" UpDirection="0, 1, 0" FieldOfView="45"/>
                                                 </Viewport3D.Camera>
                                                 
                                                 <ModelVisual3D>
@@ -697,6 +652,18 @@
                                         </LinearGradientBrush>
                                     </Grid.Background>
                                 </Grid>
+
+                                <!-- Integrated BUGrock Launcher 3D Stone Title Logo -->
+                                <Image Source="Assets/bugrock_logo.png" 
+                                       Height="90" 
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Top" 
+                                       Margin="0,32,0,0"
+                                       RenderOptions.BitmapScalingMode="HighQuality">
+                                    <Image.Effect>
+                                        <DropShadowEffect Color="#000000" BlurRadius="22" ShadowDepth="4" Opacity="0.6"/>
+                                    </Image.Effect>
+                                </Image>
 
                                 <!-- Hero Bottom Controls (Version Box & Giant PLAY Button) -->
                                 <Grid VerticalAlignment="Bottom" Margin="20,0,20,18">
