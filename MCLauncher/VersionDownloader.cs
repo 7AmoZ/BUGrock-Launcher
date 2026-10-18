@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
@@ -41,7 +41,7 @@ namespace MCLauncher {
                     long? totalSize = resp.Content.Headers.ContentLength;
                     progress(0, totalSize);
                     long transferred = 0;
-                    byte[] buf = new byte[1024 * 1024];
+                    byte[] buf = new byte[64 * 1024];
                     while (true) {
                         int n = await inStream.ReadAsync(buf, 0, buf.Length, cancellationToken);
                         if (n == 0)

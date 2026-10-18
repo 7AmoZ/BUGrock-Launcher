@@ -144,7 +144,7 @@ namespace MCLauncher {
                 await _versions.DownloadVersionsGDK();
             } catch (Exception e) {
                 Trace.WriteLine("List download failed:\n" + e.ToString());
-                MessageBox.Show("Failed to update version list from the internet. Some new versions might be missing.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ThemedMessageBox.Show("Failed to update version list from the internet. Some new versions might be missing.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
 
@@ -154,7 +154,7 @@ namespace MCLauncher {
                 await _versions.DownloadVersionsUWP();
             } catch (Exception e) {
                 Trace.WriteLine("List download failed:\n" + e.ToString());
-                MessageBox.Show("Failed to update version list from the internet. Some new versions might be missing.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ThemedMessageBox.Show("Failed to update version list from the internet. Some new versions might be missing.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
             LoadingProgressLabel.Content = "Loading imported versions";
@@ -186,14 +186,14 @@ namespace MCLauncher {
                     foreach (var version in _versions) {
                         if (version.IsImported && version.GameDirectory == directory) {
                             if (version.IsStateChanging) {
-                                MessageBox.Show("A version with the same name was already imported, and is currently being modified. Please wait a few moments and try again.", "Error");
+                                ThemedMessageBox.Show("A version with the same name was already imported, and is currently being modified. Please wait a few moments and try again.", "Error");
                                 return;
                             }
-                            MessageBoxResult messageBoxResult = System.Windows.MessageBox.Show("A version with the same name was already imported. Do you want to delete it ?", "Delete Confirmation", System.Windows.MessageBoxButton.YesNo);
+                            MessageBoxResult messageBoxResult = ThemedMessageBox.Show("A version with the same name was already imported. Do you want to delete it ?", "Delete Confirmation", System.Windows.MessageBoxButton.YesNo);
                             if (messageBoxResult == MessageBoxResult.Yes) {
                                 var uninstallResult = await Remove(version);
                                 if (!uninstallResult) {
-                                    MessageBox.Show("Failed to remove existing version. Import aborted.", "Error");
+                                    ThemedMessageBox.Show("Failed to remove existing version. Import aborted.", "Error");
                                     return;
                                 }
                                 found = true;
@@ -204,7 +204,7 @@ namespace MCLauncher {
                         }
                     }
                     if (!found) {
-                        MessageBox.Show("The destination path for importing already exists and doesn't contain a Minecraft installation known to the launcher. To avoid loss of data, importing was aborted. Please remove the files manually.", "Error");
+                        ThemedMessageBox.Show("The destination path for importing already exists and doesn't contain a Minecraft installation known to the launcher. To avoid loss of data, importing was aborted. Please remove the files manually.", "Error");
                         return;
                     }
                 }
@@ -216,7 +216,7 @@ namespace MCLauncher {
                 } else if (extension == ".appx") {
                     packageType = PackageType.UWP;
                 } else {
-                    MessageBox.Show("Unsupported file extension: " + extension, "Import failure");
+                    ThemedMessageBox.Show("Unsupported file extension: " + extension, "Import failure");
                     return;
                 }
 
@@ -258,7 +258,7 @@ namespace MCLauncher {
                 Trace.WriteLine(debug);
             }
 
-            MessageBox.Show(
+            ThemedMessageBox.Show(
                 "Failed to import file: " + fileName + "\n\n" +
                 userMessage +
                 (ex != null ? "\n\nException message: " + exceptionMessage : "") +
@@ -292,7 +292,7 @@ namespace MCLauncher {
 
         private bool ShowGDKFirstUseWarning() {
             if (!UserPrefs.HasPreviouslyUsedGDK) {
-                var result = MessageBox.Show(
+                var result = ThemedMessageBox.Show(
                     "The launcher has detected that this is your first time using a GDK version of Minecraft in this launcher.\n" +
                         "Please be aware of the following:\n\n" +
                         "You MUST install a GDK version of Minecraft from the Store before attempting to use the launcher for GDK versions.\n" +
@@ -596,7 +596,7 @@ namespace MCLauncher {
                     await ReRegisterPackage(v.GamePackageFamily, gameDir, v);
                 } catch (Exception e) {
                     Trace.WriteLine("App re-register failed:\n" + e.ToString());
-                    MessageBox.Show("App re-register failed:\n" + e.ToString());
+                    ThemedMessageBox.Show("App re-register failed:\n" + e.ToString());
                     _hasLaunchTask = false;
                     v.StateChangeInfo = null;
                     return;
@@ -619,7 +619,7 @@ namespace MCLauncher {
                     Trace.WriteLine("App launch finished!");
                 } catch (Exception e) {
                     Trace.WriteLine("App launch failed:\n" + e.ToString());
-                    MessageBox.Show("App launch failed:\n" + e.ToString());
+                    ThemedMessageBox.Show("App launch failed:\n" + e.ToString());
                     return;
                 } finally {
                     _hasLaunchTask = false;
@@ -759,7 +759,7 @@ namespace MCLauncher {
                     //try to be uninstalled at the same time???
                     Trace.WriteLine("BackupMinecraftDataForRemoval error: " + tmpDir + " already exists");
                     Process.Start("explorer.exe", tmpDir);
-                    MessageBox.Show("The temporary directory for backing up MC data already exists. This probably means that we failed last time backing up the data. Please back the directory up manually.");
+                    ThemedMessageBox.Show("The temporary directory for backing up MC data already exists. This probably means that we failed last time backing up the data. Please back the directory up manually.");
                     return false;
                 }
                 Directory.Delete(tmpDir, recursive: true);
@@ -774,7 +774,7 @@ namespace MCLauncher {
             foreach (var f in Directory.EnumerateFiles(from)) {
                 string ft = Path.Combine(to, Path.GetFileName(f));
                 if (File.Exists(ft)) {
-                    if (MessageBox.Show("The file " + ft + " already exists in the destination.\nDo you want to replace it? The old file will be lost otherwise.", "Restoring data directory from previous installation", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
+                    if (ThemedMessageBox.Show("The file " + ft + " already exists in the destination.\nDo you want to replace it? The old file will be lost otherwise.", "Restoring data directory from previous installation", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
                         continue;
                     File.Delete(ft);
                 }
@@ -783,7 +783,7 @@ namespace MCLauncher {
             foreach (var f in Directory.EnumerateDirectories(from)) {
                 string tp = Path.Combine(to, Path.GetFileName(f));
                 if (!Directory.Exists(tp)) {
-                    if (File.Exists(tp) && MessageBox.Show("The file " + tp + " is not a directory. Do you want to remove it? The data from the old directory will be lost otherwise.", "Restoring data directory from previous installation", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
+                    if (File.Exists(tp) && ThemedMessageBox.Show("The file " + tp + " is not a directory. Do you want to remove it? The data from the old directory will be lost otherwise.", "Restoring data directory from previous installation", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
                         continue;
                     Directory.CreateDirectory(tp);
                 }
@@ -810,7 +810,7 @@ namespace MCLauncher {
                 return true;
             } catch (Exception e) {
                 Trace.WriteLine("Failed restoring Minecraft data from " + src + ": " + e.ToString());
-                MessageBox.Show("Failed to move Minecraft data from:\n"
+                ThemedMessageBox.Show("Failed to move Minecraft data from:\n"
                     + src
                     + "\nto:\n"
                     + uwpDataDir
@@ -900,7 +900,7 @@ namespace MCLauncher {
                     return true;
                 } catch (Exception e) {
                     Trace.WriteLine("Failed deleting uwpMigration.dat: " + e.ToString());
-                    MessageBox.Show(
+                    ThemedMessageBox.Show(
                         "Failed deleting uwpMigration.dat file.\n" +
                         "Your worlds will be visible to UWP versions, but GDK versions won't see them unless you move them back manually.\n\n" +
                         "Please delete the following file manually: " + uwpMigrationDat +
@@ -1068,7 +1068,7 @@ namespace MCLauncher {
                     Trace.WriteLine("Download complete");
                 } catch (BadUpdateIdentityException) {
                     Trace.WriteLine("Download failed due to failure to fetch download URL");
-                    MessageBox.Show(
+                    ThemedMessageBox.Show(
                         "Unable to fetch download URL for version." +
                         (v.VersionType == VersionType.Beta ? "\nFor beta versions, please make sure your account is subscribed to the Minecraft beta programme in the Xbox Insider Hub app." : "")
                     );
@@ -1077,7 +1077,7 @@ namespace MCLauncher {
                 } catch (Exception e) {
                     Trace.WriteLine("Download failed:\n" + e.ToString());
                     if (!(e is TaskCanceledException))
-                        MessageBox.Show("Download failed:\n" + e.ToString());
+                        ThemedMessageBox.Show("Download failed:\n" + e.ToString());
                     v.StateChangeInfo = null;
                     return;
                 }
@@ -1100,7 +1100,7 @@ namespace MCLauncher {
                     }
                 } catch (Exception e) {
                     Trace.WriteLine("Extraction failed:\n" + e.ToString());
-                    MessageBox.Show("Extraction failed:\n" + e.ToString());
+                    ThemedMessageBox.Show("Extraction failed:\n" + e.ToString());
                     v.StateChangeInfo = null;
                     return;
                 }
@@ -1128,7 +1128,7 @@ namespace MCLauncher {
                     }
                 } catch (Exception e) {
                     Trace.WriteLine("Failed unregistering package:\n" + e.ToString());
-                    MessageBox.Show("Failed unregistering package:\n" + e.ToString(), "Uninstall error");
+                    ThemedMessageBox.Show("Failed unregistering package:\n" + e.ToString(), "Uninstall error");
                     return false;
                 }
                 Trace.WriteLine("Cleaning up game files for version " + v.DisplayName);
@@ -1138,7 +1138,7 @@ namespace MCLauncher {
                     Directory.Delete(@"\\?\" + Path.GetFullPath(v.GameDirectory), true);
                 } catch (Exception e) {
                     Trace.WriteLine("Failed deleting game directory:\n" + e.ToString());
-                    MessageBox.Show("Failed deleting game directory:\n" + e.ToString(), "Uninstall error");
+                    ThemedMessageBox.Show("Failed deleting game directory:\n" + e.ToString(), "Uninstall error");
                     return false;
                 }
 
@@ -1187,7 +1187,7 @@ namespace MCLauncher {
 
         private void MenuItemOpenLogFileClicked(object sender, RoutedEventArgs e) {
             if (!File.Exists(@"Log.txt")) {
-                MessageBox.Show("Log file not found", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ThemedMessageBox.Show("Log file not found", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             } else 
                 Process.Start(new ProcessStartInfo
                 {
@@ -1201,7 +1201,7 @@ namespace MCLauncher {
         }
 
         private void MenuItemUninstallAllVersionsClicked(object sender, RoutedEventArgs e) {
-            var result = MessageBox.Show(
+            var result = ThemedMessageBox.Show(
                 "All versions of Minecraft managed by the launcher will be unregistered and deleted.\n" +
                     "Your data (worlds, etc.) won't be removed.\n\n" +
                     "Note: If you just want to reinstall Minecraft from the Store, and don't want to delete your launcher-managed versions, you can use the \"Cleanup for Store reinstall\" option instead.\n\n" +
@@ -1256,7 +1256,7 @@ namespace MCLauncher {
         private void MenuItemFindMyDataClicked(object sender, RoutedEventArgs e) {
             var locations = LocateMinecraftWorlds(MinecraftPackageFamilies.MINECRAFT);
 
-            MessageBox.Show(
+            ThemedMessageBox.Show(
                 buildDataLocationMessage("Release", MinecraftPackageFamilies.MINECRAFT) + "\n\n" +
                 buildDataLocationMessage("Preview", MinecraftPackageFamilies.MINECRAFT_PREVIEW) + "\n\n" +
                 "Note: Data folders containing no worlds are not shown.",
@@ -1282,21 +1282,12 @@ namespace MCLauncher {
                 await UnregisterPackage(MinecraftPackageFamilies.MINECRAFT_PREVIEW, null, skipBackup: false);
             } catch (Exception ex) {
                 Trace.WriteLine("Error cleaning up: " + ex.Message);
-                MessageBox.Show("An error occurred while cleaning up. Check the log for details.", "Error");
+                ThemedMessageBox.Show("An error occurred while cleaning up. Check the log for details.", "Error");
             }
             Trace.WriteLine("Done cleaning up");
             allowClose = true;
             dialog.Close();
-            MessageBox.Show("Cleanup completed. You should now be able to install Minecraft from Microsoft Store.", "Cleanup completed");
-        }
-
-        private void ShowBetaTabOption_Changed(object sender, RoutedEventArgs e) {
-            UserPrefs.ShowLegacyBetaTab = ShowBetaTabOption.IsChecked;
-            BetaTab.Visibility = UserPrefs.ShowLegacyBetaTab ? Visibility.Visible : Visibility.Collapsed;
-            if (VersionTabs.SelectedItem == BetaTab && BetaTab.Visibility != Visibility.Visible) {
-                VersionTabs.SelectedItem = ReleaseTab;
-            }
-            RewritePrefs();
+            ThemedMessageBox.Show("Cleanup completed. You should now be able to install Minecraft from Microsoft Store.", "Cleanup completed");
         }
 
         private void TabNav_Checked(object sender, RoutedEventArgs e) {
@@ -1326,7 +1317,7 @@ namespace MCLauncher {
             if (installed != null) {
                 InvokeLaunch(installed);
             } else {
-                MessageBox.Show("No version is currently installed. Please select a version in the Installations tab to download and install it.", "BUGrock Launcher", MessageBoxButton.OK, MessageBoxImage.Information);
+                ThemedMessageBox.Show("No version is currently installed. Please select a version in the Installations tab to download and install it.", "BUGrock Launcher", MessageBoxButton.OK, MessageBoxImage.Information);
                 TabNavInstallations.IsChecked = true;
             }
         }
@@ -1424,7 +1415,7 @@ namespace MCLauncher {
                     var bmp = SteveHeadHelper.LoadSkinFromFile(ofd.FileName);
                     ApplySkin(bmp, System.IO.Path.GetFileNameWithoutExtension(ofd.FileName), isBlock: false);
                 } catch (Exception ex) {
-                    MessageBox.Show("Failed to load skin image: " + ex.Message, "Skin Upload", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    ThemedMessageBox.Show("Failed to load skin image: " + ex.Message, "Skin Upload", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
         }
@@ -1613,14 +1604,13 @@ namespace MCLauncher {
             private long _progress = 0;
             private long _maxProgress = 0;
             private readonly Stopwatch _speedTimer = Stopwatch.StartNew();
-            private long _lastBytes = 0;
-            private long _lastSpeedTick = 0;
-            private double _smoothedSpeedBytes = 0;
+            private readonly Queue<(long TimeMs, long Bytes)> _speedSamples = new();
+            private long _lastSpeedUiTick = 0;
             private string _downloadSpeedText = "";
 
             public VersionStateChangeInfo(VersionState versionState) {
                 _versionState = versionState;
-                _lastSpeedTick = _speedTimer.ElapsedMilliseconds;
+                _lastSpeedUiTick = _speedTimer.ElapsedMilliseconds;
             }
 
             public VersionState VersionState {
@@ -1629,9 +1619,8 @@ namespace MCLauncher {
                     _versionState = value;
                     _progress = 0;
                     _maxProgress = 0;
-                    _lastBytes = 0;
-                    _lastSpeedTick = _speedTimer.ElapsedMilliseconds;
-                    _smoothedSpeedBytes = 0;
+                    _speedSamples.Clear();
+                    _lastSpeedUiTick = _speedTimer.ElapsedMilliseconds;
                     _downloadSpeedText = "";
                     OnPropertyChanged("Progress");
                     OnPropertyChanged("MaxProgress");
@@ -1687,44 +1676,41 @@ namespace MCLauncher {
             private void CalculateSpeed(long current) {
                 if (_versionState != VersionState.Downloading) {
                     DownloadSpeedText = "";
-                    return;
-                }
-
-                if (_lastSpeedTick == 0) {
-                    _lastSpeedTick = _speedTimer.ElapsedMilliseconds;
-                    _lastBytes = current;
+                    _speedSamples.Clear();
                     return;
                 }
 
                 long now = _speedTimer.ElapsedMilliseconds;
-                long elapsed = now - _lastSpeedTick;
+                _speedSamples.Enqueue((now, current));
 
-                if (elapsed >= 350) {
-                    long bytesDelta = current - _lastBytes;
-                    if (bytesDelta >= 0 && elapsed > 0) {
-                        double currentSpeed = (bytesDelta * 1000.0) / elapsed;
-                        if (_smoothedSpeedBytes <= 0) {
-                            _smoothedSpeedBytes = currentSpeed;
-                        } else {
-                            // Exponential moving average for smooth readout
-                            _smoothedSpeedBytes = (_smoothedSpeedBytes * 0.65) + (currentSpeed * 0.35);
-                        }
+                // Discard samples older than 1000ms (1-second sliding window)
+                while (_speedSamples.Count > 1 && (now - _speedSamples.Peek().TimeMs) > 1000) {
+                    _speedSamples.Dequeue();
+                }
 
-                        double speedMB = _smoothedSpeedBytes / (1024.0 * 1024.0);
+                if (now - _lastSpeedUiTick >= 250) {
+                    var oldest = _speedSamples.Peek();
+                    long timeDelta = now - oldest.TimeMs;
+                    long bytesDelta = current - oldest.Bytes;
+
+                    if (timeDelta >= 150 && bytesDelta >= 0) {
+                        double bytesPerSec = (bytesDelta * 1000.0) / timeDelta;
+                        double speedMB = bytesPerSec / (1024.0 * 1024.0);
+
                         if (speedMB >= 10.0) {
                             DownloadSpeedText = $"{speedMB:0.0} MB/s";
                         } else if (speedMB >= 0.1) {
                             DownloadSpeedText = $"{speedMB:0.2} MB/s";
-                        } else if (_smoothedSpeedBytes > 0) {
-                            DownloadSpeedText = $"{(_smoothedSpeedBytes / 1024.0):0} KB/s";
+                        } else if (bytesPerSec > 0) {
+                            DownloadSpeedText = $"{(bytesPerSec / 1024.0):0} KB/s";
                         } else {
                             DownloadSpeedText = "0.0 MB/s";
                         }
-                    } else if (elapsed >= 1500 && current == _lastBytes) {
+                    } else if (now - oldest.TimeMs >= 1200 && current == oldest.Bytes) {
                         DownloadSpeedText = "0.0 MB/s";
                     }
-                    _lastBytes = current;
-                    _lastSpeedTick = now;
+
+                    _lastSpeedUiTick = now;
                 }
             }
 

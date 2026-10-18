@@ -105,11 +105,12 @@
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="22"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="18,6"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="#276749" BorderThickness="0,0,0,3" CornerRadius="6">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="#276749" BorderThickness="0,0,0,3" CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <ContentPresenter.Effect>
                                     <DropShadowEffect Color="#1E4E38" BlurRadius="2" ShadowDepth="2" Direction="270" Opacity="0.9"/>
@@ -141,12 +142,12 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Padding" Value="14,6"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="#282A36" BorderThickness="1" CornerRadius="6">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="#282A36" BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -174,7 +175,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="#232530" BorderThickness="1" CornerRadius="6">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="#232530" BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -213,7 +214,7 @@
                         <TextBlock Text="Not installed &#x2022; Online Repository" Foreground="#606478" FontSize="11" Margin="0,4,0,0"/>
                     </StackPanel>
 
-                    <Button x:Name="DownloadButton" Grid.Column="2" Style="{StaticResource DarkButtonStyle}" Content="&#x21E9; DOWNLOAD" Command="{Binding DownloadCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" Padding="16,8" FontWeight="Bold"/>
+                    <Button x:Name="DownloadButton" Grid.Column="2" Style="{StaticResource DarkButtonStyle}" Content="&#x21E9; DOWNLOAD" Command="{Binding DownloadCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" MinWidth="124" Height="38" Padding="16,6" FontSize="12" FontWeight="Bold"/>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -244,8 +245,8 @@
                         <TextBlock Text="{Binding DisplayInstallStatus}" Foreground="#8E92A4" FontSize="11" Margin="0,4,0,0"/>
                     </StackPanel>
 
-                    <Button x:Name="DownloadButton" Grid.Column="2" Style="{StaticResource GiantPlayButtonStyle}" Content="PLAY" Command="{Binding LaunchCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" Padding="20,6" FontSize="14" Margin="0,0,10,0"/>
-                    <Button x:Name="RemoveButton" Grid.Column="3" Style="{StaticResource DangerButtonStyle}" Content="&#x1F5D1;" Command="{Binding RemoveCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" Padding="10,8" ToolTip="Uninstall this version"/>
+                    <Button x:Name="DownloadButton" Grid.Column="2" Style="{StaticResource GiantPlayButtonStyle}" Content="PLAY" Command="{Binding LaunchCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" MinWidth="96" Height="38" Padding="20,6" FontSize="14" FontWeight="Bold" Margin="0,0,10,0"/>
+                    <Button x:Name="RemoveButton" Grid.Column="3" Style="{StaticResource DangerButtonStyle}" Content="&#x1F5D1;" Command="{Binding RemoveCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" Width="38" Height="38" Padding="0" FontSize="14" ToolTip="Uninstall this version"/>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -380,7 +381,15 @@
                                         <Grid>
                                             <Border x:Name="border" Background="{TemplateBinding Background}" BorderThickness="0" CornerRadius="4" Padding="{TemplateBinding Padding}">
                                                 <Grid>
-                                                    <ContentPresenter ContentSource="Header" HorizontalAlignment="Left" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <!-- Checkmark box for IsCheckable items -->
+                                                    <Border x:Name="checkMarkBorder" Grid.Column="0" Width="15" Height="15" CornerRadius="3" Background="#1C2E22" BorderBrush="#38A169" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,8,0" Visibility="Collapsed">
+                                                        <TextBlock Text="✓" Foreground="#38A169" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0"/>
+                                                    </Border>
+                                                    <ContentPresenter Grid.Column="1" ContentSource="Header" HorizontalAlignment="Left" VerticalAlignment="Center" RecognizesAccessKey="True"/>
                                                     <Popup x:Name="PART_Popup" AllowsTransparency="True" Focusable="False" IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}" Placement="Bottom" PopupAnimation="Fade">
                                                         <Border Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="6" Padding="4" SnapsToDevicePixels="True">
                                                             <Border.Effect>
@@ -394,7 +403,10 @@
                                         </Grid>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="Role" Value="SubmenuItem">
-                                                <Setter TargetName="border" Property="Padding" Value="12,6"/>
+                                                <Setter TargetName="border" Property="Padding" Value="10,6"/>
+                                            </Trigger>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter TargetName="checkMarkBorder" Property="Visibility" Value="Visible"/>
                                             </Trigger>
                                             <Trigger Property="IsHighlighted" Value="True">
                                                 <Setter TargetName="border" Property="Background" Value="#21222D"/>
@@ -435,9 +447,8 @@
                         <MenuItem Header="Find my Minecraft data" Click="MenuItemFindMyDataClicked" />
                     </MenuItem>
                     <MenuItem Header="_Options">
-                        <MenuItem Header="Delete installation packages after download to save space" IsCheckable="True" Name="DeleteAppxAfterDownloadOption" Checked="DeleteAppxAfterDownloadCheck_Changed" Unchecked="DeleteAppxAfterDownloadCheck_Changed" IsChecked="{Binding UserPrefs.DeleteAppxAfterDownload }" />
+                        <MenuItem Header="Delete packages (.appx / .msixvc) after extraction" IsCheckable="True" Name="DeleteAppxAfterDownloadOption" Checked="DeleteAppxAfterDownloadCheck_Changed" Unchecked="DeleteAppxAfterDownloadCheck_Changed" IsChecked="{Binding UserPrefs.DeleteAppxAfterDownload}" ToolTip="When checked, downloaded package files are automatically deleted after extraction to save disk space." />
                         <MenuItem Header="Set version data endpoints..." Name="SetVersionListEndpoint" Click="MenuItemSetVersionListEndpointClicked" />
-                        <MenuItem Header="Show legacy Beta versions tab" IsCheckable="True" Name="ShowBetaTabOption" Checked="ShowBetaTabOption_Changed" Unchecked="ShowBetaTabOption_Changed" IsChecked="{Binding UserPrefs.ShowLegacyBetaTab}" />
                     </MenuItem>
                 </Menu>
 
@@ -803,7 +814,7 @@
                             <RadioButton x:Name="SubFilterAll" Content="All" IsChecked="True" Checked="SubFilter_Checked" GroupName="SubVersionFilter" Style="{StaticResource SubFilterTabStyle}"/>
                             <RadioButton x:Name="SubFilterRelease" Content="Release" Checked="SubFilter_Checked" GroupName="SubVersionFilter" Style="{StaticResource SubFilterTabStyle}"/>
                             <RadioButton x:Name="SubFilterPreview" Content="Preview" Checked="SubFilter_Checked" GroupName="SubVersionFilter" Style="{StaticResource SubFilterTabStyle}"/>
-                            <RadioButton x:Name="SubFilterBeta" Content="Beta" Checked="SubFilter_Checked" GroupName="SubVersionFilter" Style="{StaticResource SubFilterTabStyle}"/>
+                            <RadioButton x:Name="SubFilterBeta" Content="Beta" Checked="SubFilter_Checked" GroupName="SubVersionFilter" Style="{StaticResource SubFilterTabStyle}" Visibility="Collapsed"/>
                             <RadioButton x:Name="SubFilterImported" Content="Imported" Checked="SubFilter_Checked" GroupName="SubVersionFilter" Style="{StaticResource SubFilterTabStyle}"/>
                         </StackPanel>
 
