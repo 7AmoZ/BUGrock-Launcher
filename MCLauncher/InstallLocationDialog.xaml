@@ -120,7 +120,7 @@
                             <RadioButton x:Name="RbDefault" Grid.Column="0" GroupName="InstallLocationGroup" IsChecked="True" VerticalAlignment="Top" Margin="0,2,10,0" Checked="RbDefault_Checked"/>
 
                             <StackPanel Grid.Column="1">
-                                <TextBlock Text="Default Directory (المسار الافتراضي)" FontWeight="Bold" Foreground="#FFFFFF" FontSize="13"/>
+                                <TextBlock Text="Default Directory (Recommended)" FontWeight="Bold" Foreground="#FFFFFF" FontSize="13"/>
                                 <TextBlock x:Name="DefaultPathText" Text="E:\...\BUGrock_Launcher_Bin\Minecraft-..." Foreground="#38A169" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,2"/>
                                 <TextBlock Text="Installs inside the launcher's folder on this drive." Foreground="#606478" FontSize="11"/>
                             </StackPanel>
@@ -138,7 +138,7 @@
                             <RadioButton x:Name="RbCustom" Grid.Column="0" GroupName="InstallLocationGroup" VerticalAlignment="Top" Margin="0,2,10,0" Checked="RbCustom_Checked"/>
 
                             <StackPanel Grid.Column="1">
-                                <TextBlock Text="Custom Directory (مسار مخصص)" FontWeight="Bold" Foreground="#FFFFFF" FontSize="13"/>
+                                <TextBlock Text="Custom Directory" FontWeight="Bold" Foreground="#FFFFFF" FontSize="13"/>
                                 <TextBlock Text="Install game files in a custom folder on any drive of your choice:" Foreground="#8E92A4" FontSize="11" Margin="0,4,0,8"/>
 
                                 <Grid>
