@@ -92,10 +92,12 @@ namespace MCLauncher {
         }
 
         public static MessageBoxResult Show(string message, string title = "BUGrock Launcher", MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxImage icon = MessageBoxImage.None, Window? owner = null) {
-            owner ??= Application.Current?.MainWindow;
-            if (owner != null && !owner.Dispatcher.CheckAccess()) {
-                return owner.Dispatcher.Invoke(() => Show(message, title, buttons, icon, owner));
+            var app = Application.Current;
+            if (app != null && !app.Dispatcher.CheckAccess()) {
+                return (MessageBoxResult)app.Dispatcher.Invoke(new Func<MessageBoxResult>(() => Show(message, title, buttons, icon, owner)));
             }
+
+            owner ??= app?.MainWindow;
 
             var dialog = new ThemedMessageBox(message, title, buttons, icon);
             if (owner != null && owner.IsVisible) {

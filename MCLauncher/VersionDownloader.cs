@@ -20,7 +20,7 @@ namespace MCLauncher {
         private HttpClient client = new HttpClient();
         private WUProtocol protocol = new WUProtocol();
         
-        private async Task<XDocument> PostXmlAsync(string url, XDocument data) {
+        private async Task<XDocument> PostXmlAsync(string url, XDocument data, CancellationToken cancellationToken) {
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url);
             using (var stringWriter = new StringWriter()) {
                 using (XmlWriter xmlWriter = XmlWriter.Create(stringWriter, new XmlWriterSettings { Indent = false, OmitXmlDeclaration = true })) {
@@ -28,7 +28,7 @@ namespace MCLauncher {
                 }
                 request.Content = new StringContent(stringWriter.ToString(), Encoding.UTF8, "application/soap+xml");
             }
-            using (var resp = await client.SendAsync(request)) {
+            using (var resp = await client.SendAsync(request, cancellationToken)) {
                 string str = await resp.Content.ReadAsStringAsync();
                 return XDocument.Parse(str);
             }
@@ -54,15 +54,21 @@ namespace MCLauncher {
             }
         }
 
-        private async Task<string> GetDownloadUrl(string updateIdentity, string revisionNumber) {
-            XDocument result = await PostXmlAsync(protocol.GetDownloadUrl(),
-                protocol.BuildDownloadRequest(updateIdentity, revisionNumber));
-            Trace.WriteLine($"GetDownloadUrl() response for updateIdentity {updateIdentity}, revision {revisionNumber}:\n{result.ToString()}");
-            foreach (string s in protocol.ExtractDownloadResponseUrls(result)) {
-                if (s.StartsWith("http://tlu.dl.delivery.mp.microsoft.com/"))
-                    return s;
+        private async Task<string> GetDownloadUrl(string updateIdentity, string revisionNumber, CancellationToken cancellationToken) {
+            try {
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+                XDocument result = await PostXmlAsync(protocol.GetDownloadUrl(),
+                    protocol.BuildDownloadRequest(updateIdentity, revisionNumber), linkedCts.Token);
+                Trace.WriteLine($"GetDownloadUrl() response for updateIdentity {updateIdentity}, revision {revisionNumber}:\n{result.ToString()}");
+                foreach (string s in protocol.ExtractDownloadResponseUrls(result)) {
+                    if (s.StartsWith("http://tlu.dl.delivery.mp.microsoft.com/"))
+                        return s;
+                }
+                return null;
+            } catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) {
+                throw new TimeoutException("Timed out while contacting Windows Update server.");
             }
-            return null;
         }
 
         public void EnableUserAuthorization() {
@@ -70,7 +76,7 @@ namespace MCLauncher {
         }
 
         public async Task DownloadAppx(string updateIdentity, string revisionNumber, string destination, DownloadProgress progress, CancellationToken cancellationToken) {
-            string link = await GetDownloadUrl(updateIdentity, revisionNumber);
+            string link = await GetDownloadUrl(updateIdentity, revisionNumber, cancellationToken);
             if (link == null)
                 throw new BadUpdateIdentityException();
             Trace.WriteLine("Resolved download link: " + link);

@@ -1057,8 +1057,6 @@ namespace MCLauncher {
                         await downloader.DownloadAppx(v.UUID, "1", dlPath, dlProgressHandler, cancelSource.Token);
                     } else if (v.PackageType == PackageType.GDK) {
                         if (!ShowGDKFirstUseWarning()) {
-                            v.StateChangeInfo = null;
-                            v.UpdateInstallStatus();
                             return;
                         }
                         await downloader.DownloadMsixvc(v.DownloadURLs, dlPath, dlProgressHandler, cancelSource.Token);
@@ -1066,22 +1064,7 @@ namespace MCLauncher {
                         throw new Exception("Unknown package type");
                     }
                     Trace.WriteLine("Download complete");
-                } catch (BadUpdateIdentityException) {
-                    Trace.WriteLine("Download failed due to failure to fetch download URL");
-                    ThemedMessageBox.Show(
-                        "Unable to fetch download URL for version." +
-                        (v.VersionType == VersionType.Beta ? "\nFor beta versions, please make sure your account is subscribed to the Minecraft beta programme in the Xbox Insider Hub app." : "")
-                    );
-                    v.StateChangeInfo = null;
-                    return;
-                } catch (Exception e) {
-                    Trace.WriteLine("Download failed:\n" + e.ToString());
-                    if (!(e is TaskCanceledException))
-                        ThemedMessageBox.Show("Download failed:\n" + e.ToString());
-                    v.StateChangeInfo = null;
-                    return;
-                }
-                try {
+
                     string dirPath = v.GameDirectory;
                     if (Directory.Exists(dirPath))
                         Directory.Delete(dirPath, true);
@@ -1098,14 +1081,21 @@ namespace MCLauncher {
                     } else {
                         Trace.WriteLine("Not deleting package due to user preferences");
                     }
+                } catch (BadUpdateIdentityException) {
+                    Trace.WriteLine("Download failed due to failure to fetch download URL");
+                    string msg = (v.VersionType == VersionType.Beta)
+                        ? "Unable to fetch download URL for beta version.\n\nPlease make sure your account is subscribed to the Minecraft beta programme in the Xbox Insider Hub app."
+                        : $"Unable to download {v.DisplayName} ({v.Name}).\n\nMicrosoft has removed the download files for this legacy version from Windows Update servers.\nYou can still install and play it by obtaining the .Appx file and clicking '+ Import .appx'.";
+                    ThemedMessageBox.Show(msg, "Version Unavailable", MessageBoxButton.OK, MessageBoxImage.Warning);
+                } catch (OperationCanceledException) {
+                    Trace.WriteLine("Download was cancelled by user.");
                 } catch (Exception e) {
-                    Trace.WriteLine("Extraction failed:\n" + e.ToString());
-                    ThemedMessageBox.Show("Extraction failed:\n" + e.ToString());
+                    Trace.WriteLine("Download or extraction failed:\n" + e.ToString());
+                    ThemedMessageBox.Show("Operation failed:\n" + e.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                } finally {
                     v.StateChangeInfo = null;
-                    return;
+                    v.UpdateInstallStatus();
                 }
-                v.StateChangeInfo = null;
-                v.UpdateInstallStatus();
             });
         }
 
