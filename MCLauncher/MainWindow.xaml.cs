@@ -1417,6 +1417,22 @@ namespace MCLauncher {
                 }
             }
         }
+
+        private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e) {
+            if (e.ChangedButton == MouseButton.Left) DragMove();
+        }
+
+        private void btnMinimize_Click(object sender, RoutedEventArgs e) {
+            WindowState = WindowState.Minimized;
+        }
+
+        private void btnMaximize_Click(object sender, RoutedEventArgs e) {
+            WindowState = (WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized);
+        }
+
+        private void btnClose_Click(object sender, RoutedEventArgs e) {
+            Close();
+        }
     }
 
     struct MinecraftPackageFamilies

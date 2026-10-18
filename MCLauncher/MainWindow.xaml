@@ -6,26 +6,33 @@
         xmlns:local="clr-namespace:MCLauncher.WPFDataTypes"
         mc:Ignorable="d"
         Title="BUGrock Launcher" 
-        Height="760" Width="1160"
+        Height="780" Width="1200"
         MinHeight="660" MinWidth="1020"
         WindowStartupLocation="CenterScreen"
-        Background="#0F0F12"
+        Background="#0F1015"
         Icon="Assets/bugrock.ico"
         MouseMove="Window_MouseMove">
 
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="38" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="8"/>
+    </WindowChrome.WindowChrome>
+
     <Window.Resources>
-        <!-- Colors -->
-        <SolidColorBrush x:Key="BgDark" Color="#0F0F12"/>
-        <SolidColorBrush x:Key="BgSidebar" Color="#131316"/>
-        <SolidColorBrush x:Key="BgCard" Color="#18181C"/>
-        <SolidColorBrush x:Key="BgCardHover" Color="#222228"/>
-        <SolidColorBrush x:Key="BorderDark" Color="#26262D"/>
-        <SolidColorBrush x:Key="TextMain" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="TextMuted" Color="#8E8E96"/>
-        <SolidColorBrush x:Key="MinecraftGreen" Color="#3C8527"/>
-        <SolidColorBrush x:Key="MinecraftGreenHover" Color="#4E9E35"/>
-        <SolidColorBrush x:Key="MinecraftGreenPressed" Color="#2E691D"/>
+        <!-- Exact Color Tokens from HTML -->
+        <SolidColorBrush x:Key="BgPrimary" Color="#0F1015"/>
+        <SolidColorBrush x:Key="BgSecondary" Color="#13141A"/>
+        <SolidColorBrush x:Key="BgCard" Color="#181921"/>
+        <SolidColorBrush x:Key="BgCardHover" Color="#21222D"/>
+        <SolidColorBrush x:Key="BorderSubtle" Color="#232530"/>
+        <SolidColorBrush x:Key="BorderElevated" Color="#282A36"/>
+        <SolidColorBrush x:Key="AccentGreen" Color="#38A169"/>
+        <SolidColorBrush x:Key="AccentGreenHover" Color="#48BB78"/>
+        <SolidColorBrush x:Key="AccentGreenDark" Color="#276749"/>
         <SolidColorBrush x:Key="AccentMagenta" Color="#D05CE3"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#8E92A4"/>
+        <SolidColorBrush x:Key="TextSubtle" Color="#606478"/>
+        <SolidColorBrush x:Key="RecessedBg" Color="#0B0C0F"/>
 
         <!-- Version List Collection Views -->
         <CollectionViewSource x:Key="versionListViewRelease" IsLiveFilteringRequested="True"/>
@@ -36,25 +43,25 @@
         <!-- Top Navigation Tab RadioButton Style (NO blue highlight, clean green underline) -->
         <Style x:Key="TopNavTabStyle" TargetType="RadioButton">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#8E8E96"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#8E92A4"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="0,0,24,0"/>
+            <Setter Property="Margin" Value="0,0,28,0"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="TabBorder" Background="Transparent" BorderThickness="0,0,0,2" BorderBrush="Transparent" Padding="4,10,4,10">
+                        <Border x:Name="TabBorder" Background="Transparent" BorderThickness="0,0,0,2" BorderBrush="Transparent" Padding="2,12,2,12">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter Property="Foreground" Value="#FFFFFF"/>
-                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="#4CAF50"/>
+                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="#38A169"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Foreground" Value="#EEEEEE"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -65,25 +72,25 @@
         <!-- Sub Filter Tab RadioButton Style -->
         <Style x:Key="SubFilterTabStyle" TargetType="RadioButton">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#8E8E96"/>
-            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#8E92A4"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="0,0,16,0"/>
+            <Setter Property="Margin" Value="0,0,20,0"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="TabBorder" Background="Transparent" BorderThickness="0,0,0,2" BorderBrush="Transparent" Padding="4,6,4,6">
+                        <Border x:Name="TabBorder" Background="Transparent" BorderThickness="0,0,0,2" BorderBrush="Transparent" Padding="2,6,2,6">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter Property="Foreground" Value="#FFFFFF"/>
-                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="#4CAF50"/>
+                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="#38A169"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Foreground" Value="#EEEEEE"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -91,32 +98,35 @@
             </Setter>
         </Style>
 
-        <!-- Minecraft Style Green Button -->
-        <Style x:Key="MinecraftButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#3C8527"/>
+        <!-- Giant PLAY Pixel Button Style -->
+        <Style x:Key="GiantPlayButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#38A169"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontSize" Value="22"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Padding" Value="18,8"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="#245415" BorderThickness="0,0,0,3" CornerRadius="4">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="#276749" BorderThickness="0,0,0,3" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <ContentPresenter.Effect>
+                                    <DropShadowEffect Color="#1E4E38" BlurRadius="2" ShadowDepth="2" Direction="270" Opacity="0.9"/>
+                                </ContentPresenter.Effect>
+                            </ContentPresenter>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="btnBorder" Property="Background" Value="#4EA034"/>
+                                <Setter TargetName="btnBorder" Property="Background" Value="#48BB78"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="btnBorder" Property="Background" Value="#2D661B"/>
-                                <Setter TargetName="btnBorder" Property="BorderThickness" Value="0,3,0,0"/>
+                                <Setter TargetName="btnBorder" Property="Background" Value="#276749"/>
+                                <Setter TargetName="btnBorder" Property="BorderThickness" Value="0,2,0,0"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="btnBorder" Property="Background" Value="#38383D"/>
-                                <Setter Property="Foreground" Value="#77777D"/>
+                                <Setter TargetName="btnBorder" Property="Background" Value="#232530"/>
+                                <Setter Property="Foreground" Value="#606478"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -126,26 +136,25 @@
 
         <!-- Secondary Dark Button Style -->
         <Style x:Key="DarkButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#1C1C22"/>
-            <Setter Property="Foreground" Value="#E0E0E6"/>
+            <Setter Property="Background" Value="#181921"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="Padding" Value="12,6"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="#2D2D36" BorderThickness="1" CornerRadius="5">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="#282A36" BorderThickness="1" CornerRadius="6">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="btnBorder" Property="Background" Value="#282830"/>
-                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                <Setter TargetName="btnBorder" Property="Background" Value="#21222D"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="btnBorder" Property="Background" Value="#16161A"/>
+                                <Setter TargetName="btnBorder" Property="Background" Value="#13141A"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -155,8 +164,8 @@
 
         <!-- Danger / Remove Button Style -->
         <Style x:Key="DangerButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#2A1B1B"/>
-            <Setter Property="Foreground" Value="#E57373"/>
+            <Setter Property="Background" Value="#13141A"/>
+            <Setter Property="Foreground" Value="#8E92A4"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
@@ -165,13 +174,13 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="#482222" BorderThickness="1" CornerRadius="5">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="#232530" BorderThickness="1" CornerRadius="6">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="btnBorder" Property="Background" Value="#541B1B"/>
-                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                <Setter TargetName="btnBorder" Property="Background" Value="#3B1C1C"/>
+                                <Setter Property="Foreground" Value="#FF6B6B"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -181,7 +190,7 @@
 
         <!-- Template for Version Not Installed (Mockup Style: Dark card, gray RELEASE badge, DOWNLOAD button) -->
         <DataTemplate x:Key="templateVersionNotInstalled" DataType="{x:Type local:Version}">
-            <Border Background="#16161A" BorderBrush="#26262E" BorderThickness="1" CornerRadius="6" Margin="0,0,0,10" Padding="16,14">
+            <Border Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="8" Margin="0,0,0,10" Padding="16,14">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -190,28 +199,28 @@
                     </Grid.ColumnDefinitions>
                     
                     <!-- Box/Package Icon -->
-                    <Border Grid.Column="0" Width="36" Height="36" Background="#202026" CornerRadius="6" Margin="0,0,14,0" VerticalAlignment="Center">
+                    <Border Grid.Column="0" Width="38" Height="38" Background="#0B0C0F" BorderBrush="#232530" BorderThickness="1" CornerRadius="6" Margin="0,0,14,0" VerticalAlignment="Center">
                         <TextBlock Text="&#x1F4E6;" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding DisplayName}" FontWeight="Bold" FontSize="15" Foreground="#FFFFFF" VerticalAlignment="Center"/>
-                            <Border Background="#2B2B32" CornerRadius="3" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
-                                <TextBlock Text="RELEASE" Foreground="#AAAAAA" FontSize="10" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding DisplayName}" FontWeight="Bold" FontSize="14" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                            <Border Background="#21222D" BorderBrush="#282A36" BorderThickness="1" CornerRadius="4" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
+                                <TextBlock Text="RELEASE" Foreground="#8E92A4" FontSize="10" FontWeight="Bold"/>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="Not installed &#x2022; Online Repository" Foreground="#777780" FontSize="12" Margin="0,4,0,0"/>
+                        <TextBlock Text="Not installed &#x2022; Online Repository" Foreground="#606478" FontSize="11" Margin="0,4,0,0"/>
                     </StackPanel>
 
-                    <Button x:Name="DownloadButton" Grid.Column="2" Style="{StaticResource DarkButtonStyle}" Content="&#x21E9; DOWNLOAD" Command="{Binding DownloadCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" Padding="18,8" FontWeight="Bold"/>
+                    <Button x:Name="DownloadButton" Grid.Column="2" Style="{StaticResource DarkButtonStyle}" Content="&#x21E9; DOWNLOAD" Command="{Binding DownloadCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" Padding="16,8" FontWeight="Bold"/>
                 </Grid>
             </Border>
         </DataTemplate>
 
         <!-- Template for Version Installed (Mockup Style: Green accent border, green badge, PLAY + Trash buttons) -->
         <DataTemplate x:Key="templateVersionInstalled" DataType="{x:Type local:Version}">
-            <Border Background="#141915" BorderBrush="#3C8527" BorderThickness="1.5" CornerRadius="6" Margin="0,0,0,10" Padding="16,14">
+            <Border Background="#181921" BorderBrush="#38A169" BorderThickness="1.5" CornerRadius="8" Margin="0,0,0,10" Padding="16,14">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -221,21 +230,21 @@
                     </Grid.ColumnDefinitions>
                     
                     <!-- Green Block Icon -->
-                    <Border Grid.Column="0" Width="36" Height="36" Background="#1D2E1F" CornerRadius="6" Margin="0,0,14,0" VerticalAlignment="Center">
+                    <Border Grid.Column="0" Width="38" Height="38" Background="#0B0C0F" BorderBrush="#38A169" BorderThickness="1" CornerRadius="6" Margin="0,0,14,0" VerticalAlignment="Center">
                         <Image Source="Assets/bugrock_block.png" Width="22" Height="22" RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Border>
                     
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding DisplayName}" FontWeight="Bold" FontSize="15" Foreground="#FFFFFF" VerticalAlignment="Center"/>
-                            <Border Background="#1F3D23" CornerRadius="3" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
-                                <TextBlock Text="RELEASE" Foreground="#52C41A" FontSize="10" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding DisplayName}" FontWeight="Bold" FontSize="14" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                            <Border Background="#1C2E22" BorderBrush="#38A169" BorderThickness="1" CornerRadius="4" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
+                                <TextBlock Text="RELEASE" Foreground="#38A169" FontSize="10" FontWeight="Bold"/>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="{Binding DisplayInstallStatus}" Foreground="#79A882" FontSize="12" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding DisplayInstallStatus}" Foreground="#8E92A4" FontSize="11" Margin="0,4,0,0"/>
                     </StackPanel>
 
-                    <Button x:Name="DownloadButton" Grid.Column="2" Style="{StaticResource MinecraftButtonStyle}" Content="PLAY" Command="{Binding LaunchCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" Padding="24,8" Margin="0,0,10,0"/>
+                    <Button x:Name="DownloadButton" Grid.Column="2" Style="{StaticResource GiantPlayButtonStyle}" Content="PLAY" Command="{Binding LaunchCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" Padding="20,6" FontSize="14" Margin="0,0,10,0"/>
                     <Button x:Name="RemoveButton" Grid.Column="3" Style="{StaticResource DangerButtonStyle}" Content="&#x1F5D1;" Command="{Binding RemoveCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" Padding="10,8" ToolTip="Uninstall this version"/>
                 </Grid>
             </Border>
@@ -243,7 +252,7 @@
 
         <!-- Template for Version Downloading (Mockup Style: Magenta border, progress bar, cancel button) -->
         <DataTemplate x:Key="templateVersionDownloading" DataType="{x:Type local:Version}">
-            <Border Background="#19131D" BorderBrush="#C026D3" BorderThickness="1.5" CornerRadius="6" Margin="0,0,0,10" Padding="16,14">
+            <Border Background="#181921" BorderBrush="#D05CE3" BorderThickness="1.5" CornerRadius="8" Margin="0,0,0,10" Padding="16,14">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -256,25 +265,25 @@
                     </Grid.RowDefinitions>
                     
                     <!-- Magenta Flask Icon -->
-                    <Border Grid.Row="0" Grid.Column="0" Width="36" Height="36" Background="#2D1936" CornerRadius="6" Margin="0,0,14,0" VerticalAlignment="Center">
+                    <Border Grid.Row="0" Grid.Column="0" Width="38" Height="38" Background="#0B0C0F" BorderBrush="#D05CE3" BorderThickness="1" CornerRadius="6" Margin="0,0,14,0" VerticalAlignment="Center">
                         <TextBlock Text="&#x2697;" FontSize="18" Foreground="#D05CE3" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     
                     <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding DisplayName}" FontWeight="Bold" FontSize="15" Foreground="#FFFFFF" VerticalAlignment="Center"/>
-                            <Border Background="#3D1B44" CornerRadius="3" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding DisplayName}" FontWeight="Bold" FontSize="14" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                            <Border Background="#2B1530" BorderBrush="#D05CE3" BorderThickness="1" CornerRadius="4" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
                                 <TextBlock Text="PREVIEW" Foreground="#D05CE3" FontSize="10" FontWeight="Bold"/>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="{Binding StateChangeInfo.DisplayStatus}" Foreground="#C084FC" FontSize="12" Margin="0,4,0,4"/>
+                        <TextBlock Text="{Binding StateChangeInfo.DisplayStatus}" Foreground="#D05CE3" FontSize="11" Margin="0,4,0,4"/>
                     </StackPanel>
 
                     <Button Grid.Row="0" Grid.Column="2" Content="&#x2715;" Width="28" Height="28" Style="{StaticResource DangerButtonStyle}" Padding="0" VerticalAlignment="Center" Command="{Binding StateChangeInfo.CancelCommand}" IsEnabled="{Binding StateChangeInfo.HasCancelCommand}" ToolTip="Cancel download"/>
 
-                    <!-- Thin Magenta Progress Bar -->
-                    <Canvas Name="progressSizeHack" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Height="6" Margin="0,8,0,0">
-                        <ProgressBar Width="{Binding Path=ActualWidth, ElementName=progressSizeHack, Mode=OneWay}" Height="{Binding Path=ActualHeight, ElementName=progressSizeHack, Mode=OneWay}" Minimum="0" Maximum="{Binding StateChangeInfo.MaxProgress}" Value="{Binding StateChangeInfo.Progress}" IsIndeterminate="{Binding StateChangeInfo.IsProgressIndeterminate}" Foreground="#D05CE3" Background="#261A2E" BorderThickness="0"/>
+                    <!-- Thin Magenta Progress Bar (4px) -->
+                    <Canvas Name="progressSizeHack" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Height="4" Margin="0,8,0,0">
+                        <ProgressBar Width="{Binding Path=ActualWidth, ElementName=progressSizeHack, Mode=OneWay}" Height="{Binding Path=ActualHeight, ElementName=progressSizeHack, Mode=OneWay}" Minimum="0" Maximum="{Binding StateChangeInfo.MaxProgress}" Value="{Binding StateChangeInfo.Progress}" IsIndeterminate="{Binding StateChangeInfo.IsProgressIndeterminate}" Foreground="#D05CE3" Background="#13141A" BorderThickness="0"/>
                     </Canvas>
                 </Grid>
             </Border>
@@ -315,18 +324,20 @@
         </ControlTemplate>
     </Window.Resources>
 
-    <Grid Background="#0F0F12">
+    <Grid Background="#0F1015">
         <Grid.RowDefinitions>
-            <!-- Custom Top Menu Bar -->
+            <!-- 1. Top Bar (38px) -->
             <RowDefinition Height="38"/>
-            <!-- Main Body: Sidebar + Content -->
+            <!-- 2. Middle Body: Sidebar + Main Content -->
             <RowDefinition Height="*"/>
-            <!-- Bottom Status Bar -->
+            <!-- 3. Bottom Status Bar (30px) -->
             <RowDefinition Height="30"/>
         </Grid.RowDefinitions>
 
-        <!-- Top Header & Menu Bar -->
-        <Border Grid.Row="0" Background="#111114" BorderBrush="#1C1C22" BorderThickness="0,0,0,1">
+        <!-- ============================================================== -->
+        <!-- 1. TOP MENU BAR (38px)                                         -->
+        <!-- ============================================================== -->
+        <Border Grid.Row="0" Background="#13141A" BorderBrush="#232530" BorderThickness="0,0,0,1" MouseDown="TitleBar_MouseDown">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -335,26 +346,33 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Left Title & Logo -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,16,0">
-                    <Image Source="Assets/bugrock_block.png" Width="20" Height="20" Margin="0,0,8,0" RenderOptions.BitmapScalingMode="HighQuality"/>
-                    <TextBlock Text="BUGrock Launcher" Foreground="#EEEEEE" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,18,0">
+                    <Border Width="20" Height="20" CornerRadius="3" Background="#181921" BorderBrush="#282A36" BorderThickness="1" Margin="0,0,8,0">
+                        <Image Source="Assets/bugrock_block.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Border>
+                    <TextBlock Text="BUGrock Launcher" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <!-- Menus: File, Tools, Options -->
-                <Menu Grid.Column="1" VerticalAlignment="Center" Background="Transparent" Foreground="#CCCCCC">
+                <Menu Grid.Column="1" VerticalAlignment="Center" Background="Transparent" Foreground="#8E92A4" WindowChrome.IsHitTestVisibleInChrome="True">
                     <Menu.Resources>
                         <Style TargetType="MenuItem">
-                            <Setter Property="Foreground" Value="#CCCCCC"/>
-                            <Setter Property="Background" Value="#111114"/>
+                            <Setter Property="Foreground" Value="#8E92A4"/>
+                            <Setter Property="Background" Value="#13141A"/>
                             <Setter Property="BorderThickness" Value="0"/>
                             <Setter Property="Padding" Value="8,4"/>
                             <Setter Property="FontSize" Value="12"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                                </Trigger>
+                            </Style.Triggers>
                         </Style>
                     </Menu.Resources>
                     <MenuItem Header="_File">
                         <MenuItem Header="Open log file" Click="MenuItemOpenLogFileClicked" />
                         <MenuItem Header="Open launcher data folder in Explorer" Click="MenuItemOpenDataDirClicked"/>
-                        <Separator Background="#26262D"/>
+                        <Separator Background="#232530"/>
                         <MenuItem Header="_Import .appx or .msixvc..." Click="ImportButtonClicked" />
                     </MenuItem>
                     <MenuItem Header="_Tools">
@@ -370,14 +388,31 @@
                     </MenuItem>
                 </Menu>
 
-                <!-- Right Quick Import Action -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                    <Button Content="+ Import .appx" Click="ImportButtonClicked" Style="{StaticResource DarkButtonStyle}" Padding="10,4" FontSize="11"/>
+                <!-- Right Pill Button & Native Window Controls -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0" WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button Click="ImportButtonClicked" Style="{StaticResource DarkButtonStyle}" Padding="10,4" Margin="0,0,14,0" ToolTip="Import .appx package">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="+ " Foreground="#38A169" FontWeight="Bold" FontSize="12"/>
+                            <TextBlock Text="Import .appx" FontSize="11" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Divider -->
+                    <Border Width="1" Height="14" Background="#232530" Margin="0,0,10,0"/>
+
+                    <!-- Minimize Button -->
+                    <Button Click="btnMinimize_Click" Width="26" Height="26" Style="{StaticResource DarkButtonStyle}" Background="Transparent" BorderThickness="0" Padding="0" Content="-" FontSize="14" ToolTip="Minimize"/>
+                    <!-- Maximize Button -->
+                    <Button Click="btnMaximize_Click" Width="26" Height="26" Style="{StaticResource DarkButtonStyle}" Background="Transparent" BorderThickness="0" Padding="0" Content="&#x25A2;" FontSize="12" ToolTip="Maximize"/>
+                    <!-- Close Button -->
+                    <Button Click="btnClose_Click" Width="26" Height="26" Style="{StaticResource DangerButtonStyle}" Background="Transparent" BorderThickness="0" Padding="0" Content="&#x2715;" FontSize="11" ToolTip="Close"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- Main Body: Sidebar + Main Views -->
+        <!-- ============================================================== -->
+        <!-- 2. MAIN MIDDLE BODY (Sidebar + Views)                          -->
+        <!-- ============================================================== -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <!-- Sidebar (240px) -->
@@ -387,7 +422,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- LEFT SIDEBAR -->
-            <Border Grid.Column="0" Background="#111114" BorderBrush="#1C1C22" BorderThickness="0,0,1,0">
+            <Border Grid.Column="0" Background="#13141A" BorderBrush="#232530" BorderThickness="0,0,1,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <!-- Profile Card -->
@@ -399,7 +434,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- Profile Card (Steve_The_Glitched + Microsoft Account) -->
-                    <Border Grid.Row="0" Margin="14,14,14,12" Background="#16161B" CornerRadius="8" Padding="10,10" BorderBrush="#22222A" BorderThickness="1">
+                    <Border Grid.Row="0" Margin="14,14,14,14" Background="#181921" CornerRadius="8" Padding="10,10" BorderBrush="#232530" BorderThickness="1">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -407,15 +442,15 @@
                             </Grid.ColumnDefinitions>
                             
                             <!-- Bugrock Avatar Cube -->
-                            <Border Grid.Column="0" Width="38" Height="38" CornerRadius="6" Background="#26152B" Margin="0,0,10,0">
-                                <Image Source="Assets/bugrock_block.png" Width="28" Height="28" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <Border Grid.Column="0" Width="36" Height="36" CornerRadius="6" Background="#0B0C0F" BorderBrush="#282A36" BorderThickness="1" Margin="0,0,10,0">
+                                <Image Source="Assets/bugrock_block.png" Width="26" Height="26" RenderOptions.BitmapScalingMode="HighQuality"/>
                             </Border>
 
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Text="Steve_The_Glitched" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13" TextTrimming="CharacterEllipsis"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                                    <Ellipse Width="6" Height="6" Fill="#4CAF50" Margin="0,0,6,0"/>
-                                    <TextBlock Text="Microsoft Account" Foreground="#888892" FontSize="11"/>
+                                    <Ellipse Width="6" Height="6" Fill="#38A169" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Microsoft Account" Foreground="#8E92A4" FontSize="11"/>
                                 </StackPanel>
                             </StackPanel>
                         </Grid>
@@ -425,91 +460,95 @@
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="12,0,12,0">
                             <!-- GAMES Header -->
-                            <TextBlock Text="GAMES" Foreground="#666670" FontSize="10" FontWeight="Bold" Margin="4,6,0,8"/>
+                            <TextBlock Text="GAMES" Foreground="#606478" FontSize="10" FontWeight="Bold" Margin="4,4,0,8"/>
 
                             <!-- Bedrock Edition (The only active game - no fake Java/Dungeons buttons!) -->
-                            <Border Background="#18181E" CornerRadius="6" Margin="0,0,0,14" BorderBrush="#222228" BorderThickness="1">
-                                <Grid Height="48">
+                            <Border Background="#181921" CornerRadius="6" Margin="0,0,0,14" BorderBrush="#232530" BorderThickness="1">
+                                <Grid Height="46">
                                     <!-- Green active indicator line on left edge -->
-                                    <Border HorizontalAlignment="Left" Width="3.5" Background="#4CAF50" CornerRadius="2,0,0,2"/>
+                                    <Border HorizontalAlignment="Left" Width="3.5" Background="#38A169" CornerRadius="2,0,0,2"/>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
-                                        <Border Width="28" Height="28" Background="#1B2B1E" CornerRadius="4" Margin="0,0,10,0">
-                                            <Image Source="Assets/bugrock_block.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                        <Border Width="26" Height="26" Background="#0F1015" BorderBrush="#282A36" BorderThickness="1" CornerRadius="4" Margin="0,0,10,0">
+                                            <Image Source="Assets/bugrock_block.png" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
                                         </Border>
                                         <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="MINECRAFT" Foreground="#FFFFFF" FontSize="12" FontWeight="Bold"/>
-                                            <TextBlock Text="Bedrock Edition" Foreground="#888892" FontSize="10" Margin="0,1,0,0"/>
+                                            <TextBlock Text="MINECRAFT:" Foreground="#8E92A4" FontSize="10" FontWeight="Bold"/>
+                                            <TextBlock Text="Bedrock Edition" Foreground="#FFFFFF" FontSize="12" FontWeight="Bold"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
                             </Border>
 
                             <!-- SKIN MANAGER Card with 3D Head Widget -->
-                            <Border Background="#16161B" BorderBrush="#22222A" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
+                            <Border Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                                 <StackPanel>
                                     <!-- Header -->
                                     <Grid Margin="0,0,0,6">
-                                        <TextBlock Text="SKIN MANAGER" Foreground="#888892" FontSize="10" FontWeight="Bold"/>
-                                        <TextBlock Text="&#x26F6;" HorizontalAlignment="Right" Foreground="#666670" FontSize="11"/>
+                                        <TextBlock Text="SKIN MANAGER" Foreground="#8E92A4" FontSize="10" FontWeight="Bold"/>
+                                        <TextBlock Text="&#x26F6;" HorizontalAlignment="Right" Foreground="#606478" FontSize="11"/>
                                     </Grid>
 
                                     <!-- Skin Name Status -->
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                        <Ellipse Width="6" Height="6" Fill="#4CAF50" Margin="0,0,6,0"/>
-                                        <TextBlock x:Name="SkinNameLabel" Text="Steve (Classic)" Foreground="#4CAF50" FontSize="11" FontWeight="SemiBold"/>
+                                        <Ellipse Width="6" Height="6" Fill="#38A169" Margin="0,0,6,0"/>
+                                        <TextBlock x:Name="SkinNameLabel" Text="Steve (Classic)" Foreground="#38A169" FontSize="11" FontWeight="SemiBold"/>
                                     </StackPanel>
 
                                     <!-- 3D Interactive Head Viewport -->
-                                    <Border Height="120" Background="#0C0C0E" CornerRadius="6" BorderBrush="#1C1C24" BorderThickness="1" Margin="0,0,0,10" ClipToBounds="True">
-                                        <Viewport3D x:Name="HeadViewport">
-                                            <Viewport3D.Camera>
-                                                <PerspectiveCamera Position="0, 0, 2.2" LookDirection="0, 0, -1" UpDirection="0, 1, 0" FieldOfView="45"/>
-                                            </Viewport3D.Camera>
-                                            
-                                            <ModelVisual3D>
-                                                <ModelVisual3D.Content>
-                                                    <Model3DGroup>
-                                                        <AmbientLight Color="#999999"/>
-                                                        <DirectionalLight Color="#FFFFFF" Direction="-1, -1.5, -2"/>
-                                                        
-                                                        <Model3DGroup x:Name="HeadModelGroup">
-                                                            <Model3DGroup.Transform>
-                                                                <Transform3DGroup>
-                                                                    <RotateTransform3D>
-                                                                        <RotateTransform3D.Rotation>
-                                                                            <AxisAngleRotation3D x:Name="SteveHeadRotationYaw" Axis="0,1,0" Angle="0"/>
-                                                                        </RotateTransform3D.Rotation>
-                                                                    </RotateTransform3D>
-                                                                    <RotateTransform3D>
-                                                                        <RotateTransform3D.Rotation>
-                                                                            <AxisAngleRotation3D x:Name="SteveHeadRotationPitch" Axis="1,0,0" Angle="0"/>
-                                                                        </RotateTransform3D.Rotation>
-                                                                    </RotateTransform3D>
-                                                                </Transform3DGroup>
-                                                            </Model3DGroup.Transform>
+                                    <Border Height="120" Background="#0B0C0F" CornerRadius="6" BorderBrush="#1C1D24" BorderThickness="1" Margin="0,0,0,10" ClipToBounds="True">
+                                        <Grid>
+                                            <Viewport3D x:Name="HeadViewport">
+                                                <Viewport3D.Camera>
+                                                    <PerspectiveCamera Position="0, 0, 2.2" LookDirection="0, 0, -1" UpDirection="0, 1, 0" FieldOfView="45"/>
+                                                </Viewport3D.Camera>
+                                                
+                                                <ModelVisual3D>
+                                                    <ModelVisual3D.Content>
+                                                        <Model3DGroup>
+                                                            <AmbientLight Color="#999999"/>
+                                                            <DirectionalLight Color="#FFFFFF" Direction="-1, -1.5, -2"/>
+                                                            
+                                                            <Model3DGroup x:Name="HeadModelGroup">
+                                                                <Model3DGroup.Transform>
+                                                                    <Transform3DGroup>
+                                                                        <RotateTransform3D>
+                                                                            <RotateTransform3D.Rotation>
+                                                                                <AxisAngleRotation3D x:Name="SteveHeadRotationYaw" Axis="0,1,0" Angle="0"/>
+                                                                            </RotateTransform3D.Rotation>
+                                                                        </RotateTransform3D>
+                                                                        <RotateTransform3D>
+                                                                            <RotateTransform3D.Rotation>
+                                                                                <AxisAngleRotation3D x:Name="SteveHeadRotationPitch" Axis="1,0,0" Angle="0"/>
+                                                                            </RotateTransform3D.Rotation>
+                                                                        </RotateTransform3D>
+                                                                    </Transform3DGroup>
+                                                                </Model3DGroup.Transform>
+                                                            </Model3DGroup>
                                                         </Model3DGroup>
-                                                    </Model3DGroup>
-                                                </ModelVisual3D.Content>
-                                            </ModelVisual3D>
-                                        </Viewport3D>
+                                                    </ModelVisual3D.Content>
+                                                </ModelVisual3D>
+                                            </Viewport3D>
+                                            <!-- 3D Tracking Label -->
+                                            <TextBlock Text="3D TRACKING" Foreground="#606478" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,6,4"/>
+                                        </Grid>
                                     </Border>
 
                                     <!-- Preset Selector Pills -->
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
-                                        <Button x:Name="PresetSteveBtn" Click="PresetSteve_Click" Width="26" Height="26" Margin="0,0,8,0" Cursor="Hand" ToolTip="Classic Steve">
+                                        <Button x:Name="PresetSteveBtn" Click="PresetSteve_Click" Width="24" Height="24" Margin="0,0,8,0" Cursor="Hand" ToolTip="Classic Steve">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="Button">
-                                                    <Border CornerRadius="13" BorderBrush="#4CAF50" BorderThickness="2" Background="#1D2E1F">
-                                                        <Ellipse Width="16" Height="16" Fill="#4CAF50"/>
+                                                    <Border CornerRadius="12" BorderBrush="#38A169" BorderThickness="2" Background="#1D2E1F">
+                                                        <Ellipse Width="14" Height="14" Fill="#38A169"/>
                                                     </Border>
                                                 </ControlTemplate>
                                             </Button.Template>
                                         </Button>
-                                        <Button x:Name="PresetGlitchedBtn" Click="PresetGlitched_Click" Width="26" Height="26" Cursor="Hand" ToolTip="BUGrock Glitched">
+                                        <Button x:Name="PresetGlitchedBtn" Click="PresetGlitched_Click" Width="24" Height="24" Cursor="Hand" ToolTip="BUGrock Glitched">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="Button">
-                                                    <Border CornerRadius="13" BorderBrush="#33333C" BorderThickness="1" Background="#26152B">
-                                                        <Ellipse Width="16" Height="16" Fill="#D05CE3"/>
+                                                    <Border CornerRadius="12" BorderBrush="#232530" BorderThickness="1" Background="#26152B">
+                                                        <Ellipse Width="14" Height="14" Fill="#D05CE3"/>
                                                     </Border>
                                                 </ControlTemplate>
                                             </Button.Template>
@@ -519,7 +558,7 @@
                                     <!-- Upload Skin Button -->
                                     <Button Click="UploadSkinButton_Click" Style="{StaticResource DarkButtonStyle}" Padding="10,7" HorizontalAlignment="Stretch" ToolTip="Upload custom 64x64 Minecraft skin (.png)">
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <TextBlock Text="+ " FontWeight="Bold" Foreground="#4CAF50" FontSize="12"/>
+                                            <TextBlock Text="+ " FontWeight="Bold" Foreground="#38A169" FontSize="12"/>
                                             <TextBlock Text="UPLOAD SKIN (.PNG)" FontSize="10" FontWeight="Bold"/>
                                         </StackPanel>
                                     </Button>
@@ -529,11 +568,11 @@
                     </ScrollViewer>
 
                     <!-- Bottom Local Data Directory Link -->
-                    <Border Grid.Row="2" BorderBrush="#1C1C22" BorderThickness="0,1,0,0" Padding="14,10">
+                    <Border Grid.Row="2" BorderBrush="#232530" BorderThickness="0,1,0,0" Padding="14,10">
                         <Button Click="MenuItemOpenDataDirClicked" Style="{StaticResource DarkButtonStyle}" Background="Transparent" BorderThickness="0" Padding="4,4" HorizontalAlignment="Left">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#x1F4C1;" FontSize="14" Margin="0,0,8,0"/>
-                                <TextBlock Text="Local Data Directory" Foreground="#888892" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <TextBlock Text="&#x1F4C1;" FontSize="13" Margin="0,0,8,0"/>
+                                <TextBlock Text="Local Data Directory" Foreground="#8E92A4" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </Border>
@@ -550,38 +589,47 @@
                 </Grid.RowDefinitions>
 
                 <!-- Top Navigation Tabs -->
-                <Border Grid.Row="0" Background="#111114" BorderBrush="#1C1C22" BorderThickness="0,0,0,1" Padding="20,0,20,0">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <RadioButton x:Name="TabNavPlay" Content="Play" IsChecked="True" Checked="TabNav_Checked" GroupName="MainViews" Style="{StaticResource TopNavTabStyle}"/>
-                        <RadioButton x:Name="TabNavInstallations" Content="Installations" Checked="TabNav_Checked" GroupName="MainViews" Style="{StaticResource TopNavTabStyle}"/>
-                        <RadioButton x:Name="TabNavPatchNotes" Content="Patch Notes" Checked="TabNav_Checked" GroupName="MainViews" Style="{StaticResource TopNavTabStyle}"/>
-                    </StackPanel>
+                <Border Grid.Row="0" Background="#13141A" BorderBrush="#232530" BorderThickness="0,0,0,1" Padding="24,0,24,0">
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <RadioButton x:Name="TabNavPlay" Content="Play" IsChecked="True" Checked="TabNav_Checked" GroupName="MainViews" Style="{StaticResource TopNavTabStyle}"/>
+                            <RadioButton x:Name="TabNavInstallations" Content="Installations" Checked="TabNav_Checked" GroupName="MainViews" Style="{StaticResource TopNavTabStyle}"/>
+                            <RadioButton x:Name="TabNavPatchNotes" Content="Patch Notes" Checked="TabNav_Checked" GroupName="MainViews" Style="{StaticResource TopNavTabStyle}"/>
+                        </StackPanel>
+
+                        <!-- Right Architecture Badge -->
+                        <Border HorizontalAlignment="Right" VerticalAlignment="Center" Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="4" Padding="8,3">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Architecture: " Foreground="#606478" FontSize="11"/>
+                                <TextBlock Text="x64 UWP Bridge" Foreground="#8E92A4" FontSize="11" FontWeight="Medium"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
                 </Border>
 
                 <!-- VIEW 1: PLAY VIEW -->
                 <Grid x:Name="PlayViewGrid" Grid.Row="1" Visibility="Visible">
                     <Grid.RowDefinitions>
-                        <!-- Hero Section -->
-                        <RowDefinition Height="340"/>
+                        <!-- Hero Section (330px) -->
+                        <RowDefinition Height="330"/>
                         <!-- News Cards -->
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
                     <!-- Hero Art Landscape -->
                     <Grid Grid.Row="0" Margin="16,14,16,8">
-                        <Border CornerRadius="8" ClipToBounds="True">
+                        <Border CornerRadius="8" ClipToBounds="True" BorderBrush="#232530" BorderThickness="1">
                             <Grid>
-                                <!-- Clean Sunset Minecraft Wallpaper -->
+                                <!-- Clean Sunset Minecraft Voxel Wallpaper -->
                                 <Image Source="Assets/launcher_hero.png" Stretch="UniformToFill" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
 
                                 <!-- Smooth Gradient Shadow Overlay at bottom of hero -->
                                 <Grid>
                                     <Grid.Background>
                                         <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                                            <GradientStop Color="#22000000" Offset="0.0"/>
-                                            <GradientStop Color="#00000000" Offset="0.4"/>
-                                            <GradientStop Color="#B30F0F12" Offset="0.8"/>
-                                            <GradientStop Color="#E60F0F12" Offset="1.0"/>
+                                            <GradientStop Color="#000F1015" Offset="0.3"/>
+                                            <GradientStop Color="#B30F1015" Offset="0.75"/>
+                                            <GradientStop Color="#E60F1015" Offset="1.0"/>
                                         </LinearGradientBrush>
                                     </Grid.Background>
                                 </Grid>
@@ -595,21 +643,21 @@
                                     </Grid.ColumnDefinitions>
 
                                     <!-- Version Selector Box -->
-                                    <Border Grid.Column="0" Background="#E616161B" BorderBrush="#2A2A33" BorderThickness="1" CornerRadius="6" Padding="14,10" MinWidth="180">
+                                    <Border Grid.Column="0" Background="#181921" BorderBrush="#282A36" BorderThickness="1" CornerRadius="6" Padding="14,10" MinWidth="200">
                                         <StackPanel>
-                                            <TextBlock Text="SELECTED VERSION" Foreground="#7E7E88" FontSize="10" FontWeight="Bold" Margin="0,0,0,4"/>
+                                            <TextBlock Text="SELECTED VERSION" Foreground="#8E92A4" FontSize="10" FontWeight="Bold" Margin="0,0,0,4"/>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock x:Name="QuickPlayVersionLabel" Text="1.20.73 Release" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
-                                                <TextBlock Text=" &#x25BE;" Foreground="#888892" FontSize="12" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                                <TextBlock Text=" &#x25BE;" Foreground="#8E92A4" FontSize="12" VerticalAlignment="Center" Margin="4,0,0,0"/>
                                             </StackPanel>
-                                            <TextBlock Text="Stable &#x2022; Windows 10/11" Foreground="#6C6C76" FontSize="11" Margin="0,3,0,0"/>
+                                            <TextBlock Text="Stable &#x2022; Windows 10/11" Foreground="#606478" FontSize="11" Margin="0,3,0,0"/>
                                         </StackPanel>
                                     </Border>
 
                                     <!-- Giant Green Pixel PLAY Button -->
-                                    <Button Grid.Column="2" Click="QuickPlayButton_Click" Style="{StaticResource MinecraftButtonStyle}" Content="PLAY" FontSize="26" FontWeight="Black" Padding="46,12" VerticalAlignment="Center">
+                                    <Button Grid.Column="2" Click="QuickPlayButton_Click" Style="{StaticResource GiantPlayButtonStyle}" Content="PLAY" Width="170" Height="54" VerticalAlignment="Center">
                                         <Button.Effect>
-                                            <DropShadowEffect Color="#000000" BlurRadius="12" ShadowDepth="4" Opacity="0.6"/>
+                                            <DropShadowEffect Color="#000000" BlurRadius="14" ShadowDepth="4" Opacity="0.4"/>
                                         </Button.Effect>
                                     </Button>
                                 </Grid>
@@ -617,7 +665,7 @@
                         </Border>
                     </Grid>
 
-                    <!-- News & Community Highlights (3 Cards matching the exact mockup) -->
+                    <!-- News & Community Highlights (3 Cards matching the exact HTML) -->
                     <Grid Grid.Row="1" Margin="16,8,16,14">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -628,45 +676,60 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Card 1: What's new in 1.21? -->
-                        <Border Grid.Column="0" Background="#16161B" BorderBrush="#22222A" BorderThickness="1" CornerRadius="8" Padding="12">
+                        <Border Grid.Column="0" Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="8" Padding="12">
                             <StackPanel>
-                                <Border Height="100" CornerRadius="6" Margin="0,0,0,10" ClipToBounds="True">
+                                <Border Height="110" CornerRadius="6" Margin="0,0,0,10" ClipToBounds="True">
                                     <Image Source="Assets/news_update.png" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Border>
-                                <TextBlock Text="NEWS" Foreground="#4CAF50" FontWeight="Bold" FontSize="10" Margin="0,0,0,4"/>
-                                <TextBlock Text="What's new in 1.21?" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" Margin="0,0,0,4"/>
-                                <TextBlock Text="Discover the latest mobs, blocks, and technical changes in the Bedrock ecosystem." Foreground="#888892" FontSize="11" TextWrapping="Wrap" LineHeight="16"/>
+                                <Grid Margin="0,0,0,4">
+                                    <Border HorizontalAlignment="Left" Background="#1C2E22" BorderBrush="#38A169" BorderThickness="1" CornerRadius="4" Padding="6,2">
+                                        <TextBlock Text="NEWS" Foreground="#38A169" FontWeight="Bold" FontSize="10"/>
+                                    </Border>
+                                    <TextBlock Text="1.21 Tricky Trials" HorizontalAlignment="Right" Foreground="#606478" FontSize="10" VerticalAlignment="Center"/>
+                                </Grid>
+                                <TextBlock Text="What's new in 1.21?" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" Margin="0,2,0,4"/>
+                                <TextBlock Text="Discover the latest mobs, blocks, and technical changes in the Bedrock ecosystem." Foreground="#8E92A4" FontSize="11" TextWrapping="Wrap" LineHeight="16"/>
                             </StackPanel>
                         </Border>
 
                         <!-- Card 2: Manage Your Realm -->
-                        <Border Grid.Column="2" Background="#16161B" BorderBrush="#22222A" BorderThickness="1" CornerRadius="8" Padding="12">
+                        <Border Grid.Column="2" Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="8" Padding="12">
                             <StackPanel>
-                                <Border Height="100" CornerRadius="6" Margin="0,0,0,10" ClipToBounds="True">
+                                <Border Height="110" CornerRadius="6" Margin="0,0,0,10" ClipToBounds="True">
                                     <Image Source="Assets/news_realms.png" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Border>
-                                <TextBlock Text="REALMS" Foreground="#D05CE3" FontWeight="Bold" FontSize="10" Margin="0,0,0,4"/>
-                                <TextBlock Text="Manage Your Realm" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" Margin="0,0,0,4"/>
-                                <TextBlock Text="Connect with friends on a dedicated server. Always online, always available." Foreground="#888892" FontSize="11" TextWrapping="Wrap" LineHeight="16"/>
+                                <Grid Margin="0,0,0,4">
+                                    <Border HorizontalAlignment="Left" Background="#2B1530" BorderBrush="#D05CE3" BorderThickness="1" CornerRadius="4" Padding="6,2">
+                                        <TextBlock Text="REALMS" Foreground="#D05CE3" FontWeight="Bold" FontSize="10"/>
+                                    </Border>
+                                    <TextBlock Text="Cloud Servers" HorizontalAlignment="Right" Foreground="#606478" FontSize="10" VerticalAlignment="Center"/>
+                                </Grid>
+                                <TextBlock Text="Manage Your Realm" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" Margin="0,2,0,4"/>
+                                <TextBlock Text="Connect with friends on a dedicated server. Always online, always available." Foreground="#8E92A4" FontSize="11" TextWrapping="Wrap" LineHeight="16"/>
                             </StackPanel>
                         </Border>
 
                         <!-- Card 3: Explore Marketplace -->
-                        <Border Grid.Column="4" Background="#16161B" BorderBrush="#22222A" BorderThickness="1" CornerRadius="8" Padding="12">
+                        <Border Grid.Column="4" Background="#181921" BorderBrush="#232530" BorderThickness="1" CornerRadius="8" Padding="12">
                             <StackPanel>
-                                <Border Height="100" CornerRadius="6" Margin="0,0,0,10" ClipToBounds="True">
+                                <Border Height="110" CornerRadius="6" Margin="0,0,0,10" ClipToBounds="True">
                                     <Image Source="Assets/news_addons.png" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
                                 </Border>
-                                <TextBlock Text="ADD-ONS" Foreground="#4CAF50" FontWeight="Bold" FontSize="10" Margin="0,0,0,4"/>
-                                <TextBlock Text="Explore Marketplace" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" Margin="0,0,0,4"/>
-                                <TextBlock Text="Find thousands of skins, worlds, and textures created by the community." Foreground="#888892" FontSize="11" TextWrapping="Wrap" LineHeight="16"/>
+                                <Grid Margin="0,0,0,4">
+                                    <Border HorizontalAlignment="Left" Background="#1C2E22" BorderBrush="#38A169" BorderThickness="1" CornerRadius="4" Padding="6,2">
+                                        <TextBlock Text="ADD-ONS" Foreground="#38A169" FontWeight="Bold" FontSize="10"/>
+                                    </Border>
+                                    <TextBlock Text="Community Packs" HorizontalAlignment="Right" Foreground="#606478" FontSize="10" VerticalAlignment="Center"/>
+                                </Grid>
+                                <TextBlock Text="Explore Marketplace" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" Margin="0,2,0,4"/>
+                                <TextBlock Text="Find thousands of skins, worlds, and textures created by the community." Foreground="#8E92A4" FontSize="11" TextWrapping="Wrap" LineHeight="16"/>
                             </StackPanel>
                         </Border>
                     </Grid>
                 </Grid>
 
                 <!-- VIEW 2: INSTALLATIONS VIEW -->
-                <Grid x:Name="InstallationsViewGrid" Grid.Row="1" Visibility="Collapsed" Margin="20,14,20,10">
+                <Grid x:Name="InstallationsViewGrid" Grid.Row="1" Visibility="Collapsed" Margin="24,16,24,10">
                     <Grid.RowDefinitions>
                         <!-- Filter Sub-nav Row -->
                         <RowDefinition Height="Auto"/>
@@ -675,7 +738,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- Filter Sub-nav Row: All | Release | Preview | Beta | Imported + Installed only + Import button -->
-                    <Grid Grid.Row="0" Margin="0,0,0,14">
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
@@ -693,7 +756,7 @@
 
                         <!-- Right Actions -->
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <CheckBox Name="ShowInstalledVersionsOnlyCheckbox" Content="Installed only" Checked="ShowInstalledVersionsOnlyCheckbox_Changed" Unchecked="ShowInstalledVersionsOnlyCheckbox_Changed" IsChecked="{Binding UserPrefs.ShowInstalledOnly}" Foreground="#CCCCCC" FontWeight="SemiBold" FontSize="12" Margin="0,0,14,0" VerticalAlignment="Center"/>
+                            <CheckBox Name="ShowInstalledVersionsOnlyCheckbox" Content="Installed only" Checked="ShowInstalledVersionsOnlyCheckbox_Changed" Unchecked="ShowInstalledVersionsOnlyCheckbox_Changed" IsChecked="{Binding UserPrefs.ShowInstalledOnly}" Foreground="#8E92A4" FontWeight="SemiBold" FontSize="12" Margin="0,0,16,0" VerticalAlignment="Center"/>
                             <Button Content="+ Import .appx" Click="ImportButtonClicked" Style="{StaticResource DarkButtonStyle}" Padding="12,6" FontSize="12" FontWeight="Bold"/>
                         </StackPanel>
                     </Grid>
@@ -721,46 +784,61 @@
                     </TabControl>
                 </Grid>
 
-                <!-- VIEW 3: PATCH NOTES VIEW (Matching mockup with vertical green line) -->
+                <!-- VIEW 3: PATCH NOTES VIEW -->
                 <Grid x:Name="PatchNotesViewGrid" Grid.Row="1" Visibility="Collapsed" Margin="28,20,28,16">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel>
-                            <!-- Note 1: Exact mockup note -->
-                            <Border BorderBrush="#4CAF50" BorderThickness="3,0,0,0" Padding="18,0,0,0" Margin="0,0,0,30">
+                            <!-- Note 1: Exact spec note -->
+                            <Border BorderBrush="#38A169" BorderThickness="3,0,0,0" Padding="18,0,0,0" Margin="0,0,0,26">
                                 <StackPanel>
-                                    <TextBlock Text="MAY 15, 2024" Foreground="#4CAF50" FontSize="12" FontWeight="Bold" Margin="0,0,0,6"/>
-                                    <TextBlock Text="Minecraft Bedrock 1.20.81 Hotfix" Foreground="#FFFFFF" FontSize="20" FontWeight="Bold" Margin="0,0,0,10"/>
-                                    <TextBlock Text="A new update for Minecraft is available, fixing some crashes and bugs that occurred since the release of 1.20.80." Foreground="#888892" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,16"/>
+                                    <TextBlock Text="MAY 15, 2024" Foreground="#38A169" FontSize="11" FontWeight="Bold" Margin="0,0,0,6"/>
+                                    <TextBlock Text="Minecraft Bedrock 1.20.81 Hotfix" Foreground="#FFFFFF" FontSize="18" FontWeight="Bold" Margin="0,0,0,8"/>
+                                    <TextBlock Text="A new update for Minecraft is available, fixing some crashes and bugs that occurred since the release of 1.20.80." Foreground="#8E92A4" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,12"/>
 
                                     <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
-                                        <TextBlock Text="&#x2714;" Foreground="#4CAF50" FontWeight="Bold" Margin="0,0,10,0"/>
-                                        <TextBlock Text="Fixed several crashes that could occur during gameplay." Foreground="#CCCCCC" FontSize="13"/>
+                                        <TextBlock Text="&#x2714;" Foreground="#38A169" FontWeight="Bold" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Fixed several crashes that could occur during gameplay." Foreground="#FFFFFF" FontSize="13"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#x2714;" Foreground="#4CAF50" FontWeight="Bold" Margin="0,0,10,0"/>
-                                        <TextBlock Text="Fixed a bug where the game could freeze when using certain resource packs." Foreground="#CCCCCC" FontSize="13"/>
+                                        <TextBlock Text="&#x2714;" Foreground="#38A169" FontWeight="Bold" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Fixed a bug where the game could freeze when using certain resource packs." Foreground="#FFFFFF" FontSize="13"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
 
-                            <!-- Note 2: BUGrock Launcher Features -->
-                            <Border BorderBrush="#D05CE3" BorderThickness="3,0,0,0" Padding="18,0,0,0" Margin="0,0,0,20">
+                            <!-- Note 2: 1.21 Preview -->
+                            <Border BorderBrush="#232530" BorderThickness="3,0,0,0" Padding="18,0,0,0" Margin="0,0,0,24">
                                 <StackPanel>
-                                    <TextBlock Text="LATEST LAUNCHER UPDATE" Foreground="#D05CE3" FontSize="12" FontWeight="Bold" Margin="0,0,0,6"/>
-                                    <TextBlock Text="BUGrock Multi-Version Launcher v2.4.12" Foreground="#FFFFFF" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
-                                    <TextBlock Text="Modern Minecraft Bedrock manager with full multi-version support and custom skin preview." Foreground="#888892" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,14"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                        <TextBlock Text="MAY 08, 2024" Foreground="#D05CE3" FontSize="11" FontWeight="Bold" Margin="0,0,10,0"/>
+                                        <Border Background="#2B1530" BorderBrush="#D05CE3" BorderThickness="1" CornerRadius="4" Padding="4,1">
+                                            <TextBlock Text="PREVIEW" Foreground="#D05CE3" FontSize="9" FontWeight="Bold"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="Minecraft Bedrock 1.21.0.24 Preview" Foreground="#FFFFFF" FontSize="16" FontWeight="Bold" Margin="0,0,0,8"/>
+                                    <TextBlock Text="Testing new Trial Chambers adjustments, Mace weapon balancing, and improved multi-version isolation in BUGrock Launcher." Foreground="#8E92A4" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,12"/>
 
                                     <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
-                                        <TextBlock Text="&#x2714;" Foreground="#4CAF50" FontWeight="Bold" Margin="0,0,10,0"/>
-                                        <TextBlock Text="Interactive 3D Minecraft Steve Head widget tracking mouse cursor across the window." Foreground="#CCCCCC" FontSize="13"/>
-                                    </StackPanel>
-                                    <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
-                                        <TextBlock Text="&#x2714;" Foreground="#4CAF50" FontWeight="Bold" Margin="0,0,10,0"/>
-                                        <TextBlock Text="Direct .appx and .msixvc package installation without store restrictions." Foreground="#CCCCCC" FontSize="13"/>
+                                        <TextBlock Text="&#x2714;" Foreground="#38A169" FontWeight="Bold" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Adjusted Breeze wind charge knockback radius in Trial Chambers." Foreground="#8E92A4" FontSize="13"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#x2714;" Foreground="#4CAF50" FontWeight="Bold" Margin="0,0,10,0"/>
-                                        <TextBlock Text="Side-by-side versions support for Release, Preview, and Beta." Foreground="#CCCCCC" FontSize="13"/>
+                                        <TextBlock Text="&#x2714;" Foreground="#38A169" FontWeight="Bold" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Resolved texture streaming delay when switching between 1.20 and 1.21 profiles." Foreground="#8E92A4" FontSize="13"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Note 3: 1.20.73 Release -->
+                            <Border BorderBrush="#232530" BorderThickness="3,0,0,0" Padding="18,0,0,0" Margin="0,0,0,20">
+                                <StackPanel>
+                                    <TextBlock Text="APRIL 02, 2024" Foreground="#8E92A4" FontSize="11" FontWeight="Bold" Margin="0,0,0,6"/>
+                                    <TextBlock Text="Minecraft Bedrock 1.20.73 Release" Foreground="#FFFFFF" FontSize="16" FontWeight="Bold" Margin="0,0,0,8"/>
+                                    <TextBlock Text="Stability and realms connectivity maintenance patch recommended for all standard Windows 10/11 Bedrock servers." Foreground="#8E92A4" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#x2714;" Foreground="#38A169" FontWeight="Bold" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Fixed an issue preventing players from joining Realms after package switching." Foreground="#8E92A4" FontSize="13"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -770,38 +848,43 @@
             </Grid>
         </Grid>
 
-        <!-- BOTTOM STATUS BAR (Footer) -->
-        <Border Grid.Row="2" Background="#0C0C0E" BorderBrush="#1C1C22" BorderThickness="0,1,0,0" Padding="16,0">
+        <!-- ============================================================== -->
+        <!-- 3. BOTTOM STATUS BAR (30px)                                    -->
+        <!-- ============================================================== -->
+        <Border Grid.Row="2" Background="#0B0C0F" BorderBrush="#1C1D24" BorderThickness="0,1,0,0" Padding="16,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Left: Services Status & Client Version -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Ellipse Width="6" Height="6" Fill="#4CAF50" Margin="0,0,6,0"/>
-                    <TextBlock Text="Minecraft Services: Online" Foreground="#888892" FontSize="11" Margin="0,0,16,0"/>
-                    <TextBlock Text="&#x1F4F6;" FontSize="11" Foreground="#666670" Margin="0,0,6,0"/>
-                    <TextBlock Text="Client Version: 2.4.12-stable" Foreground="#888892" FontSize="11"/>
+                    <Ellipse Width="6" Height="6" Fill="#38A169" Margin="0,0,6,0"/>
+                    <TextBlock Text="Minecraft Services: " Foreground="#8E92A4" FontSize="11"/>
+                    <TextBlock Text="Online" Foreground="#FFFFFF" FontWeight="Medium" FontSize="11" Margin="0,0,14,0"/>
+                    <TextBlock Text="|" Foreground="#232530" Margin="0,0,14,0"/>
+                    <TextBlock Text="&#x1F4F6;" FontSize="11" Foreground="#38A169" Margin="0,0,6,0"/>
+                    <TextBlock Text="Client Version: " Foreground="#8E92A4" FontSize="11"/>
+                    <TextBlock Text="2.4.12-stable" Foreground="#FFFFFF" FontSize="11"/>
                 </StackPanel>
 
-                <!-- Original Loading Progress Grid (Preserved for core launcher operations) -->
+                <!-- Original Loading Progress Grid (Preserved for background tasks) -->
                 <Grid Name="LoadingProgressGrid" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,20,0" VerticalAlignment="Center">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <Label Grid.Row="0" Grid.Column="0" Name="LoadingProgressLabel" Content="" Foreground="#AAAAAA" FontSize="11" Padding="0,0,0,0" VerticalAlignment="Center"/>
-                    <ProgressBar Grid.Row="0" Grid.Column="1" Name="LoadingProgressBar" Width="100" Height="5" Margin="8,0,0,0" Maximum="5" Value="0" Background="#1C1C22" Foreground="#3C8527" BorderThickness="0" VerticalAlignment="Center"/>
+                    <ProgressBar Grid.Row="0" Grid.Column="1" Name="LoadingProgressBar" Width="100" Height="4" Margin="8,0,0,0" Maximum="5" Value="0" Background="#181921" Foreground="#38A169" BorderThickness="0" VerticalAlignment="Center"/>
                 </Grid>
 
                 <!-- Right: Privacy Policy & Terms of Use Links -->
-                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Privacy Policy" Foreground="#666670" FontSize="11" Margin="0,0,14,0" Cursor="Hand"/>
-                    <TextBlock Text="Terms of Use" Foreground="#666670" FontSize="11" Cursor="Hand"/>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Privacy Policy" Foreground="#606478" FontSize="11" Margin="0,0,10,0" Cursor="Hand"/>
+                    <TextBlock Text="|" Foreground="#232530" Margin="0,0,10,0"/>
+                    <TextBlock Text="Terms of Use" Foreground="#606478" FontSize="11" Cursor="Hand"/>
                 </StackPanel>
             </Grid>
         </Border>
