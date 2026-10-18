@@ -166,6 +166,10 @@ namespace MCLauncher {
         }
 
         private void VersionEntryPropertyChanged(object? sender, PropertyChangedEventArgs e) {
+            if (!Dispatcher.CheckAccess()) {
+                Dispatcher.InvokeAsync(() => VersionEntryPropertyChanged(sender, e));
+                return;
+            }
             RefreshLists();
             UpdateQuickPlayStatus();
         }
@@ -1168,11 +1172,13 @@ namespace MCLauncher {
         }
 
         private void RefreshLists() {
-            Dispatcher.Invoke(() => {
-                foreach (var list in _versionListViews) {
-                    list.View.Refresh();
-                }
-            });
+            if (!Dispatcher.CheckAccess()) {
+                Dispatcher.InvokeAsync(RefreshLists);
+                return;
+            }
+            foreach (var list in _versionListViews) {
+                list.View.Refresh();
+            }
         }
 
         private void DeleteAppxAfterDownloadCheck_Changed(object sender, RoutedEventArgs e) {
@@ -1331,6 +1337,10 @@ namespace MCLauncher {
         }
 
         private void UpdateQuickPlayStatus() {
+            if (!Dispatcher.CheckAccess()) {
+                Dispatcher.InvokeAsync(UpdateQuickPlayStatus);
+                return;
+            }
             if (QuickPlayVersionLabel == null) return;
             var installed = _versions.FirstOrDefault(v => v.IsInstalled);
             if (installed != null) {
