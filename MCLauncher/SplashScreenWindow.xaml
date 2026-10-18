@@ -12,12 +12,9 @@
     <Window.Resources>
         <!-- Fade in animation -->
         <Storyboard x:Key="PulseStoryBoard" RepeatBehavior="Forever" AutoReverse="True">
-            <DoubleAnimation Storyboard.TargetName="BlockImage" 
+            <DoubleAnimation Storyboard.TargetName="EmblemImage" 
                              Storyboard.TargetProperty="Opacity" 
-                             From="0.8" To="1.0" Duration="0:0:1.5" />
-            <DoubleAnimation Storyboard.TargetName="GlowEllipse" 
-                             Storyboard.TargetProperty="Opacity" 
-                             From="0.2" To="0.5" Duration="0:0:1.5" />
+                             From="0.88" To="1.0" Duration="0:0:1.5" />
         </Storyboard>
     </Window.Resources>
 
@@ -26,7 +23,7 @@
             <!-- Top custom title bar -->
             <Grid VerticalAlignment="Top" Height="36" Margin="12,4,12,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Image Source="Assets/bugrock_block.png" Width="18" Height="18" Margin="0,0,8,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <Image Source="Assets/bugrock_splash_emblem.png" Width="20" Height="20" Margin="0,0,8,0" RenderOptions.BitmapScalingMode="HighQuality"/>
                     <TextBlock Text="BUGrock Launcher" Foreground="#CCCCCC" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" FontFamily="Segoe UI"/>
                 </StackPanel>
                 
@@ -76,48 +73,19 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Center Content -->
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <!-- Launcher Title -->
-                <TextBlock Text="BUGrock Launcher" 
-                           Foreground="#FFFFFF" 
-                           FontSize="34" 
-                           FontWeight="Black" 
-                           FontFamily="Segoe UI Black, Impact, Arial Black" 
-                           HorizontalAlignment="Center" 
-                           Margin="0,0,0,24">
-                    <TextBlock.Effect>
-                        <DropShadowEffect Color="#FF00FF" BlurRadius="18" ShadowDepth="0" Opacity="0.4"/>
-                    </TextBlock.Effect>
-                </TextBlock>
-
-                <!-- Centered Block with Glow -->
-                <Grid Width="220" Height="220" HorizontalAlignment="Center">
-                    <Ellipse x:Name="GlowEllipse" Fill="#D100D1" Opacity="0.3" Width="200" Height="200">
-                        <Ellipse.Effect>
-                            <BlurEffect Radius="60"/>
-                        </Ellipse.Effect>
-                    </Ellipse>
-                    
-                    <Image x:Name="BlockImage" 
-                           Source="Assets/bugrock_block.png" 
-                           Width="180" Height="180" 
-                           RenderOptions.BitmapScalingMode="HighQuality"
-                           HorizontalAlignment="Center" 
-                           VerticalAlignment="Center">
-                        <Image.Effect>
-                            <DropShadowEffect Color="#000000" BlurRadius="25" ShadowDepth="8" Opacity="0.6"/>
-                        </Image.Effect>
-                    </Image>
-                </Grid>
-                
-                <TextBlock Text="Windows 10/11 Edition Multi-Version Manager" 
-                           Foreground="#8E8E93" 
-                           FontSize="13" 
-                           FontWeight="Medium" 
-                           HorizontalAlignment="Center" 
-                           Margin="0,18,0,0"/>
-            </StackPanel>
+            <!-- Center Content: High-Res 3D Emblem with Glowing Outline -->
+            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Image x:Name="EmblemImage" 
+                       Source="Assets/bugrock_splash_emblem.png" 
+                       Width="330" Height="330" 
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       HorizontalAlignment="Center" 
+                       VerticalAlignment="Center">
+                    <Image.Effect>
+                        <DropShadowEffect Color="#C026D3" BlurRadius="40" ShadowDepth="0" Opacity="0.45"/>
+                    </Image.Effect>
+                </Image>
+            </Grid>
 
             <!-- Bottom Status (Loading / Signing in...) -->
             <Grid VerticalAlignment="Bottom" Margin="24,0,24,20">
