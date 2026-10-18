@@ -1400,34 +1400,44 @@ namespace MCLauncher {
         }
 
         private void ApplySkin(BitmapSource skinImage, string displayName, bool isBlock = false, bool isBugrock = false) {
-            if (HeadModelGroup == null) return;
-            HeadModelGroup.Children.Clear();
-            var headModel = SteveHeadHelper.CreateHeadModel(skinImage, isBlock);
-            HeadModelGroup.Children.Add(headModel);
-            if (SkinNameLabel != null) {
-                SkinNameLabel.Text = displayName;
-                SkinNameLabel.Foreground = (isBlock || isBugrock) ? (SolidColorBrush)FindResource("AccentMagenta") : (SolidColorBrush)FindResource("AccentGreen");
-            }
+            try {
+                if (HeadModelGroup == null || skinImage == null) return;
+                HeadModelGroup.Children.Clear();
+                var headModel = SteveHeadHelper.CreateHeadModel(skinImage, isBlock);
+                HeadModelGroup.Children.Add(headModel);
+                if (SkinNameLabel != null) {
+                    SkinNameLabel.Text = displayName;
+                    var magenta = TryFindResource("AccentMagenta") as SolidColorBrush ?? new SolidColorBrush(Color.FromRgb(0xD0, 0x5C, 0xE3));
+                    var green = TryFindResource("AccentGreen") as SolidColorBrush ?? new SolidColorBrush(Color.FromRgb(0x38, 0xA1, 0x69));
+                    SkinNameLabel.Foreground = (isBlock || isBugrock) ? magenta : green;
+                }
+            } catch { }
         }
 
         private void PresetCustom_Click(object sender, RoutedEventArgs e) {
-            if (!string.IsNullOrEmpty(UserPrefs?.CustomSkinPath) && File.Exists(UserPrefs.CustomSkinPath)) {
-                UserPrefs.ActiveSkinType = "Custom";
-                RewritePrefs();
-                var bmp = SteveHeadHelper.LoadSkinFromFile(UserPrefs.CustomSkinPath);
-                string name = string.IsNullOrEmpty(UserPrefs.CustomSkinName) ? "Custom Skin" : UserPrefs.CustomSkinName;
-                ApplySkin(bmp, name, isBlock: false, isBugrock: false);
-                UpdateSkinSelectionUI(isCustom: true);
-            } else {
-                UploadSkinButton_Click(sender, e);
+            try {
+                if (!string.IsNullOrEmpty(UserPrefs?.CustomSkinPath) && File.Exists(UserPrefs.CustomSkinPath)) {
+                    UserPrefs.ActiveSkinType = "Custom";
+                    RewritePrefs();
+                    var bmp = SteveHeadHelper.LoadSkinFromFile(UserPrefs.CustomSkinPath);
+                    string name = string.IsNullOrEmpty(UserPrefs.CustomSkinName) ? "Custom Skin" : UserPrefs.CustomSkinName;
+                    ApplySkin(bmp, name, isBlock: false, isBugrock: false);
+                    UpdateSkinSelectionUI(isCustom: true);
+                } else {
+                    UploadSkinButton_Click(sender, e);
+                }
+            } catch (Exception ex) {
+                ThemedMessageBox.Show("Failed to switch skin: " + ex.Message, "Skin Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
         private void PresetGlitched_Click(object sender, RoutedEventArgs e) {
-            UserPrefs.ActiveSkinType = "BUGrock";
-            RewritePrefs();
-            LoadDefaultBugrockSkin();
-            UpdateSkinSelectionUI(isCustom: false);
+            try {
+                UserPrefs.ActiveSkinType = "BUGrock";
+                RewritePrefs();
+                LoadDefaultBugrockSkin();
+                UpdateSkinSelectionUI(isCustom: false);
+            } catch { }
         }
 
         private void UploadSkinButton_Click(object sender, RoutedEventArgs e) {

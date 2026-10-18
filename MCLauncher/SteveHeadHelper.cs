@@ -255,14 +255,10 @@ namespace MCLauncher
             byte[] bytes = File.ReadAllBytes(filePath);
             using (var ms = new MemoryStream(bytes))
             {
-                var bmp = new BitmapImage();
-                bmp.BeginInit();
-                bmp.CacheOption = BitmapCacheOption.OnLoad;
-                bmp.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-                bmp.StreamSource = ms;
-                bmp.EndInit();
-                bmp.Freeze();
-                return bmp;
+                var decoder = BitmapDecoder.Create(ms, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                var frame = decoder.Frames[0];
+                frame.Freeze();
+                return frame;
             }
         }
     }
