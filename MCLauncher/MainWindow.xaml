@@ -250,7 +250,7 @@
             </Border>
         </DataTemplate>
 
-        <!-- Template for Version Downloading (Mockup Style: Magenta border, progress bar, cancel button) -->
+        <!-- Template for Version Downloading (Mockup Style: Magenta border, progress bar, cancel button, download speed indicator) -->
         <DataTemplate x:Key="templateVersionDownloading" DataType="{x:Type local:Version}">
             <Border Background="#181921" BorderBrush="#D05CE3" BorderThickness="1.5" CornerRadius="8" Margin="0,0,0,10" Padding="16,14">
                 <Grid>
@@ -262,27 +262,39 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     
                     <!-- Magenta Flask Icon -->
-                    <Border Grid.Row="0" Grid.Column="0" Width="38" Height="38" Background="#0B0C0F" BorderBrush="#D05CE3" BorderThickness="1" CornerRadius="6" Margin="0,0,14,0" VerticalAlignment="Center">
+                    <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Width="38" Height="38" Background="#0B0C0F" BorderBrush="#D05CE3" BorderThickness="1" CornerRadius="6" Margin="0,0,14,0" VerticalAlignment="Top">
                         <TextBlock Text="&#x2697;" FontSize="18" Foreground="#D05CE3" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     
-                    <StackPanel Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding DisplayName}" FontWeight="Bold" FontSize="14" Foreground="#FFFFFF" VerticalAlignment="Center"/>
-                            <Border Background="#2B1530" BorderBrush="#D05CE3" BorderThickness="1" CornerRadius="4" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
-                                <TextBlock Text="PREVIEW" Foreground="#D05CE3" FontSize="10" FontWeight="Bold"/>
-                            </Border>
-                        </StackPanel>
-                        <TextBlock Text="{Binding StateChangeInfo.DisplayStatus}" Foreground="#D05CE3" FontSize="11" Margin="0,4,0,4"/>
+                    <!-- Row 0: Version Title & Type Badge -->
+                    <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding DisplayName}" FontWeight="Bold" FontSize="14" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                        <Border Background="#2B1530" BorderBrush="#D05CE3" BorderThickness="1" CornerRadius="4" Margin="10,0,0,0" Padding="6,2" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding DisplayVersionType}" Foreground="#D05CE3" FontSize="10" FontWeight="Bold"/>
+                        </Border>
                     </StackPanel>
 
                     <Button Grid.Row="0" Grid.Column="2" Content="&#x2715;" Width="28" Height="28" Style="{StaticResource DangerButtonStyle}" Padding="0" VerticalAlignment="Center" Command="{Binding StateChangeInfo.CancelCommand}" IsEnabled="{Binding StateChangeInfo.HasCancelCommand}" ToolTip="Cancel download"/>
 
-                    <!-- Thin Magenta Progress Bar (4px) -->
-                    <Canvas Name="progressSizeHack" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Height="4" Margin="0,8,0,0">
+                    <!-- Row 1: Status on Left, Download Speed on Right (Directly Above Progress Bar) -->
+                    <Grid Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,6,0,4">
+                        <TextBlock Text="{Binding StateChangeInfo.DisplayStatus}" Foreground="#D05CE3" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+
+                        <!-- Speed Badge (e.g. ⚡ 14.8 MB/s) -->
+                        <Border Visibility="{Binding StateChangeInfo.SpeedVisibility}" Background="#2B1530" BorderBrush="#D05CE3" BorderThickness="1" CornerRadius="4" Padding="6,2" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⚡ " Foreground="#D05CE3" FontSize="10" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding StateChangeInfo.DownloadSpeedText}" Foreground="#FFFFFF" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Row 2: Thin Magenta Progress Bar (4px) -->
+                    <Canvas Name="progressSizeHack" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Height="4" Margin="0,4,0,0">
                         <ProgressBar Width="{Binding Path=ActualWidth, ElementName=progressSizeHack, Mode=OneWay}" Height="{Binding Path=ActualHeight, ElementName=progressSizeHack, Mode=OneWay}" Minimum="0" Maximum="{Binding StateChangeInfo.MaxProgress}" Value="{Binding StateChangeInfo.Progress}" IsIndeterminate="{Binding StateChangeInfo.IsProgressIndeterminate}" Foreground="#D05CE3" Background="#13141A" BorderThickness="0"/>
                     </Canvas>
                 </Grid>

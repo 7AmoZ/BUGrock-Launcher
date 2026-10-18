@@ -1039,13 +1039,18 @@ namespace MCLauncher {
                 VersionDownloader downloader = _anonVersionDownloader;
 
                 VersionDownloader.DownloadProgress dlProgressHandler = (current, total) => {
-                    if (v.StateChangeInfo.VersionState != VersionState.Downloading) {
+                    var info = v.StateChangeInfo;
+                    if (info == null) return;
+                    if (info.VersionState != VersionState.Downloading) {
                         Trace.WriteLine("Actual download started");
-                        v.StateChangeInfo.VersionState = VersionState.Downloading;
-                        if (total.HasValue)
-                            v.StateChangeInfo.MaxProgress = total.Value;
+                        info.VersionState = VersionState.Downloading;
+                        if (total.HasValue && total.Value > 0)
+                            info.MaxProgress = total.Value;
                     }
-                    v.StateChangeInfo.Progress = current;
+                    if (info.MaxProgress == 0 && total.HasValue && total.Value > 0) {
+                        info.MaxProgress = total.Value;
+                    }
+                    info.Progress = current;
                 };
 
                 try {
@@ -1520,6 +1525,13 @@ namespace MCLauncher {
                 get => VersionType == VersionType.Imported;
             }
 
+            public string DisplayVersionType => VersionType switch {
+                VersionType.Preview => "PREVIEW",
+                VersionType.Beta => "BETA",
+                VersionType.Imported => "IMPORTED",
+                _ => "RELEASE"
+            };
+
             public string GameDirectory { get; set; }
 
             public PackageType PackageType { get; set; }
@@ -1595,17 +1607,31 @@ namespace MCLauncher {
 
             private long _progress = 0;
             private long _maxProgress = 0;
+            private readonly Stopwatch _speedTimer = Stopwatch.StartNew();
+            private long _lastBytes = 0;
+            private long _lastSpeedTick = 0;
+            private double _smoothedSpeedBytes = 0;
+            private string _downloadSpeedText = "";
 
             public VersionStateChangeInfo(VersionState versionState) {
                 _versionState = versionState;
+                _lastSpeedTick = _speedTimer.ElapsedMilliseconds;
             }
 
             public VersionState VersionState {
                 get { return _versionState; }
                 set {
                     _versionState = value;
-                    Progress = 0;
-                    MaxProgress = 0;
+                    _progress = 0;
+                    _maxProgress = 0;
+                    _lastBytes = 0;
+                    _lastSpeedTick = _speedTimer.ElapsedMilliseconds;
+                    _smoothedSpeedBytes = 0;
+                    _downloadSpeedText = "";
+                    OnPropertyChanged("Progress");
+                    OnPropertyChanged("MaxProgress");
+                    OnPropertyChanged("DownloadSpeedText");
+                    OnPropertyChanged("SpeedVisibility");
                     OnPropertyChanged("IsProgressIndeterminate");
                     OnPropertyChanged("DisplayStatus");
                 }
@@ -1617,14 +1643,84 @@ namespace MCLauncher {
                 }
             }
 
+            public string DownloadSpeedText {
+                get => _downloadSpeedText;
+                private set {
+                    if (_downloadSpeedText != value) {
+                        _downloadSpeedText = value;
+                        OnPropertyChanged("DownloadSpeedText");
+                        OnPropertyChanged("SpeedVisibility");
+                    }
+                }
+            }
+
+            public Visibility SpeedVisibility =>
+                (_versionState == VersionState.Downloading && !string.IsNullOrEmpty(_downloadSpeedText))
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+
             public long Progress {
                 get { return _progress; }
-                set { _progress = value; OnPropertyChanged("Progress"); OnPropertyChanged("DisplayStatus"); }
+                set {
+                    _progress = value;
+                    CalculateSpeed(value);
+                    OnPropertyChanged("Progress");
+                    OnPropertyChanged("DisplayStatus");
+                }
             }
 
             public long MaxProgress {
                 get { return _maxProgress; }
-                set { _maxProgress = value; OnPropertyChanged("MaxProgress"); OnPropertyChanged("DisplayStatus"); OnPropertyChanged("IsProgressIndeterminate"); }
+                set {
+                    _maxProgress = value;
+                    OnPropertyChanged("MaxProgress");
+                    OnPropertyChanged("DisplayStatus");
+                    OnPropertyChanged("IsProgressIndeterminate");
+                }
+            }
+
+            private void CalculateSpeed(long current) {
+                if (_versionState != VersionState.Downloading) {
+                    DownloadSpeedText = "";
+                    return;
+                }
+
+                if (_lastSpeedTick == 0) {
+                    _lastSpeedTick = _speedTimer.ElapsedMilliseconds;
+                    _lastBytes = current;
+                    return;
+                }
+
+                long now = _speedTimer.ElapsedMilliseconds;
+                long elapsed = now - _lastSpeedTick;
+
+                if (elapsed >= 350) {
+                    long bytesDelta = current - _lastBytes;
+                    if (bytesDelta >= 0 && elapsed > 0) {
+                        double currentSpeed = (bytesDelta * 1000.0) / elapsed;
+                        if (_smoothedSpeedBytes <= 0) {
+                            _smoothedSpeedBytes = currentSpeed;
+                        } else {
+                            // Exponential moving average for smooth readout
+                            _smoothedSpeedBytes = (_smoothedSpeedBytes * 0.65) + (currentSpeed * 0.35);
+                        }
+
+                        double speedMB = _smoothedSpeedBytes / (1024.0 * 1024.0);
+                        if (speedMB >= 10.0) {
+                            DownloadSpeedText = $"{speedMB:0.0} MB/s";
+                        } else if (speedMB >= 0.1) {
+                            DownloadSpeedText = $"{speedMB:0.2} MB/s";
+                        } else if (_smoothedSpeedBytes > 0) {
+                            DownloadSpeedText = $"{(_smoothedSpeedBytes / 1024.0):0} KB/s";
+                        } else {
+                            DownloadSpeedText = "0.0 MB/s";
+                        }
+                    } else if (elapsed >= 1500 && current == _lastBytes) {
+                        DownloadSpeedText = "0.0 MB/s";
+                    }
+                    _lastBytes = current;
+                    _lastSpeedTick = now;
+                }
             }
 
             public string DisplayStatus {
@@ -1632,7 +1728,13 @@ namespace MCLauncher {
                     switch (_versionState) {
                         case VersionState.Initializing: return "Preparing...";
                         case VersionState.Downloading:
-                            return "Downloading... " + (Progress / 1024 / 1024) + "MiB/" + (MaxProgress / 1024 / 1024) + "MiB";
+                            if (MaxProgress > 0) {
+                                double progMB = (double)Progress / (1024.0 * 1024.0);
+                                double maxMB = (double)MaxProgress / (1024.0 * 1024.0);
+                                int percent = (int)Math.Clamp((Progress * 100.0) / MaxProgress, 0, 100);
+                                return $"Downloading... {progMB:0.0} MB / {maxMB:0.0} MB ({percent}%)";
+                            }
+                            return $"Downloading... {((double)Progress / (1024.0 * 1024.0)):0.0} MB";
                         case VersionState.Extracting: return "Extracting...";
                         case VersionState.Registering: return "Registering package...";
                         case VersionState.Launching: return "Launching...";
@@ -1642,7 +1744,7 @@ namespace MCLauncher {
                         case VersionState.Decrypting: return "Copying decrypted Minecraft.Windows.exe...";
                         case VersionState.Moving: return "Copying other game files...";
                         case VersionState.MovingData: return "Restoring Minecraft worlds...";
-                        default: return "Wtf is happening? ...";
+                        default: return "Processing...";
                     }
                 }
             }
