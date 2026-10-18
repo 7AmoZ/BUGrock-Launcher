@@ -15,6 +15,8 @@ namespace MCLauncher {
 
         public bool ShowLegacyBetaTab { get; set; } = false;
 
+        public string ActiveSkinType { get; set; } = "BUGrock";
+
         public string CustomSkinPath { get; set; } = "";
 
         public string CustomSkinName { get; set; } = "";

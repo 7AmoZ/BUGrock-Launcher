@@ -1349,21 +1349,28 @@ namespace MCLauncher {
 
         private void InitSteveHead() {
             try {
-                if (!string.IsNullOrEmpty(UserPrefs?.CustomSkinPath)) {
-                    if (UserPrefs.CustomSkinPath == "STEVE_PRESET") {
-                        LoadStevePreset();
-                        return;
-                    }
-                    if (File.Exists(UserPrefs.CustomSkinPath)) {
-                        var bmp = SteveHeadHelper.LoadSkinFromFile(UserPrefs.CustomSkinPath);
-                        string name = string.IsNullOrEmpty(UserPrefs.CustomSkinName) ? "Custom Skin" : UserPrefs.CustomSkinName;
-                        ApplySkin(bmp, name, isBlock: false, isBugrock: false);
-                        return;
-                    }
+                if (UserPrefs?.ActiveSkinType == "Custom" && !string.IsNullOrEmpty(UserPrefs?.CustomSkinPath) && File.Exists(UserPrefs.CustomSkinPath)) {
+                    var bmp = SteveHeadHelper.LoadSkinFromFile(UserPrefs.CustomSkinPath);
+                    string name = string.IsNullOrEmpty(UserPrefs.CustomSkinName) ? "Custom Skin" : UserPrefs.CustomSkinName;
+                    ApplySkin(bmp, name, isBlock: false, isBugrock: false);
+                    UpdateSkinSelectionUI(isCustom: true);
+                    return;
                 }
             } catch { }
 
             LoadDefaultBugrockSkin();
+            UpdateSkinSelectionUI(isCustom: false);
+        }
+
+        private void UpdateSkinSelectionUI(bool isCustom) {
+            try {
+                if (PresetCustomRing != null) {
+                    PresetCustomRing.BorderBrush = isCustom ? new SolidColorBrush(Color.FromRgb(0x38, 0xA1, 0x69)) : Brushes.Transparent;
+                }
+                if (PresetGlitchedRing != null) {
+                    PresetGlitchedRing.BorderBrush = !isCustom ? new SolidColorBrush(Color.FromRgb(0xD0, 0x5C, 0xE3)) : Brushes.Transparent;
+                }
+            } catch { }
         }
 
         private void LoadDefaultBugrockSkin() {
@@ -1377,12 +1384,6 @@ namespace MCLauncher {
                     }
                 } catch { }
             }
-        }
-
-        private void LoadStevePreset() {
-            try {
-                LoadSkinByPath("pack://application:,,,/Assets/steve_skin.png", "Steve (Classic)", isBlock: false, isBugrock: false);
-            } catch { }
         }
 
         private void LoadSkinByPath(string uriOrPath, string displayName, bool isBlock = false, bool isBugrock = false) {
@@ -1409,18 +1410,24 @@ namespace MCLauncher {
             }
         }
 
-        private void PresetSteve_Click(object sender, RoutedEventArgs e) {
-            UserPrefs.CustomSkinPath = "STEVE_PRESET";
-            UserPrefs.CustomSkinName = "Steve (Classic)";
-            RewritePrefs();
-            LoadStevePreset();
+        private void PresetCustom_Click(object sender, RoutedEventArgs e) {
+            if (!string.IsNullOrEmpty(UserPrefs?.CustomSkinPath) && File.Exists(UserPrefs.CustomSkinPath)) {
+                UserPrefs.ActiveSkinType = "Custom";
+                RewritePrefs();
+                var bmp = SteveHeadHelper.LoadSkinFromFile(UserPrefs.CustomSkinPath);
+                string name = string.IsNullOrEmpty(UserPrefs.CustomSkinName) ? "Custom Skin" : UserPrefs.CustomSkinName;
+                ApplySkin(bmp, name, isBlock: false, isBugrock: false);
+                UpdateSkinSelectionUI(isCustom: true);
+            } else {
+                UploadSkinButton_Click(sender, e);
+            }
         }
 
         private void PresetGlitched_Click(object sender, RoutedEventArgs e) {
-            UserPrefs.CustomSkinPath = "";
-            UserPrefs.CustomSkinName = "";
+            UserPrefs.ActiveSkinType = "BUGrock";
             RewritePrefs();
             LoadDefaultBugrockSkin();
+            UpdateSkinSelectionUI(isCustom: false);
         }
 
         private void UploadSkinButton_Click(object sender, RoutedEventArgs e) {
@@ -1441,12 +1448,14 @@ namespace MCLauncher {
                     string skinName = System.IO.Path.GetFileNameWithoutExtension(ofd.FileName);
                     if (string.IsNullOrWhiteSpace(skinName)) skinName = "Custom Skin";
 
+                    UserPrefs.ActiveSkinType = "Custom";
                     UserPrefs.CustomSkinPath = cachedFile;
                     UserPrefs.CustomSkinName = skinName;
                     RewritePrefs();
 
                     var bmp = SteveHeadHelper.LoadSkinFromFile(cachedFile);
                     ApplySkin(bmp, skinName, isBlock: false, isBugrock: false);
+                    UpdateSkinSelectionUI(isCustom: true);
                 } catch (Exception ex) {
                     ThemedMessageBox.Show("Failed to load skin image: " + ex.Message, "Skin Upload", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
