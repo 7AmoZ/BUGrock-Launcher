@@ -61,6 +61,9 @@ namespace MCLauncher {
             } else {
                 UserPrefs = userPrefs;
             }
+            if (UserPrefs.CustomInstallDirectories == null) {
+                UserPrefs.CustomInstallDirectories = new Dictionary<string, string>();
+            }
 
             var versionsApiUWP = UserPrefs.VersionsApiUWP != "" ? UserPrefs.VersionsApiUWP : VERSIONS_API_UWP;
             var versionsApiGDK = UserPrefs.VersionsApiGDK != "" ? UserPrefs.VersionsApiGDK : VERSIONS_API_GDK;
@@ -161,8 +164,22 @@ namespace MCLauncher {
             LoadingProgressBar.Value = 5;
             await _versions.LoadImported();
 
+            ApplyCustomInstallDirectories();
+
             LoadingProgressGrid.Visibility = Visibility.Collapsed;
             UpdateQuickPlayStatus();
+        }
+
+        private void ApplyCustomInstallDirectories() {
+            if (UserPrefs?.CustomInstallDirectories == null) return;
+            foreach (var v in _versions) {
+                if (v.VersionType != VersionType.Imported && UserPrefs.CustomInstallDirectories.TryGetValue(v.Name, out var customDir)) {
+                    if (!string.IsNullOrWhiteSpace(customDir) && Directory.Exists(customDir)) {
+                        v.GameDirectory = customDir;
+                        v.UpdateInstallStatus();
+                    }
+                }
+            }
         }
 
         private void VersionEntryPropertyChanged(object? sender, PropertyChangedEventArgs e) {
@@ -1027,6 +1044,27 @@ namespace MCLauncher {
         }
 
         private void InvokeDownload(Version v) {
+            string defaultDir = Path.GetFullPath((v.VersionType == VersionType.Preview ? "Minecraft-Preview-" : "Minecraft-") + v.Name);
+            var dialog = new InstallLocationDialog(v.DisplayName, defaultDir, v.Name) {
+                Owner = this
+            };
+            if (dialog.ShowDialog() != true) {
+                return;
+            }
+
+            string chosenDir = dialog.SelectedPath;
+            v.GameDirectory = chosenDir;
+
+            if (!string.Equals(Path.GetFullPath(chosenDir), defaultDir, StringComparison.OrdinalIgnoreCase)) {
+                UserPrefs.CustomInstallDirectories[v.Name] = chosenDir;
+                RewritePrefs();
+            } else {
+                if (UserPrefs.CustomInstallDirectories.ContainsKey(v.Name)) {
+                    UserPrefs.CustomInstallDirectories.Remove(v.Name);
+                    RewritePrefs();
+                }
+            }
+
             CancellationTokenSource cancelSource = new CancellationTokenSource();
             v.IsNew = false;
             v.StateChangeInfo = new VersionStateChangeInfo(VersionState.Initializing);
@@ -1034,7 +1072,12 @@ namespace MCLauncher {
 
             Trace.WriteLine("Download start");
             Task.Run(async () => {
-                string dlPath = Path.GetFullPath((v.VersionType == VersionType.Preview ? "Minecraft-Preview-" : "Minecraft-") + v.Name + (v.PackageType == PackageType.UWP ? ".Appx" : ".msixvc"));
+                string dlExt = (v.PackageType == PackageType.UWP ? ".Appx" : ".msixvc");
+                string parentOfChosen = Path.GetDirectoryName(chosenDir) ?? Directory.GetCurrentDirectory();
+                string dlPath = Directory.Exists(parentOfChosen)
+                    ? Path.Combine(parentOfChosen, (v.VersionType == VersionType.Preview ? "Minecraft-Preview-" : "Minecraft-") + v.Name + dlExt)
+                    : Path.GetFullPath((v.VersionType == VersionType.Preview ? "Minecraft-Preview-" : "Minecraft-") + v.Name + dlExt);
+
                 VersionDownloader downloader = _anonVersionDownloader;
 
                 VersionDownloader.DownloadProgress dlProgressHandler = (current, total) => {
@@ -1101,6 +1144,11 @@ namespace MCLauncher {
 
         private async Task<bool> Remove(Version v) {
             try {
+                if (UserPrefs?.CustomInstallDirectories != null && UserPrefs.CustomInstallDirectories.ContainsKey(v.Name)) {
+                    UserPrefs.CustomInstallDirectories.Remove(v.Name);
+                    RewritePrefs();
+                }
+
                 v.StateChangeInfo = new VersionStateChangeInfo(VersionState.Unregistering);
                 Trace.WriteLine("Unregistering version " + v.DisplayName);
                 try {
@@ -1136,6 +1184,7 @@ namespace MCLauncher {
                     Dispatcher.Invoke(() => _versions.Remove(v));
                     Trace.WriteLine("Removed imported version " + v.DisplayName);
                 } else {
+                    v.GameDirectory = (v.VersionType == VersionType.Preview ? "Minecraft-Preview-" : "Minecraft-") + v.Name;
                     v.UpdateInstallStatus();
                     Trace.WriteLine("Removed release version " + v.DisplayName);
                 }

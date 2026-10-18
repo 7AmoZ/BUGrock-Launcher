@@ -20,5 +20,7 @@ namespace MCLauncher {
         public string CustomSkinPath { get; set; } = "";
 
         public string CustomSkinName { get; set; } = "";
+
+        public Dictionary<string, string> CustomInstallDirectories { get; set; } = new Dictionary<string, string>();
     }
 }
