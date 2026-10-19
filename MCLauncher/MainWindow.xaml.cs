@@ -1940,6 +1940,7 @@ namespace MCLauncher {
                 }
 
                 int cmp = CompareVersionStrings(candidate.Name, current?.Name);
+                string actionType = current == null ? "INSTALLING" : (cmp > 0 ? "UPDATING" : "DOWNGRADING");
                 string msg;
                 string title;
                 if (current == null) {
