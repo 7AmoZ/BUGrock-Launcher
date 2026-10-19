@@ -656,12 +656,14 @@ namespace MCLauncher {
 
                 var helperPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, GDK_DECRYPT_HELPER_NAME);
 
-                var command = $"Invoke-CommandInDesktopPackage -PackageFamilyName '{versionEntry.GamePackageFamily}' -App Game -Command '{helperPath}' -Args '\"{exeSrcPath}\" \"{exeTmpPath}\" \"{decryptHelperLogFile}\" \"{donePath}\"'";
-                Trace.WriteLine("Decrypt command: " + command);
+                // Use Base64 EncodedCommand to prevent any quoting or space issues in paths
+                var psScript = $"Invoke-CommandInDesktopPackage -PackageFamilyName \"{versionEntry.GamePackageFamily}\" -App Game -Command \"{helperPath}\" -Args '\"{exeSrcPath}\" \"{exeTmpPath}\" \"{decryptHelperLogFile}\" \"{donePath}\"'";
+                var encodedCommand = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(psScript));
+                Trace.WriteLine("Decrypt command (raw): " + psScript);
 
                 var processInfo = new ProcessStartInfo {
                     FileName = "powershell.exe",
-                    Arguments = $"-NoProfile -NonInteractive -Command \"{command}\"",
+                    Arguments = $"-NoProfile -NonInteractive -EncodedCommand {encodedCommand}",
                     CreateNoWindow = true,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -670,10 +672,17 @@ namespace MCLauncher {
 
                 Trace.WriteLine("Copying decrypted exe");
                 try {
-                    var process = Process.Start(processInfo);
-                    process.WaitForExit();
-                    Trace.WriteLine("Process output:" + process.StandardOutput.ReadToEnd());
-                    Trace.WriteLine("Process errors:" + process.StandardError.ReadToEnd());
+                    using var process = Process.Start(processInfo);
+                    if (process != null) {
+                        using var reg = cancellationToken.Register(() => {
+                            try { process.Kill(); } catch { }
+                        });
+                        await process.WaitForExitAsync(cancellationToken);
+                        Trace.WriteLine("Process output:" + (await process.StandardOutput.ReadToEndAsync()));
+                        Trace.WriteLine("Process errors:" + (await process.StandardError.ReadToEndAsync()));
+                    }
+                } catch (OperationCanceledException) {
+                    throw;
                 } catch (Exception ex) {
                     Trace.WriteLine("Decrypt helper log output: " + SafeReadAllText(decryptHelperLogFile));
                     InstallError(
@@ -689,7 +698,6 @@ namespace MCLauncher {
                     cancellationToken.ThrowIfCancellationRequested();
                     //Give it up to 30 seconds to copy the file
                     //We can't block on the outcome of Invoke-CommandInDesktopPackage, so we have to poll for the file
-                    //TODO: What if the copy takes longer than that?
                     await Task.Delay(100, cancellationToken);
                 }
 
@@ -713,14 +721,23 @@ namespace MCLauncher {
 
                 if (!IsValidPeExecutable(exeTmpPath)) {
                     Trace.WriteLine("Decrypted exe failed PE header check: still encrypted ciphertext.");
-                    InstallError(
-                        "Failed to decrypt Minecraft.Windows.exe.\n\n" +
-                            "The file is still encrypted because GDK decryption keys were not found on this system.\n" +
-                            "Please make sure 'Auto-fetch decryption keys' is enabled in Options or install Minecraft once from Microsoft Store.",
-                        "Decryption failed: invalid executable header",
-                        filePath,
-                        null
+                    var storePrompt = ThemedMessageBox.Show(
+                        "Minecraft.Windows.exe is encrypted and requires an active game license from Microsoft Store.\n\n" +
+                        "Since your account already owns or has access to Minecraft, clicking 'Yes' will open the Store to register the decryption keys on this PC.\n\n" +
+                        "Would you like to open Microsoft Store now to activate it?",
+                        "Decryption Keys Required",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning
                     );
+                    if (storePrompt == MessageBoxResult.Yes) {
+                        try {
+                            string storeUri = isPreview ? "ms-windows-store://pdp/?ProductId=9P5X4QVLC2XR" : "ms-windows-store://pdp/?ProductId=9NBLGGH4279M";
+                            Process.Start(new ProcessStartInfo {
+                                FileName = storeUri,
+                                UseShellExecute = true
+                            });
+                        } catch { }
+                    }
                     try { if (File.Exists(exeTmpPath)) File.Delete(exeTmpPath); } catch { }
                     return false;
                 }
@@ -1024,12 +1041,21 @@ namespace MCLauncher {
             string tmpDir = GetBackupMinecraftDataDir();
             if (Directory.Exists(tmpDir)) {
                 if (GetWorldCountInDataDir(tmpDir) > 0) {
-                    //TODO: this might happen if two different versions
-                    //try to be uninstalled at the same time???
-                    Trace.WriteLine("BackupMinecraftDataForRemoval error: " + tmpDir + " already exists");
-                    Process.Start("explorer.exe", tmpDir);
-                    ThemedMessageBox.Show("The temporary directory for backing up MC data already exists. This probably means that we failed last time backing up the data. Please back the directory up manually.");
-                    return false;
+                    Trace.WriteLine("BackupMinecraftDataForRemoval: " + tmpDir + " already exists with worlds");
+                    var res = ThemedMessageBox.Show(
+                        "A previous backup of your Minecraft worlds was found in temporary storage.\n\n" +
+                        "Would you like to preserve these worlds and continue the installation?\n\n" +
+                        "Click 'Yes' to safely keep your worlds and proceed, or 'No' to cancel and inspect them in File Explorer.",
+                        "Saved Worlds Backup Found",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question
+                    );
+                    if (res == MessageBoxResult.Yes) {
+                        return true;
+                    } else {
+                        try { Process.Start("explorer.exe", tmpDir); } catch { }
+                        return false;
+                    }
                 }
                 Directory.Delete(tmpDir, recursive: true);
             }
@@ -2066,11 +2092,14 @@ namespace MCLauncher {
                 ThemedMessageBox.Show(msg, title, MessageBoxButton.OK, MessageBoxImage.Information);
 
                 _selectedQuickPlayVersion = targetVer;
-                UpdateQuickPlayStatus();
+                if (QuickPlayVersionLabel != null) {
+                    QuickPlayVersionLabel.Text = $"{candidate.Name} ({actionType})";
+                }
 
                 if (!candidate.IsInstalled) {
                     if (string.IsNullOrEmpty(candidate.PackageFilePath) || !File.Exists(candidate.PackageFilePath)) {
                         ThemedMessageBox.Show("The package file for this version could not be found.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        UpdateQuickPlayStatus();
                         return;
                     }
 
@@ -2088,6 +2117,7 @@ namespace MCLauncher {
                         } else if (candidate.PackageType == PackageType.GDK) {
                             if (!ShowGDKFirstUseWarning()) {
                                 HideHeroProgress();
+                                UpdateQuickPlayStatus();
                                 return;
                             }
                             extractSuccess = await ExtractMsixvc(candidate.PackageFilePath, targetDir, targetVer, isPreview: candidate.VersionType == VersionType.Preview, cancellationToken: _heroCancelSource.Token);
@@ -2100,10 +2130,9 @@ namespace MCLauncher {
                     if (!extractSuccess) {
                         if (_heroCancelSource != null && _heroCancelSource.IsCancellationRequested) {
                             ThemedMessageBox.Show("Operation was cancelled.", "Cancelled", MessageBoxButton.OK, MessageBoxImage.Information);
-                        } else {
-                            ThemedMessageBox.Show("Failed to extract package. Check log for details.", "Extraction Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                         HideHeroProgress();
+                        UpdateQuickPlayStatus();
                         return;
                     }
 
@@ -2113,6 +2142,7 @@ namespace MCLauncher {
 
                 ShowHeroProgress(actionType, "Launching Minecraft...");
                 InvokeLaunch(targetVer);
+                UpdateQuickPlayStatus();
             } catch (Exception ex) {
                 HideHeroProgress();
                 Trace.WriteLine("HandleVersionSelected error: " + ex);

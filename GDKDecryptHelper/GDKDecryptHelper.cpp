@@ -25,7 +25,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     if (__argc != 5) {
-        MessageBoxW(NULL, L"Expected 2 parameters: exeSrcPath, exeDstPath, logFile, doneFile", L"GDKDecryptHelper error", MB_ICONERROR);
+        MessageBoxW(NULL, L"Expected 4 parameters: exeSrcPath, exeDstPath, logFile, doneFile", L"GDKDecryptHelper error", MB_ICONERROR);
         return 1;
     }
 
