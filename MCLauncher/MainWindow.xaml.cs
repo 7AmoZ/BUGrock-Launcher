@@ -1776,20 +1776,110 @@ namespace MCLauncher {
             MovingData
         };
 
+        public class ChromeSpeedCalculator {
+            private readonly int _windowSizeSeconds;
+            private readonly Queue<double> _samples = new();
+            private readonly Stopwatch _stopwatch = new();
+            private long _lastBytes = 0;
+            private long _lastTimeMs = 0;
+            private long _lastProgressTickMs = 0;
+
+            public ChromeSpeedCalculator(int windowSizeSeconds = 5) {
+                _windowSizeSeconds = Math.Max(1, windowSizeSeconds);
+            }
+
+            public void Start(long initialBytes = 0) {
+                _stopwatch.Restart();
+                _lastBytes = initialBytes;
+                _lastTimeMs = 0;
+                _lastProgressTickMs = 0;
+                _samples.Clear();
+            }
+
+            public void Reset() {
+                _stopwatch.Reset();
+                _lastBytes = 0;
+                _lastTimeMs = 0;
+                _lastProgressTickMs = 0;
+                _samples.Clear();
+            }
+
+            public string UpdateProgress(long currentTotalBytes) {
+                if (!_stopwatch.IsRunning) {
+                    Start(currentTotalBytes);
+                    return "0.0 MB/s";
+                }
+
+                long nowMs = _stopwatch.ElapsedMilliseconds;
+                _lastProgressTickMs = nowMs;
+                long elapsedMs = nowMs - _lastTimeMs;
+
+                // Take sample every 400ms to avoid zero/micro-interval spikes and smooth socket buffer bursts
+                if (elapsedMs >= 400) {
+                    long bytesReceived = currentTotalBytes - _lastBytes;
+                    if (bytesReceived >= 0) {
+                        double elapsedSeconds = elapsedMs / 1000.0;
+                        double instantSpeed = bytesReceived / elapsedSeconds;
+
+                        _samples.Enqueue(instantSpeed);
+
+                        int maxSamples = (int)(_windowSizeSeconds * 2.5); // 2.5 samples per second for _windowSizeSeconds
+                        while (_samples.Count > maxSamples) {
+                            _samples.Dequeue();
+                        }
+
+                        _lastTimeMs = nowMs;
+                        _lastBytes = currentTotalBytes;
+                    }
+                }
+
+                return GetCurrentSpeedText();
+            }
+
+            public string GetCurrentSpeedText() {
+                if (!_stopwatch.IsRunning || _samples.Count == 0) {
+                    return "";
+                }
+
+                // If no progress update received for over 2 seconds, download stalled
+                if (_stopwatch.ElapsedMilliseconds - _lastProgressTickMs > 2000) {
+                    return "0.0 MB/s";
+                }
+
+                double sum = 0;
+                foreach (double speed in _samples) {
+                    sum += speed;
+                }
+                double avgBytesPerSec = sum / _samples.Count;
+                double speedMB = avgBytesPerSec / (1024.0 * 1024.0);
+
+                if (speedMB >= 10.0) {
+                    return $"{speedMB:0.0} MB/s";
+                } else if (speedMB >= 0.1) {
+                    return $"{speedMB:0.2} MB/s";
+                } else if (avgBytesPerSec > 0) {
+                    double speedKB = avgBytesPerSec / 1024.0;
+                    return $"{speedKB:0} KB/s";
+                } else {
+                    return "0.0 MB/s";
+                }
+            }
+        }
+
         public class VersionStateChangeInfo : NotifyPropertyChangedBase {
 
             private VersionState _versionState;
 
             private long _progress = 0;
             private long _maxProgress = 0;
-            private readonly Stopwatch _speedTimer = Stopwatch.StartNew();
-            private readonly Queue<(long TimeMs, long Bytes)> _speedSamples = new();
-            private long _lastSpeedUiTick = 0;
+            private readonly ChromeSpeedCalculator _speedCalculator = new(windowSizeSeconds: 5);
             private string _downloadSpeedText = "";
 
             public VersionStateChangeInfo(VersionState versionState) {
                 _versionState = versionState;
-                _lastSpeedUiTick = _speedTimer.ElapsedMilliseconds;
+                if (_versionState == VersionState.Downloading) {
+                    _speedCalculator.Start();
+                }
             }
 
             public VersionState VersionState {
@@ -1798,8 +1888,11 @@ namespace MCLauncher {
                     _versionState = value;
                     _progress = 0;
                     _maxProgress = 0;
-                    _speedSamples.Clear();
-                    _lastSpeedUiTick = _speedTimer.ElapsedMilliseconds;
+                    if (_versionState == VersionState.Downloading) {
+                        _speedCalculator.Start();
+                    } else {
+                        _speedCalculator.Reset();
+                    }
                     _downloadSpeedText = "";
                     OnPropertyChanged("Progress");
                     OnPropertyChanged("MaxProgress");
@@ -1838,7 +1931,9 @@ namespace MCLauncher {
                 get { return _progress; }
                 set {
                     _progress = value;
-                    CalculateSpeed(value);
+                    if (_versionState == VersionState.Downloading) {
+                        DownloadSpeedText = _speedCalculator.UpdateProgress(value);
+                    }
                     OnPropertyChanged("Progress");
                     OnPropertyChanged("DisplayStatus");
                 }
@@ -1851,47 +1946,6 @@ namespace MCLauncher {
                     OnPropertyChanged("MaxProgress");
                     OnPropertyChanged("DisplayStatus");
                     OnPropertyChanged("IsProgressIndeterminate");
-                }
-            }
-
-            private void CalculateSpeed(long current) {
-                if (_versionState != VersionState.Downloading) {
-                    DownloadSpeedText = "";
-                    _speedSamples.Clear();
-                    return;
-                }
-
-                long now = _speedTimer.ElapsedMilliseconds;
-                _speedSamples.Enqueue((now, current));
-
-                // Discard samples older than 1000ms (1-second sliding window)
-                while (_speedSamples.Count > 1 && (now - _speedSamples.Peek().TimeMs) > 1000) {
-                    _speedSamples.Dequeue();
-                }
-
-                if (now - _lastSpeedUiTick >= 250) {
-                    var oldest = _speedSamples.Peek();
-                    long timeDelta = now - oldest.TimeMs;
-                    long bytesDelta = current - oldest.Bytes;
-
-                    if (timeDelta >= 150 && bytesDelta >= 0) {
-                        double bytesPerSec = (bytesDelta * 1000.0) / timeDelta;
-                        double speedMB = bytesPerSec / (1024.0 * 1024.0);
-
-                        if (speedMB >= 10.0) {
-                            DownloadSpeedText = $"{speedMB:0.0} MB/s";
-                        } else if (speedMB >= 0.1) {
-                            DownloadSpeedText = $"{speedMB:0.2} MB/s";
-                        } else if (bytesPerSec > 0) {
-                            DownloadSpeedText = $"{(bytesPerSec / 1024.0):0} KB/s";
-                        } else {
-                            DownloadSpeedText = "0.0 MB/s";
-                        }
-                    } else if (now - oldest.TimeMs >= 1200 && current == oldest.Bytes) {
-                        DownloadSpeedText = "0.0 MB/s";
-                    }
-
-                    _lastSpeedUiTick = now;
                 }
             }
 
