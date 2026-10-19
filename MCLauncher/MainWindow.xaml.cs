@@ -1617,10 +1617,25 @@ namespace MCLauncher {
                 .ToList();
         }
 
-        private void SelectedVersionBox_Click(object sender, MouseButtonEventArgs e) {
+        private bool _wasPopupOpenOnMouseDown = false;
+
+        private void SelectedVersionBox_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
+            if (e.ChangedButton == MouseButton.Left) {
+                _wasPopupOpenOnMouseDown = (VersionSelectorPopup != null && VersionSelectorPopup.IsOpen);
+            }
+        }
+
+        private void SelectedVersionBox_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
             if (e.ChangedButton != MouseButton.Left) return;
+            e.Handled = true;
+
+            if (_wasPopupOpenOnMouseDown) {
+                if (VersionSelectorPopup != null) VersionSelectorPopup.IsOpen = false;
+                return;
+            }
+
             PopulateVersionDropdown();
-            VersionSelectorPopup.IsOpen = true;
+            if (VersionSelectorPopup != null) VersionSelectorPopup.IsOpen = true;
         }
 
         private void PopulateVersionDropdown() {
@@ -1753,9 +1768,9 @@ namespace MCLauncher {
                 };
 
                 var candCopy = candidate;
-                itemBorder.MouseLeftButtonDown += (s, ev) => {
+                itemBorder.PreviewMouseLeftButtonUp += (s, ev) => {
                     ev.Handled = true;
-                    VersionSelectorPopup.IsOpen = false;
+                    if (VersionSelectorPopup != null) VersionSelectorPopup.IsOpen = false;
                     HandleVersionSelected(candCopy);
                 };
 
@@ -1833,6 +1848,7 @@ namespace MCLauncher {
         }
 
         private void Window_MouseMove(object sender, MouseEventArgs e) {
+            if (VersionSelectorPopup != null && VersionSelectorPopup.IsOpen) return;
             if (SteveHeadRotationYaw == null || SteveHeadRotationPitch == null || HeadViewport == null) return;
             try {
                 System.Windows.Point mousePos = e.GetPosition(HeadViewport);

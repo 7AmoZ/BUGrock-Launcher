@@ -680,7 +680,7 @@
 
                                     <!-- Version Selector Box (Clickable Dropdown) -->
                                     <Grid Grid.Column="0" VerticalAlignment="Center">
-                                        <Border x:Name="SelectedVersionBox" Cursor="Hand" MouseLeftButtonDown="SelectedVersionBox_Click" CornerRadius="6" Padding="14,10" MinWidth="220" VerticalAlignment="Center">
+                                        <Border x:Name="SelectedVersionBox" Cursor="Hand" PreviewMouseLeftButtonDown="SelectedVersionBox_PreviewMouseDown" PreviewMouseLeftButtonUp="SelectedVersionBox_PreviewMouseUp" CornerRadius="6" Padding="14,10" MinWidth="220" VerticalAlignment="Center">
                                             <Border.Style>
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="#1C1E2A"/>
@@ -707,7 +707,7 @@
                                             </StackPanel>
                                         </Border>
 
-                                        <Popup x:Name="VersionSelectorPopup" PlacementTarget="{Binding ElementName=SelectedVersionBox}" Placement="Bottom" VerticalOffset="6" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
+                                        <Popup x:Name="VersionSelectorPopup" PlacementTarget="{Binding ElementName=SelectedVersionBox}" Placement="Bottom" VerticalOffset="4" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
                                             <Border Background="#161722" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="8" Padding="8" MinWidth="260" MaxWidth="380" MaxHeight="320">
                                                 <Border.Effect>
                                                     <DropShadowEffect Color="#000000" BlurRadius="18" ShadowDepth="4" Opacity="0.6"/>
