@@ -25,6 +25,8 @@ namespace MCLauncher {
     using Windows.Management.Deployment;
     using Windows.Storage;
     using Windows.System;
+    using System.Text.RegularExpressions;
+    using System.Windows.Controls;
     using WPFDataTypes;
 
     /// <summary>
@@ -1427,12 +1429,49 @@ namespace MCLauncher {
             }
         }
 
+        private Version? _selectedQuickPlayVersion = null;
+
+        public class LocalVersionCandidate {
+            public string Name { get; set; } = "";
+            public string DisplayName { get; set; } = "";
+            public string? PackageFilePath { get; set; }
+            public string? InstalledDirectory { get; set; }
+            public PackageType PackageType { get; set; }
+            public VersionType VersionType { get; set; }
+            public Version? VersionEntry { get; set; }
+            public bool IsInstalled => !string.IsNullOrEmpty(InstalledDirectory) && Directory.Exists(InstalledDirectory);
+            public bool IsActive { get; set; }
+        }
+
+        private Version? GetCurrentlyActiveVersion() {
+            if (_selectedQuickPlayVersion != null && _selectedQuickPlayVersion.IsInstalled) {
+                return _selectedQuickPlayVersion;
+            }
+
+            try {
+                foreach (var family in new[] { MinecraftPackageFamilies.MINECRAFT, MinecraftPackageFamilies.MINECRAFT_PREVIEW }) {
+                    foreach (var pkg in new PackageManager().FindPackages(family)) {
+                        string loc = GetPackagePath(pkg);
+                        if (!string.IsNullOrEmpty(loc)) {
+                            var match = _versions.FirstOrDefault(v => string.Equals(Path.GetFullPath(v.GameDirectory), Path.GetFullPath(loc), StringComparison.OrdinalIgnoreCase));
+                            if (match != null) {
+                                return match;
+                            }
+                        }
+                    }
+                }
+            } catch {
+            }
+
+            return _versions.FirstOrDefault(v => v.IsInstalled);
+        }
+
         private void QuickPlayButton_Click(object sender, RoutedEventArgs e) {
-            var installed = _versions.FirstOrDefault(v => v.IsInstalled);
-            if (installed != null) {
-                InvokeLaunch(installed);
+            var active = GetCurrentlyActiveVersion();
+            if (active != null) {
+                InvokeLaunch(active);
             } else {
-                ThemedMessageBox.Show("No version is currently installed. Please select a version in the Installations tab to download and install it.", "BUGrock Launcher", MessageBoxButton.OK, MessageBoxImage.Information);
+                ThemedMessageBox.Show("No version is currently installed. Please select a version in the Installations tab or choose a package from the version selector to install it.", "BUGrock Launcher", MessageBoxButton.OK, MessageBoxImage.Information);
                 TabNavInstallations.IsChecked = true;
             }
         }
@@ -1443,11 +1482,353 @@ namespace MCLauncher {
                 return;
             }
             if (QuickPlayVersionLabel == null) return;
-            var installed = _versions.FirstOrDefault(v => v.IsInstalled);
-            if (installed != null) {
-                QuickPlayVersionLabel.Text = $"{installed.DisplayName} Release";
+            var current = GetCurrentlyActiveVersion();
+            if (current != null) {
+                string verTypeStr = current.VersionType == VersionType.Preview ? "Preview" : "Release";
+                QuickPlayVersionLabel.Text = $"{current.Name} {verTypeStr}";
             } else {
-                QuickPlayVersionLabel.Text = "No version installed";
+                QuickPlayVersionLabel.Text = "Select Version";
+            }
+        }
+
+        private static string ExtractVersionNameFromFileName(string fileName) {
+            var match = Regex.Match(fileName, @"(?:Minecraft-(?:Preview-)?|Minecraft\.Windows-)?([0-9]+(?:\.[0-9]+)+)");
+            if (match.Success) {
+                return match.Groups[1].Value;
+            }
+            string noExt = Path.GetFileNameWithoutExtension(fileName);
+            noExt = Regex.Replace(noExt, @"^(Minecraft-Preview-|Minecraft-|Minecraft\.Windows-)", "", RegexOptions.IgnoreCase);
+            return noExt;
+        }
+
+        private int CompareVersionStrings(string v1, string? v2) {
+            if (string.IsNullOrEmpty(v2)) return 1;
+            if (string.IsNullOrEmpty(v1)) return -1;
+            var matches1 = Regex.Matches(v1, @"\d+");
+            var matches2 = Regex.Matches(v2, @"\d+");
+            int count = Math.Max(matches1.Count, matches2.Count);
+            for (int i = 0; i < count; i++) {
+                int val1 = i < matches1.Count ? int.Parse(matches1[i].Value) : 0;
+                int val2 = i < matches2.Count ? int.Parse(matches2[i].Value) : 0;
+                if (val1 != val2) return val1.CompareTo(val2);
+            }
+            return 0;
+        }
+
+        private Version GetOrCreateVersionEntry(LocalVersionCandidate candidate) {
+            if (candidate.VersionEntry != null) return candidate.VersionEntry;
+
+            var existing = _versions.FirstOrDefault(v => v.Name == candidate.Name && v.PackageType == candidate.PackageType);
+            if (existing != null) {
+                candidate.VersionEntry = existing;
+                return existing;
+            }
+
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string targetDir = candidate.InstalledDirectory ?? Path.Combine(baseDir, (candidate.VersionType == VersionType.Preview ? "Minecraft-Preview-" : "Minecraft-") + candidate.Name);
+            var newVer = new WPFDataTypes.Version(candidate.Name, targetDir, this, candidate.PackageType) {
+                VersionType = candidate.VersionType
+            };
+            _versions.Add(newVer);
+            candidate.VersionEntry = newVer;
+            return newVer;
+        }
+
+        private List<LocalVersionCandidate> ScanLocalVersions() {
+            var candidates = new Dictionary<string, LocalVersionCandidate>(StringComparer.OrdinalIgnoreCase);
+
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string curDir = Directory.GetCurrentDirectory();
+            var dirsToScan = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { baseDir, curDir };
+
+            var currentActive = GetCurrentlyActiveVersion();
+
+            // 1. Scan for package files (*.appx, *.msixvc)
+            foreach (var dir in dirsToScan) {
+                if (!Directory.Exists(dir)) continue;
+                try {
+                    var files = Directory.EnumerateFiles(dir)
+                        .Where(f => f.EndsWith(".appx", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".msixvc", StringComparison.OrdinalIgnoreCase));
+
+                    foreach (var file in files) {
+                        string fileName = Path.GetFileName(file);
+                        string ext = Path.GetExtension(file).ToLowerInvariant();
+                        var pkgType = ext == ".msixvc" ? PackageType.GDK : PackageType.UWP;
+                        var verType = fileName.Contains("Preview", StringComparison.OrdinalIgnoreCase) ? VersionType.Preview : VersionType.Release;
+
+                        string verName = ExtractVersionNameFromFileName(fileName);
+                        if (string.IsNullOrEmpty(verName)) continue;
+
+                        string expectedDir = Path.Combine(dir, (verType == VersionType.Preview ? "Minecraft-Preview-" : "Minecraft-") + verName);
+                        if (!Directory.Exists(expectedDir)) {
+                            string altDir = Path.Combine(baseDir, (verType == VersionType.Preview ? "Minecraft-Preview-" : "Minecraft-") + verName);
+                            if (Directory.Exists(altDir)) expectedDir = altDir;
+                        }
+
+                        var candidate = new LocalVersionCandidate {
+                            Name = verName,
+                            DisplayName = $"{verName} ({(verType == VersionType.Preview ? "Preview" : "Release")})",
+                            PackageFilePath = file,
+                            InstalledDirectory = Directory.Exists(expectedDir) ? expectedDir : null,
+                            PackageType = pkgType,
+                            VersionType = verType
+                        };
+
+                        var match = _versions.FirstOrDefault(v => v.Name == verName && v.PackageType == pkgType);
+                        if (match != null) {
+                            candidate.VersionEntry = match;
+                            if (match.IsInstalled && string.IsNullOrEmpty(candidate.InstalledDirectory)) {
+                                candidate.InstalledDirectory = match.GameDirectory;
+                            }
+                        }
+
+                        candidates[verName] = candidate;
+                    }
+                } catch (Exception ex) {
+                    Trace.WriteLine("Error scanning packages: " + ex.Message);
+                }
+            }
+
+            // 2. Scan installed versions from _versions
+            foreach (var v in _versions) {
+                if (v.IsInstalled && !candidates.ContainsKey(v.Name)) {
+                    candidates[v.Name] = new LocalVersionCandidate {
+                        Name = v.Name,
+                        DisplayName = $"{v.Name} ({(v.VersionType == VersionType.Preview ? "Preview" : "Release")})",
+                        InstalledDirectory = v.GameDirectory,
+                        PackageType = v.PackageType,
+                        VersionType = v.VersionType,
+                        VersionEntry = v
+                    };
+                } else if (v.IsInstalled && candidates.TryGetValue(v.Name, out var c)) {
+                    c.VersionEntry = v;
+                    c.InstalledDirectory = v.GameDirectory;
+                }
+            }
+
+            // 3. Mark current active
+            if (currentActive != null && candidates.TryGetValue(currentActive.Name, out var activeCand)) {
+                activeCand.IsActive = true;
+            }
+
+            return candidates.Values
+                .OrderByDescending(c => c.IsActive)
+                .ThenByDescending(c => c.Name, Comparer<string>.Create((a, b) => CompareVersionStrings(a, b)))
+                .ToList();
+        }
+
+        private void SelectedVersionBox_Click(object sender, MouseButtonEventArgs e) {
+            if (e.ChangedButton != MouseButton.Left) return;
+            PopulateVersionDropdown();
+            VersionSelectorPopup.IsOpen = true;
+        }
+
+        private void PopulateVersionDropdown() {
+            VersionSelectorItemsPanel.Children.Clear();
+
+            var header = new TextBlock {
+                Text = "AVAILABLE LOCAL VERSIONS",
+                Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x92, 0xA4)),
+                FontSize = 10,
+                FontWeight = FontWeights.Bold,
+                Margin = new Thickness(6, 4, 6, 8)
+            };
+            VersionSelectorItemsPanel.Children.Add(header);
+
+            var candidates = ScanLocalVersions();
+            if (candidates.Count == 0) {
+                VersionSelectorItemsPanel.Children.Add(new TextBlock {
+                    Text = "No local .appx or .msixvc packages found in launcher directory.",
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x92, 0xA4)),
+                    FontSize = 11,
+                    Margin = new Thickness(6, 12, 6, 12),
+                    TextWrapping = TextWrapping.Wrap,
+                    HorizontalAlignment = HorizontalAlignment.Center
+                });
+                return;
+            }
+
+            foreach (var candidate in candidates) {
+                bool isCurrent = candidate.IsActive;
+
+                var itemBorder = new Border {
+                    Background = isCurrent ? new SolidColorBrush(Color.FromRgb(0x1F, 0x2A, 0x24)) : new SolidColorBrush(Color.FromRgb(0x1C, 0x1E, 0x2A)),
+                    BorderBrush = isCurrent ? new SolidColorBrush(Color.FromRgb(0x38, 0xA1, 0x69)) : new SolidColorBrush(Color.FromRgb(0x2D, 0x30, 0x42)),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(6),
+                    Padding = new Thickness(10, 8, 10, 8),
+                    Margin = new Thickness(0, 2, 0, 2),
+                    Cursor = Cursors.Hand
+                };
+
+                var grid = new Grid();
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var icon = new Image {
+                    Width = 18,
+                    Height = 18,
+                    Margin = new Thickness(0, 0, 10, 0),
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                try {
+                    icon.Source = new BitmapImage(new Uri("pack://application:,,,/Assets/bugrock_block.png"));
+                } catch {
+                }
+                Grid.SetColumn(icon, 0);
+                grid.Children.Add(icon);
+
+                var textPanel = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+                var titleText = new TextBlock {
+                    Text = candidate.Name,
+                    Foreground = Brushes.White,
+                    FontWeight = FontWeights.Bold,
+                    FontSize = 13
+                };
+                var subText = new TextBlock {
+                    Text = $"{(candidate.VersionType == VersionType.Preview ? "Preview" : "Release")} • {candidate.PackageType}",
+                    Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x92, 0xA4)),
+                    FontSize = 10,
+                    Margin = new Thickness(0, 2, 0, 0)
+                };
+                textPanel.Children.Add(titleText);
+                textPanel.Children.Add(subText);
+                Grid.SetColumn(textPanel, 1);
+                grid.Children.Add(textPanel);
+
+                string badgeText;
+                Color badgeBg;
+                Color badgeFg;
+                Color badgeBorder;
+
+                if (isCurrent) {
+                    badgeText = "CURRENT";
+                    badgeBg = Color.FromRgb(0x1C, 0x2E, 0x22);
+                    badgeFg = Color.FromRgb(0x38, 0xA1, 0x69);
+                    badgeBorder = Color.FromRgb(0x38, 0xA1, 0x69);
+                } else if (candidate.IsInstalled) {
+                    badgeText = "READY";
+                    badgeBg = Color.FromRgb(0x1E, 0x24, 0x33);
+                    badgeFg = Color.FromRgb(0x7E, 0xA5, 0xF8);
+                    badgeBorder = Color.FromRgb(0x3A, 0x4D, 0x7A);
+                } else {
+                    badgeText = "PACKAGE";
+                    badgeBg = Color.FromRgb(0x2E, 0x22, 0x18);
+                    badgeFg = Color.FromRgb(0xF6, 0xAD, 0x55);
+                    badgeBorder = Color.FromRgb(0x7A, 0x50, 0x25);
+                }
+
+                var badge = new Border {
+                    Background = new SolidColorBrush(badgeBg),
+                    BorderBrush = new SolidColorBrush(badgeBorder),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(4),
+                    Padding = new Thickness(6, 2, 6, 2),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(8, 0, 0, 0),
+                    Child = new TextBlock {
+                        Text = badgeText,
+                        Foreground = new SolidColorBrush(badgeFg),
+                        FontSize = 9,
+                        FontWeight = FontWeights.Bold
+                    }
+                };
+                Grid.SetColumn(badge, 2);
+                grid.Children.Add(badge);
+
+                itemBorder.Child = grid;
+
+                itemBorder.MouseEnter += (s, ev) => {
+                    if (!isCurrent) {
+                        itemBorder.Background = new SolidColorBrush(Color.FromRgb(0x25, 0x28, 0x3A));
+                        itemBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0x38, 0xA1, 0x69));
+                    }
+                };
+                itemBorder.MouseLeave += (s, ev) => {
+                    if (!isCurrent) {
+                        itemBorder.Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1E, 0x2A));
+                        itemBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2D, 0x30, 0x42));
+                    }
+                };
+
+                var candCopy = candidate;
+                itemBorder.MouseLeftButtonDown += (s, ev) => {
+                    ev.Handled = true;
+                    VersionSelectorPopup.IsOpen = false;
+                    HandleVersionSelected(candCopy);
+                };
+
+                VersionSelectorItemsPanel.Children.Add(itemBorder);
+            }
+        }
+
+        private async void HandleVersionSelected(LocalVersionCandidate candidate) {
+            try {
+                var current = GetCurrentlyActiveVersion();
+                bool isSame = (current != null && string.Equals(current.Name, candidate.Name, StringComparison.OrdinalIgnoreCase) && candidate.IsInstalled);
+
+                var targetVer = candidate.VersionEntry ?? GetOrCreateVersionEntry(candidate);
+
+                if (isSame) {
+                    _selectedQuickPlayVersion = targetVer;
+                    UpdateQuickPlayStatus();
+                    InvokeLaunch(targetVer);
+                    return;
+                }
+
+                int cmp = CompareVersionStrings(candidate.Name, current?.Name);
+                string msg;
+                string title;
+                if (current == null) {
+                    msg = $"Installing Minecraft {candidate.Name}...";
+                    title = "Install Version";
+                } else if (cmp > 0) {
+                    msg = $"Updating Minecraft from {current.Name} to {candidate.Name}...";
+                    title = "Update Version";
+                } else {
+                    msg = $"Downgrading Minecraft from {current.Name} to {candidate.Name}...";
+                    title = "Downgrade Version";
+                }
+
+                ThemedMessageBox.Show(msg, title, MessageBoxButton.OK, MessageBoxImage.Information);
+
+                _selectedQuickPlayVersion = targetVer;
+                UpdateQuickPlayStatus();
+
+                if (!candidate.IsInstalled) {
+                    if (string.IsNullOrEmpty(candidate.PackageFilePath) || !File.Exists(candidate.PackageFilePath)) {
+                        ThemedMessageBox.Show("The package file for this version could not be found.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                    string targetDir = Path.Combine(baseDir, (candidate.VersionType == VersionType.Preview ? "Minecraft-Preview-" : "Minecraft-") + candidate.Name);
+                    targetVer.GameDirectory = targetDir;
+
+                    bool extractSuccess = false;
+                    if (candidate.PackageType == PackageType.UWP) {
+                        extractSuccess = await ExtractAppx(candidate.PackageFilePath, targetDir, targetVer);
+                    } else if (candidate.PackageType == PackageType.GDK) {
+                        if (!ShowGDKFirstUseWarning()) {
+                            return;
+                        }
+                        extractSuccess = await ExtractMsixvc(candidate.PackageFilePath, targetDir, targetVer, isPreview: candidate.VersionType == VersionType.Preview);
+                    }
+
+                    if (!extractSuccess) {
+                        ThemedMessageBox.Show("Failed to extract package. Check log for details.", "Extraction Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    targetVer.UpdateInstallStatus();
+                    candidate.InstalledDirectory = targetDir;
+                }
+
+                InvokeLaunch(targetVer);
+            } catch (Exception ex) {
+                Trace.WriteLine("HandleVersionSelected error: " + ex);
+                ThemedMessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

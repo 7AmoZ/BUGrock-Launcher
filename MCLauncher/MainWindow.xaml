@@ -678,17 +678,46 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <!-- Version Selector Box -->
-                                    <Border Grid.Column="0" Background="#1C1E2A" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="6" Padding="14,10" MinWidth="200">
-                                        <StackPanel>
-                                            <TextBlock Text="SELECTED VERSION" Foreground="#8E92A4" FontSize="10" FontWeight="Bold" Margin="0,0,0,4"/>
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock x:Name="QuickPlayVersionLabel" Text="1.20.73 Release" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
-                                                <TextBlock Text=" &#x25BE;" Foreground="#8E92A4" FontSize="12" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                    <!-- Version Selector Box (Clickable Dropdown) -->
+                                    <Grid Grid.Column="0" VerticalAlignment="Center">
+                                        <Border x:Name="SelectedVersionBox" Cursor="Hand" MouseLeftButtonDown="SelectedVersionBox_Click" CornerRadius="6" Padding="14,10" MinWidth="220" VerticalAlignment="Center">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#1C1E2A"/>
+                                                    <Setter Property="BorderBrush" Value="#2D3042"/>
+                                                    <Setter Property="BorderThickness" Value="1"/>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#252839"/>
+                                                            <Setter Property="BorderBrush" Value="#38A169"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <StackPanel>
+                                                <TextBlock Text="SELECTED VERSION" Foreground="#8E92A4" FontSize="10" FontWeight="Bold" Margin="0,0,0,4"/>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock x:Name="QuickPlayVersionLabel" Text="Select Version" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Grid.Column="1" Text="&#x25BE;" Foreground="#38A169" FontSize="14" FontWeight="Bold" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                                </Grid>
                                             </StackPanel>
-                                            <TextBlock Text="Stable &#x2022; Windows 10/11" Foreground="#606478" FontSize="11" Margin="0,3,0,0"/>
-                                        </StackPanel>
-                                    </Border>
+                                        </Border>
+
+                                        <Popup x:Name="VersionSelectorPopup" PlacementTarget="{Binding ElementName=SelectedVersionBox}" Placement="Bottom" VerticalOffset="6" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
+                                            <Border Background="#161722" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="8" Padding="8" MinWidth="260" MaxWidth="380" MaxHeight="320">
+                                                <Border.Effect>
+                                                    <DropShadowEffect Color="#000000" BlurRadius="18" ShadowDepth="4" Opacity="0.6"/>
+                                                </Border.Effect>
+                                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                                    <StackPanel x:Name="VersionSelectorItemsPanel"/>
+                                                </ScrollViewer>
+                                            </Border>
+                                        </Popup>
+                                    </Grid>
 
                                     <!-- Giant Green Pixel PLAY Button -->
                                     <Button Grid.Column="2" Click="QuickPlayButton_Click" Style="{StaticResource GiantPlayButtonStyle}" Content="PLAY" Width="170" Height="54" VerticalAlignment="Center">
