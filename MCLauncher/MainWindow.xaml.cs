@@ -73,6 +73,7 @@ namespace MCLauncher {
 
             InitializeComponent();
             DeleteAppxAfterDownloadOption.DataContext = this;
+            AutoFetchDecryptionKeysOption.DataContext = this;
             ShowInstalledVersionsOnlyCheckbox.DataContext = this;
 
             var versionListViewRelease = Resources["versionListViewRelease"] as CollectionViewSource;
@@ -366,29 +367,101 @@ namespace MCLauncher {
             }
         }
 
-        private bool ShowGDKFirstUseWarning() {
-            if (!UserPrefs.HasPreviouslyUsedGDK) {
-                var result = ThemedMessageBox.Show(
-                    "The launcher has detected that this is your first time using a GDK version of Minecraft in this launcher.\n" +
-                        "Please be aware of the following:\n\n" +
-                        "You MUST install a GDK version of Minecraft from the Store before attempting to use the launcher for GDK versions.\n" +
-                        "This is because the launcher needs the Store to install the keys to decrypt the installation packages.\n" +
-                        "If you don't, the installation packages may show corruption messages.\n\n" +
-                        "It is STRONGLY recommended to add an exclusion for C:\\XboxGames (or wherever your games install by default) to Windows Defender, " +
-                        "otherwise the installation process will take 10x as long.\n\n" +
-                        "Please also note that the location of your worlds will change when moving from UWP to GDK and vice versa.\n" +
-                        "If you can't find your worlds, you can use Tools -> \"Find my data\" to locate them.",
-                    "Minecraft GDK warning",
-                    MessageBoxButton.OKCancel
-                );
-                if (result == MessageBoxResult.OK) {
-                    UserPrefs.HasPreviouslyUsedGDK = true;
-                    RewritePrefs();
-                    return true;
-                }
+        private static bool IsValidPeExecutable(string filePath) {
+            try {
+                if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return false;
+                using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                if (fs.Length < 64) return false;
+                byte[] buffer = new byte[2];
+                if (fs.Read(buffer, 0, 2) != 2) return false;
+                return buffer[0] == 0x4D && buffer[1] == 0x5A; // 'M', 'Z'
+            } catch {
                 return false;
             }
+        }
 
+        private async Task<bool> CheckGdkPrerequisitesAndWarn(bool isPreview, CancellationToken cancellationToken = default) {
+            if (!UserPrefs.AutoFetchDecryptionKeys) {
+                var res = ThemedMessageBox.Show(
+                    "Auto-fetch decryption keys is currently disabled in Options.\n\n" +
+                    "Modern Minecraft versions (1.21+) require GDK decryption keys to run.\n" +
+                    "If these keys are not present on your system, this installation will fail to decrypt and cannot start.\n\n" +
+                    "Would you like to enable Auto-fetch and proceed?",
+                    "Decryption Keys Required",
+                    MessageBoxButton.YesNoCancel,
+                    MessageBoxImage.Warning
+                );
+
+                if (res == MessageBoxResult.Yes) {
+                    UserPrefs.AutoFetchDecryptionKeys = true;
+                    if (AutoFetchDecryptionKeysOption != null) {
+                        AutoFetchDecryptionKeysOption.IsChecked = true;
+                    }
+                    RewritePrefs();
+                } else if (res == MessageBoxResult.Cancel) {
+                    return false;
+                }
+            }
+
+            if (UserPrefs.AutoFetchDecryptionKeys) {
+                await EnsureGDKDecryptionKeys(isPreview, cancellationToken);
+            }
+
+            return true;
+        }
+
+        private async Task<bool> EnsureGDKDecryptionKeys(bool isPreview, CancellationToken cancellationToken = default) {
+            try {
+                var family = isPreview ? MinecraftPackageFamilies.MINECRAFT_PREVIEW : MinecraftPackageFamilies.MINECRAFT;
+                var pkgManager = new PackageManager();
+                foreach (var pkg in pkgManager.FindPackages(family)) {
+                    if (!pkg.IsDevelopmentMode) {
+                        Trace.WriteLine("Store package detected on system, GDK keys should be available.");
+                        return true;
+                    }
+                }
+
+                Trace.WriteLine("Acquiring GDK decryption keys in background...");
+                UpdateHeroProgress("Acquiring decryption keys in background...", 0, isIndeterminate: true);
+
+                string productId = isPreview ? "9P5X4QVLC2XR" : "9NBLGGH4279M";
+
+                try {
+                    var psi = new ProcessStartInfo {
+                        FileName = "winget.exe",
+                        Arguments = $"install --id {productId} --source msstore --accept-package-agreements --accept-source-agreements",
+                        CreateNoWindow = true,
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
+                    };
+
+                    using var proc = Process.Start(psi);
+                    if (proc != null) {
+                        using var reg = cancellationToken.Register(() => {
+                            try { proc.Kill(); } catch { }
+                        });
+
+                        await proc.WaitForExitAsync(cancellationToken);
+                        Trace.WriteLine($"winget key acquisition finished with exit code {proc.ExitCode}");
+                        if (proc.ExitCode == 0) {
+                            return true;
+                        }
+                    }
+                } catch (Exception ex) {
+                    Trace.WriteLine("winget acquisition attempt error: " + ex.Message);
+                }
+
+                return false;
+            } catch (OperationCanceledException) {
+                throw;
+            } catch (Exception ex) {
+                Trace.WriteLine("EnsureGDKDecryptionKeys error: " + ex.Message);
+                return false;
+            }
+        }
+
+        private bool ShowGDKFirstUseWarning() {
             return true;
         }
 
@@ -473,6 +546,9 @@ namespace MCLauncher {
             _hasGdkExtractTask = true;
             try {
                 cancellationToken.ThrowIfCancellationRequested();
+                if (!await CheckGdkPrerequisitesAndWarn(isPreview, cancellationToken)) {
+                    return false;
+                }
                 directory = Path.GetFullPath(directory);
                 // XVC are encrypted containers, I don't currently know of any way to extract them to an arbitrary directory
                 // For now we just stage the package in XboxGames, and then move the files to the launcher data directory
@@ -578,20 +654,14 @@ namespace MCLauncher {
                 var exeDstPath = Path.Combine(Path.GetFullPath(directory), "Minecraft.Windows.exe");
                 var decryptHelperLogFile = Path.GetTempFileName();
 
-                var helperPath = Path.Combine(Directory.GetCurrentDirectory(), GDK_DECRYPT_HELPER_NAME);
+                var helperPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, GDK_DECRYPT_HELPER_NAME);
 
-                //TODO: these paths probably need to be escaped
-                var command = $@"Invoke-CommandInDesktopPackage `
-                            -PackageFamilyName ""{versionEntry.GamePackageFamily}"" `
-                            -App Game `
-                            -Command \""{helperPath}\"" `
-                            -Args '\""{exeSrcPath}\"" \""{exeTmpPath}\"" \""{decryptHelperLogFile}\"" \""{donePath}\""'
-                        ";
+                var command = $"Invoke-CommandInDesktopPackage -PackageFamilyName '{versionEntry.GamePackageFamily}' -App Game -Command '{helperPath}' -Args '\"{exeSrcPath}\" \"{exeTmpPath}\" \"{decryptHelperLogFile}\" \"{donePath}\"'";
                 Trace.WriteLine("Decrypt command: " + command);
 
                 var processInfo = new ProcessStartInfo {
                     FileName = "powershell.exe",
-                    Arguments = command,
+                    Arguments = $"-NoProfile -NonInteractive -Command \"{command}\"",
                     CreateNoWindow = true,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -640,6 +710,21 @@ namespace MCLauncher {
                     );
                     return false;
                 }
+
+                if (!IsValidPeExecutable(exeTmpPath)) {
+                    Trace.WriteLine("Decrypted exe failed PE header check: still encrypted ciphertext.");
+                    InstallError(
+                        "Failed to decrypt Minecraft.Windows.exe.\n\n" +
+                            "The file is still encrypted because GDK decryption keys were not found on this system.\n" +
+                            "Please make sure 'Auto-fetch decryption keys' is enabled in Options or install Minecraft once from Microsoft Store.",
+                        "Decryption failed: invalid executable header",
+                        filePath,
+                        null
+                    );
+                    try { if (File.Exists(exeTmpPath)) File.Delete(exeTmpPath); } catch { }
+                    return false;
+                }
+
                 Trace.WriteLine("Minecraft executable decrypted successfully");
 
                 cancellationToken.ThrowIfCancellationRequested();
@@ -740,6 +825,25 @@ namespace MCLauncher {
                     }
                     v.StateChangeInfo = new VersionStateChangeInfo(VersionState.Launching);
                     UpdateHeroProgress("Launching Minecraft...", 100, isIndeterminate: true);
+
+                    if (v.PackageType == PackageType.GDK) {
+                        string exePath = Path.Combine(gameDir, "Minecraft.Windows.exe");
+                        if (!IsValidPeExecutable(exePath)) {
+                            Trace.WriteLine("Refusing to launch encrypted/corrupted executable: " + exePath);
+                            ThemedMessageBox.Show(
+                                "Minecraft cannot be launched because Minecraft.Windows.exe is still encrypted.\n\n" +
+                                "Please delete this installation and reinstall it with 'Auto-fetch decryption keys' enabled in Options.",
+                                "Cannot Launch Minecraft",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error
+                            );
+                            _hasLaunchTask = false;
+                            v.StateChangeInfo = null;
+                            HideHeroProgress();
+                            return;
+                        }
+                    }
+
                     try {
                         var pkg = await AppDiagnosticInfo.RequestInfoForPackageAsync(v.GamePackageFamily);
                         if (pkg.Count > 0) {
@@ -1365,6 +1469,11 @@ namespace MCLauncher {
 
         private void DeleteAppxAfterDownloadCheck_Changed(object sender, RoutedEventArgs e) {
             UserPrefs.DeleteAppxAfterDownload = DeleteAppxAfterDownloadOption.IsChecked;
+            RewritePrefs();
+        }
+
+        private void AutoFetchDecryptionKeysCheck_Changed(object sender, RoutedEventArgs e) {
+            UserPrefs.AutoFetchDecryptionKeys = AutoFetchDecryptionKeysOption.IsChecked;
             RewritePrefs();
         }
 

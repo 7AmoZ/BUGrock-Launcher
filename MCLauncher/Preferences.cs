@@ -6,6 +6,8 @@ namespace MCLauncher {
 
         public bool DeleteAppxAfterDownload { get; set; } = true;
 
+        public bool AutoFetchDecryptionKeys { get; set; } = true;
+
         [JsonProperty("VersionsApi")]
         public string VersionsApiUWP { get; set; } = "";
 

@@ -478,6 +478,7 @@
                         <MenuItem Header="Find my Minecraft data" Click="MenuItemFindMyDataClicked" />
                     </MenuItem>
                     <MenuItem Header="_Options">
+                        <MenuItem Header="Auto-fetch decryption keys for modern versions" IsCheckable="True" Name="AutoFetchDecryptionKeysOption" Checked="AutoFetchDecryptionKeysCheck_Changed" Unchecked="AutoFetchDecryptionKeysCheck_Changed" IsChecked="{Binding UserPrefs.AutoFetchDecryptionKeys}" ToolTip="When enabled, the launcher automatically acquires prerequisite keys in the background to decrypt modern GDK versions seamlessly." />
                         <MenuItem Header="Delete packages (.appx / .msixvc) after extraction" IsCheckable="True" Name="DeleteAppxAfterDownloadOption" Checked="DeleteAppxAfterDownloadCheck_Changed" Unchecked="DeleteAppxAfterDownloadCheck_Changed" IsChecked="{Binding UserPrefs.DeleteAppxAfterDownload}" ToolTip="When checked, downloaded package files are automatically deleted after extraction to save disk space." />
                         <MenuItem Header="Set version data endpoints..." Name="SetVersionListEndpoint" Click="MenuItemSetVersionListEndpointClicked" />
                     </MenuItem>
