@@ -285,7 +285,7 @@ namespace MCLauncher {
             );
         }
 
-        private async Task<bool> ExtractAppx(string filePath, string directory, Version versionEntry) {
+        private async Task<bool> ExtractAppx(string filePath, string directory, Version versionEntry, CancellationToken cancellationToken = default) {
             versionEntry.StateChangeInfo = new VersionStateChangeInfo(VersionState.Extracting);
             try {
                 await Task.Run(() => {
@@ -302,6 +302,8 @@ namespace MCLauncher {
                         Directory.CreateDirectory(fullTargetDir);
 
                         foreach (var entry in archive.Entries) {
+                            cancellationToken.ThrowIfCancellationRequested();
+
                             string destinationPath = Path.GetFullPath(Path.Combine(fullTargetDir, entry.FullName));
                             if (!destinationPath.StartsWith(fullTargetDir, StringComparison.OrdinalIgnoreCase)) {
                                 continue;
@@ -320,24 +322,37 @@ namespace MCLauncher {
                             current++;
                             if (current % 15 == 0 || current == totalEntries) {
                                 int progressVal = current;
+                                int percent = totalEntries > 0 ? (int)((long)current * 100 / totalEntries) : 0;
+                                int remaining = 100 - percent;
                                 Dispatcher.BeginInvoke(() => {
                                     if (versionEntry.StateChangeInfo != null) {
                                         versionEntry.StateChangeInfo.Progress = progressVal;
                                     }
                                 });
+                                UpdateHeroProgress($"Extracting... {percent}% ({remaining}% remaining)", percent, false);
                             }
                         }
                     }
+
+                    cancellationToken.ThrowIfCancellationRequested();
 
                     string sigPath = Path.Combine(directory, "AppxSignature.p7x");
                     if (File.Exists(sigPath)) {
                         File.Delete(sigPath);
                     }
-                });
+                }, cancellationToken);
 
                 versionEntry.UpdateInstallStatus();
 
                 return true;
+            } catch (OperationCanceledException) {
+                Trace.WriteLine("ExtractAppx was cancelled by user.");
+                try {
+                    if (Directory.Exists(directory)) {
+                        Directory.Delete(directory, recursive: true);
+                    }
+                } catch { }
+                return false;
             } catch (InvalidDataException ex) {
                 InstallError(
                     "File seems to be corrupted or not an APPX file",
@@ -445,7 +460,7 @@ namespace MCLauncher {
             return "";
         }
 
-        private async Task<bool> ExtractMsixvc(string filePath, string directory, Version versionEntry, bool isPreview) {
+        private async Task<bool> ExtractMsixvc(string filePath, string directory, Version versionEntry, bool isPreview, CancellationToken cancellationToken = default) {
             if (_hasGdkExtractTask) {
                 InstallError(
                     "Can't install multiple MSIXVC packages at the same time. Please wait for the current installation to finish before starting a new one.",
@@ -457,6 +472,7 @@ namespace MCLauncher {
             }
             _hasGdkExtractTask = true;
             try {
+                cancellationToken.ThrowIfCancellationRequested();
                 directory = Path.GetFullPath(directory);
                 // XVC are encrypted containers, I don't currently know of any way to extract them to an arbitrary directory
                 // For now we just stage the package in XboxGames, and then move the files to the launcher data directory
@@ -482,8 +498,16 @@ namespace MCLauncher {
                     return false;
                 }
 
+                cancellationToken.ThrowIfCancellationRequested();
+
                 try {
-                    await DeploymentProgressWrapper(packageManager.StagePackageAsync(new Uri(filePath), null), versionEntry);
+                    await DeploymentProgressWrapper(packageManager.StagePackageAsync(new Uri(filePath), null), versionEntry, cancellationToken);
+                } catch (OperationCanceledException) {
+                    Trace.WriteLine("StagePackageAsync cancelled by user.");
+                    try {
+                        await UnregisterPackage(versionEntry.GamePackageFamily, versionEntry, skipBackup: true);
+                    } catch { }
+                    return false;
                 } catch (Exception ex) {
                     InstallError(
                         "Failed to stage package.\n" +
@@ -497,6 +521,8 @@ namespace MCLauncher {
                     );
                     return false;
                 }
+
+                cancellationToken.ThrowIfCancellationRequested();
 
                 string installPath = "";
                 foreach (var pkg in new PackageManager().FindPackages(versionEntry.GamePackageFamily)) {
@@ -537,7 +563,10 @@ namespace MCLauncher {
                     return false;
                 }
 
+                cancellationToken.ThrowIfCancellationRequested();
+
                 versionEntry.StateChangeInfo.VersionState = VersionState.Decrypting;
+                UpdateHeroProgress("Decrypting Minecraft.Windows.exe...", 100, isIndeterminate: true);
 
                 var exeTmpDir = Path.GetTempPath();
                 var uuid = Guid.NewGuid().ToString();
@@ -587,11 +616,14 @@ namespace MCLauncher {
                 }
 
                 for (int i = 0; i < 300 && !File.Exists(donePath); i++) {
+                    cancellationToken.ThrowIfCancellationRequested();
                     //Give it up to 30 seconds to copy the file
                     //We can't block on the outcome of Invoke-CommandInDesktopPackage, so we have to poll for the file
                     //TODO: What if the copy takes longer than that?
-                    await Task.Delay(100);
+                    await Task.Delay(100, cancellationToken);
                 }
+
+                cancellationToken.ThrowIfCancellationRequested();
 
                 Trace.WriteLine("Decrypt helper log output: " + SafeReadAllText(decryptHelperLogFile));
 
@@ -610,7 +642,11 @@ namespace MCLauncher {
                 }
                 Trace.WriteLine("Minecraft executable decrypted successfully");
 
+                cancellationToken.ThrowIfCancellationRequested();
+
                 versionEntry.StateChangeInfo.VersionState = VersionState.Moving;
+                UpdateHeroProgress("Finalizing installation files...", 100, isIndeterminate: true);
+
                 //TODO: this could fail if the launcher is on a different drive than C: ?
                 try {
                     Trace.WriteLine("Moving staged files: " + installPath + " -> " + directory);
@@ -654,6 +690,15 @@ namespace MCLauncher {
                 Trace.WriteLine("Done importing msixvc: " + filePath);
                 return true;
 
+            } catch (OperationCanceledException) {
+                Trace.WriteLine("ExtractMsixvc cancelled by user.");
+                try {
+                    await UnregisterPackage(versionEntry.GamePackageFamily, versionEntry, skipBackup: true);
+                } catch { }
+                try {
+                    if (Directory.Exists(directory)) Directory.Delete(directory, true);
+                } catch { }
+                return false;
             } finally {
                 _hasGdkExtractTask = false;
             }
@@ -670,55 +715,78 @@ namespace MCLauncher {
                 return;
             _hasLaunchTask = true;
             Task.Run(async () => {
-                v.StateChangeInfo = new VersionStateChangeInfo(VersionState.MovingData);
-                if (!MoveMinecraftData(v.GamePackageFamily, v.PackageType)) {
-                    Trace.WriteLine("Data restore error, aborting launch");
-                    v.StateChangeInfo = null;
-                    _hasLaunchTask = false;
-                    return;
-                }
-                v.StateChangeInfo = new VersionStateChangeInfo(VersionState.Registering);
-                string gameDir = Path.GetFullPath(v.GameDirectory);
                 try {
-                    await ReRegisterPackage(v.GamePackageFamily, gameDir, v);
-                } catch (Exception e) {
-                    Trace.WriteLine("App re-register failed:\n" + e.ToString());
-                    ThemedMessageBox.Show("App re-register failed:\n" + e.ToString());
-                    _hasLaunchTask = false;
-                    v.StateChangeInfo = null;
-                    return;
-                }
-                v.StateChangeInfo = new VersionStateChangeInfo(VersionState.Launching);
-                try {
-                    var pkg = await AppDiagnosticInfo.RequestInfoForPackageAsync(v.GamePackageFamily);
-                    if (pkg.Count > 0) {
-                        if (pkg.Count > 1) {
-                            Trace.WriteLine("Multiple packages found ???");
-                        }
-                        var result = await pkg[0].LaunchAsync();
-                        if (result.ExtendedError != null) {
-                            Trace.WriteLine("LaunchAsync didn't throw, but returned an extended error???");
-                            throw result.ExtendedError;
-                        }
-                    } else {
-                        throw new Exception("No packages found for package family " + v.GamePackageFamily);
+                    v.StateChangeInfo = new VersionStateChangeInfo(VersionState.MovingData);
+                    UpdateHeroProgress("Restoring Minecraft worlds...", 100, isIndeterminate: true);
+                    if (!MoveMinecraftData(v.GamePackageFamily, v.PackageType)) {
+                        Trace.WriteLine("Data restore error, aborting launch");
+                        v.StateChangeInfo = null;
+                        _hasLaunchTask = false;
+                        HideHeroProgress();
+                        return;
                     }
-                    Trace.WriteLine("App launch finished!");
-                } catch (Exception e) {
-                    Trace.WriteLine("App launch failed:\n" + e.ToString());
-                    ThemedMessageBox.Show("App launch failed:\n" + e.ToString());
-                    return;
-                } finally {
+                    v.StateChangeInfo = new VersionStateChangeInfo(VersionState.Registering);
+                    UpdateHeroProgress("Registering package...", 100, isIndeterminate: true);
+                    string gameDir = Path.GetFullPath(v.GameDirectory);
+                    try {
+                        await ReRegisterPackage(v.GamePackageFamily, gameDir, v);
+                    } catch (Exception e) {
+                        Trace.WriteLine("App re-register failed:\n" + e.ToString());
+                        ThemedMessageBox.Show("App re-register failed:\n" + e.ToString());
+                        _hasLaunchTask = false;
+                        v.StateChangeInfo = null;
+                        HideHeroProgress();
+                        return;
+                    }
+                    v.StateChangeInfo = new VersionStateChangeInfo(VersionState.Launching);
+                    UpdateHeroProgress("Launching Minecraft...", 100, isIndeterminate: true);
+                    try {
+                        var pkg = await AppDiagnosticInfo.RequestInfoForPackageAsync(v.GamePackageFamily);
+                        if (pkg.Count > 0) {
+                            if (pkg.Count > 1) {
+                                Trace.WriteLine("Multiple packages found ???");
+                            }
+                            var result = await pkg[0].LaunchAsync();
+                            if (result.ExtendedError != null) {
+                                Trace.WriteLine("LaunchAsync didn't throw, but returned an extended error???");
+                                throw result.ExtendedError;
+                            }
+                        } else {
+                            throw new Exception("No packages found for package family " + v.GamePackageFamily);
+                        }
+                        Trace.WriteLine("App launch finished!");
+                    } catch (Exception e) {
+                        Trace.WriteLine("App launch failed:\n" + e.ToString());
+                        ThemedMessageBox.Show("App launch failed:\n" + e.ToString());
+                        return;
+                    } finally {
+                        _hasLaunchTask = false;
+                        v.StateChangeInfo = null;
+                        HideHeroProgress();
+                    }
+                } catch {
                     _hasLaunchTask = false;
                     v.StateChangeInfo = null;
+                    HideHeroProgress();
                 }
             });
         }
 
-        private async Task DeploymentProgressWrapper(IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress> t, Version? version) {
+        private async Task DeploymentProgressWrapper(IAsyncOperationWithProgress<DeploymentResult, DeploymentProgress> t, Version? version, CancellationToken cancellationToken = default) {
             TaskCompletionSource<int> src = new TaskCompletionSource<int>();
+            using var reg = cancellationToken.Register(() => {
+                try {
+                    t.Cancel();
+                    src.TrySetCanceled(cancellationToken);
+                } catch { }
+            });
+
             t.Progress += (v, p) => {
                 Trace.WriteLine("Deployment progress: " + p.state + " " + p.percentage + "%");
+                int pct = (int)p.percentage;
+                int remaining = 100 - pct;
+                UpdateHeroProgress($"Staging package... {pct}% ({remaining}% remaining)", pct, false);
+
                 if (version?.StateChangeInfo != null) {
                     Dispatcher.BeginInvoke(() => {
                         if (version.StateChangeInfo != null) {
@@ -729,12 +797,14 @@ namespace MCLauncher {
                 }
             };
             t.Completed += (v, p) => {
-                if (p == AsyncStatus.Error) {
+                if (p == AsyncStatus.Canceled) {
+                    src.TrySetCanceled(cancellationToken);
+                } else if (p == AsyncStatus.Error) {
                     Trace.WriteLine("Deployment failed: " + v.GetResults().ErrorText + " (error code " + v.GetResults().ExtendedErrorCode.HResult + ")");
-                    src.SetException(new Exception("Deployment failed: " + v.GetResults().ErrorText));
+                    src.TrySetException(new Exception("Deployment failed: " + v.GetResults().ErrorText));
                 } else {
                     Trace.WriteLine("Deployment done: " + p);
-                    src.SetResult(1);
+                    src.TrySetResult(1);
                 }
             };
             await src.Task;
@@ -1466,9 +1536,83 @@ namespace MCLauncher {
             return _versions.FirstOrDefault(v => v.IsInstalled);
         }
 
+        private CancellationTokenSource? _heroCancelSource = null;
+        private bool _isHeroOperationRunning = false;
+
+        private void ShowHeroProgress(string action, string initialStatus) {
+            if (!Dispatcher.CheckAccess()) {
+                Dispatcher.BeginInvoke(() => ShowHeroProgress(action, initialStatus));
+                return;
+            }
+            _isHeroOperationRunning = true;
+            if (HeroStatusAction != null) HeroStatusAction.Text = action;
+            if (HeroStatusBadge != null) {
+                if (action == "DOWNGRADING") {
+                    HeroStatusBadge.Background = new SolidColorBrush(Color.FromRgb(0x2D, 0x25, 0x18));
+                    HeroStatusBadge.BorderBrush = new SolidColorBrush(Color.FromRgb(0xD6, 0x9E, 0x2E));
+                    if (HeroStatusAction != null) HeroStatusAction.Foreground = new SolidColorBrush(Color.FromRgb(0xF6, 0xAD, 0x55));
+                } else {
+                    HeroStatusBadge.Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x2E, 0x22));
+                    HeroStatusBadge.BorderBrush = new SolidColorBrush(Color.FromRgb(0x38, 0xA1, 0x69));
+                    if (HeroStatusAction != null) HeroStatusAction.Foreground = new SolidColorBrush(Color.FromRgb(0x38, 0xA1, 0x69));
+                }
+            }
+            if (HeroStatusDetail != null) HeroStatusDetail.Text = initialStatus;
+            if (HeroProgressBar != null) {
+                HeroProgressBar.Value = 0;
+                HeroProgressBar.IsIndeterminate = false;
+            }
+            if (HeroCancelButton != null) HeroCancelButton.IsEnabled = true;
+            if (HeroProgressContainer != null) HeroProgressContainer.Visibility = Visibility.Visible;
+            if (QuickPlayButton != null) QuickPlayButton.IsEnabled = false;
+        }
+
+        private void UpdateHeroProgress(string statusDetail, double percent, bool isIndeterminate = false) {
+            if (!Dispatcher.CheckAccess()) {
+                Dispatcher.BeginInvoke(() => UpdateHeroProgress(statusDetail, percent, isIndeterminate));
+                return;
+            }
+            if (!_isHeroOperationRunning) return;
+            if (HeroStatusDetail != null) HeroStatusDetail.Text = statusDetail;
+            if (HeroProgressBar != null) {
+                HeroProgressBar.IsIndeterminate = isIndeterminate;
+                if (!isIndeterminate) {
+                    HeroProgressBar.Value = Math.Clamp(percent, 0, 100);
+                }
+            }
+        }
+
+        private void HideHeroProgress() {
+            if (!Dispatcher.CheckAccess()) {
+                Dispatcher.BeginInvoke(HideHeroProgress);
+                return;
+            }
+            _isHeroOperationRunning = false;
+            if (_heroCancelSource != null) {
+                try { _heroCancelSource.Dispose(); } catch { }
+                _heroCancelSource = null;
+            }
+            if (HeroProgressContainer != null) HeroProgressContainer.Visibility = Visibility.Collapsed;
+            if (QuickPlayButton != null) QuickPlayButton.IsEnabled = true;
+        }
+
+        private void HeroCancelButton_Click(object sender, RoutedEventArgs e) {
+            if (_heroCancelSource != null && !_heroCancelSource.IsCancellationRequested) {
+                try {
+                    if (HeroStatusDetail != null) HeroStatusDetail.Text = "Cancelling...";
+                    if (HeroCancelButton != null) HeroCancelButton.IsEnabled = false;
+                    _heroCancelSource.Cancel();
+                } catch (Exception ex) {
+                    Trace.WriteLine("Hero cancel error: " + ex);
+                }
+            }
+        }
+
         private void QuickPlayButton_Click(object sender, RoutedEventArgs e) {
+            if (_isHeroOperationRunning) return;
             var active = GetCurrentlyActiveVersion();
             if (active != null) {
+                ShowHeroProgress("LAUNCHING", "Preparing launch...");
                 InvokeLaunch(active);
             } else {
                 ThemedMessageBox.Show("No version is currently installed. Please select a version in the Installations tab or choose a package from the version selector to install it.", "BUGrock Launcher", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -1629,6 +1773,8 @@ namespace MCLauncher {
             if (e.ChangedButton != MouseButton.Left) return;
             e.Handled = true;
 
+            if (_isHeroOperationRunning) return;
+
             if (_wasPopupOpenOnMouseDown) {
                 if (VersionSelectorPopup != null) VersionSelectorPopup.IsOpen = false;
                 return;
@@ -1788,6 +1934,7 @@ namespace MCLauncher {
                 if (isSame) {
                     _selectedQuickPlayVersion = targetVer;
                     UpdateQuickPlayStatus();
+                    ShowHeroProgress("LAUNCHING", "Launching Minecraft...");
                     InvokeLaunch(targetVer);
                     return;
                 }
@@ -1821,18 +1968,32 @@ namespace MCLauncher {
                     string targetDir = Path.Combine(baseDir, (candidate.VersionType == VersionType.Preview ? "Minecraft-Preview-" : "Minecraft-") + candidate.Name);
                     targetVer.GameDirectory = targetDir;
 
+                    _heroCancelSource = new CancellationTokenSource();
+                    ShowHeroProgress(actionType, "Preparing package...");
+
                     bool extractSuccess = false;
-                    if (candidate.PackageType == PackageType.UWP) {
-                        extractSuccess = await ExtractAppx(candidate.PackageFilePath, targetDir, targetVer);
-                    } else if (candidate.PackageType == PackageType.GDK) {
-                        if (!ShowGDKFirstUseWarning()) {
-                            return;
+                    try {
+                        if (candidate.PackageType == PackageType.UWP) {
+                            extractSuccess = await ExtractAppx(candidate.PackageFilePath, targetDir, targetVer, _heroCancelSource.Token);
+                        } else if (candidate.PackageType == PackageType.GDK) {
+                            if (!ShowGDKFirstUseWarning()) {
+                                HideHeroProgress();
+                                return;
+                            }
+                            extractSuccess = await ExtractMsixvc(candidate.PackageFilePath, targetDir, targetVer, isPreview: candidate.VersionType == VersionType.Preview, cancellationToken: _heroCancelSource.Token);
                         }
-                        extractSuccess = await ExtractMsixvc(candidate.PackageFilePath, targetDir, targetVer, isPreview: candidate.VersionType == VersionType.Preview);
+                    } catch (OperationCanceledException) {
+                        Trace.WriteLine("HandleVersionSelected: Operation cancelled by user.");
+                        extractSuccess = false;
                     }
 
                     if (!extractSuccess) {
-                        ThemedMessageBox.Show("Failed to extract package. Check log for details.", "Extraction Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        if (_heroCancelSource != null && _heroCancelSource.IsCancellationRequested) {
+                            ThemedMessageBox.Show("Operation was cancelled.", "Cancelled", MessageBoxButton.OK, MessageBoxImage.Information);
+                        } else {
+                            ThemedMessageBox.Show("Failed to extract package. Check log for details.", "Extraction Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                        HideHeroProgress();
                         return;
                     }
 
@@ -1840,8 +2001,10 @@ namespace MCLauncher {
                     candidate.InstalledDirectory = targetDir;
                 }
 
+                ShowHeroProgress(actionType, "Launching Minecraft...");
                 InvokeLaunch(targetVer);
             } catch (Exception ex) {
+                HideHeroProgress();
                 Trace.WriteLine("HandleVersionSelected error: " + ex);
                 ThemedMessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }

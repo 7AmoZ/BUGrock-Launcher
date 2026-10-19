@@ -189,6 +189,37 @@
             </Setter>
         </Style>
 
+        <!-- Hero Cancel Button Style -->
+        <Style x:Key="HeroCancelButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#8E92A4"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="22"/>
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" Background="{TemplateBinding Background}" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#E53E3E"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#C53030"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Template for Version Not Installed (Clean Card with Subtle Contrast, Bedrock Block Icon, Gray RELEASE badge, DOWNLOAD button) -->
         <DataTemplate x:Key="templateVersionNotInstalled" DataType="{x:Type local:Version}">
             <Border Background="#1C1E2A" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="8" Margin="0,0,0,10" Padding="16,14">
@@ -719,8 +750,43 @@
                                         </Popup>
                                     </Grid>
 
+                                    <!-- Middle Hero Progress Card (Update / Downgrade / Extraction / Launching) -->
+                                    <Border x:Name="HeroProgressContainer" Grid.Column="1" Visibility="Collapsed" Margin="14,0,14,0" Background="#1C1E2A" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="6" Padding="14,8" VerticalAlignment="Center" Height="52">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="#000000" BlurRadius="12" ShadowDepth="3" Opacity="0.4"/>
+                                        </Border.Effect>
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Top Row: Action Badge + Status Text -->
+                                            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,6">
+                                                <Border x:Name="HeroStatusBadge" Background="#1C2E22" BorderBrush="#38A169" BorderThickness="1" CornerRadius="4" Padding="6,1" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                    <TextBlock x:Name="HeroStatusAction" Text="UPDATING" Foreground="#38A169" FontSize="9" FontWeight="Bold"/>
+                                                </Border>
+                                                <TextBlock x:Name="HeroStatusDetail" Text="Preparing..." Foreground="#E2E8F0" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+
+                                            <!-- Cancel Button (✕) -->
+                                            <Button x:Name="HeroCancelButton" Grid.Row="0" Grid.Column="1" Click="HeroCancelButton_Click" Style="{StaticResource HeroCancelButtonStyle}" ToolTip="Cancel operation" VerticalAlignment="Center" Margin="0,0,0,6">
+                                                <TextBlock Text="&#x2715;" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Button>
+
+                                            <!-- Bottom Row: Green Progress Bar -->
+                                            <Canvas x:Name="HeroProgressSizeHack" Grid.Row="1" Grid.ColumnSpan="2" Height="4">
+                                                <ProgressBar x:Name="HeroProgressBar" Width="{Binding Path=ActualWidth, ElementName=HeroProgressSizeHack, Mode=OneWay}" Height="{Binding Path=ActualHeight, ElementName=HeroProgressSizeHack, Mode=OneWay}" Minimum="0" Maximum="100" Value="0" Foreground="#38A169" Background="#12131A" BorderThickness="0"/>
+                                            </Canvas>
+                                        </Grid>
+                                    </Border>
+
                                     <!-- Giant Green Pixel PLAY Button -->
-                                    <Button Grid.Column="2" Click="QuickPlayButton_Click" Style="{StaticResource GiantPlayButtonStyle}" Content="PLAY" Width="170" Height="54" VerticalAlignment="Center">
+                                    <Button x:Name="QuickPlayButton" Grid.Column="2" Click="QuickPlayButton_Click" Style="{StaticResource GiantPlayButtonStyle}" Content="PLAY" Width="170" Height="54" VerticalAlignment="Center">
                                         <Button.Effect>
                                             <DropShadowEffect Color="#000000" BlurRadius="14" ShadowDepth="4" Opacity="0.4"/>
                                         </Button.Effect>
