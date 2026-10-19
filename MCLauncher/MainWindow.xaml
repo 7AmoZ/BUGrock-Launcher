@@ -660,10 +660,10 @@
 
                                 <!-- Integrated BUGrock Launcher 3D Stone Title Logo -->
                                 <Image Source="Assets/bugrock_logo.png" 
-                                       Height="165" 
+                                       Height="210" 
                                        HorizontalAlignment="Center" 
                                        VerticalAlignment="Top" 
-                                       Margin="0,15,0,0"
+                                       Margin="0,10,0,0"
                                        RenderOptions.BitmapScalingMode="HighQuality">
                                     <Image.Effect>
                                         <DropShadowEffect Color="#000000" BlurRadius="28" ShadowDepth="4" Opacity="0.65"/>
