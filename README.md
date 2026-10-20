@@ -78,6 +78,15 @@ Because all Bedrock Release builds share the same Windows package family (`Micro
 
 ---
 
-## 📄 License
+## 📄 License & Legal Notice
 
-This project is licensed under the **GNU General Public License v3.0 (GPL-3.0)** — see the [LICENSE.txt](LICENSE.txt) file for details.
+**BUGrock Launcher** is free and open-source software licensed under the **GNU General Public License v3.0 (GPL-3.0)** — see the [LICENSE.txt](LICENSE.txt) file for the full license text.
+
+- **Copyright © 2026 [7AmoZ](https://github.com/7AmoZ)** — UI redesign, Quick Play & version switcher, 3D skin viewer, GDK decryption key automation, codebase refactoring, and security/stability fixes (modified 2026).
+- **Third-Party Libraries**: Includes [TinyXML-2](https://github.com/leethomason/tinyxml2) under the zlib License, and [Newtonsoft.Json](https://www.newtonsoft.com/json) under the MIT License.
+- **Trademark Disclaimer**: **NOT AN OFFICIAL MINECRAFT PRODUCT. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.** *Minecraft* is a registered trademark of Mojang Synergies AB / Microsoft Corporation. All game packages and assets remain the property of their respective owners and require a valid Microsoft Store license.
+
+---
+
+###### Credits & Upstream Attribution
+<sub>In compliance with Section 5 of the GNU General Public License v3.0, this project is a heavily modified and refactored derivative work originally based on the open-source <a href="https://github.com/MCMrARM/mc-w10-version-launcher">mc-w10-version-launcher</a> / <a href="https://github.com/dktapps-pm-pl/mc-w10-version-launcher">MCLauncher</a> project by MCMrARM, dktapps, and contributors, licensed under GPL-3.0.</sub>
