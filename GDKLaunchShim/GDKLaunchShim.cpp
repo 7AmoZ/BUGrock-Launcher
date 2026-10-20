@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <string>
 #include <iostream>
+#include <cstdlib>
 
 #include <combaseapi.h>
 #include <hstring.h>
@@ -66,16 +67,17 @@ int showError(const wchar_t* name, HRESULT error) {
     return error;
 }
 
-int getTitleId(std::wstring& dir) {
+unsigned int getTitleId(std::wstring& dir) {
     std::wstring gameConfigPath = dir + L"\\MicrosoftGame.Config";
-    FILE* fp;
+    FILE* fp = nullptr;
     errno_t err = _wfopen_s(&fp, gameConfigPath.c_str(), L"rb");
-    if (err) {
+    if (err || !fp) {
         showError(L"Loading MicrosoftGame.Config", err);
         return 0;
     }
     tinyxml2::XMLDocument gameConfig;
     tinyxml2::XMLError xmlResult = gameConfig.LoadFile(fp);
+    fclose(fp);
     if (xmlResult != tinyxml2::XML_SUCCESS) {
         showError(L"Parsing MicrosoftGame.Config", xmlResult);
         return 0;
@@ -87,16 +89,19 @@ int getTitleId(std::wstring& dir) {
         return 0;
     }
     tinyxml2::XMLElement* titleIdElement = root->FirstChildElement("TitleId");
-    if (!titleIdElement) {
+    if (!titleIdElement || !titleIdElement->GetText()) {
         showError(L"Unable to find Game.TitleId element in MicrosoftGame.Config", 0);
         return 0;
     }
 
-    return std::stoi(titleIdElement->GetText(), nullptr, 16);
+    return static_cast<unsigned int>(std::strtoul(titleIdElement->GetText(), nullptr, 16));
 }
 
 DWORD findMinecraftProcess(std::wstring& fullExePath) {
     HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snap == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
     PROCESSENTRY32W pe{};
     pe.dwSize = sizeof(pe);
 
@@ -112,12 +117,12 @@ DWORD findMinecraftProcess(std::wstring& fullExePath) {
             scanned++;
             DWORD pathSize = MAX_PATH;
             std::wstring path(pathSize, L'\0');
-            QueryFullProcessImageNameW(hproc, 0, path.data(), &pathSize);
-            if (pathSize == 0) {
+            BOOL ok = QueryFullProcessImageNameW(hproc, 0, path.data(), &pathSize);
+            CloseHandle(hproc);
+            if (!ok || pathSize == 0) {
                 continue;
             }
             path.resize(pathSize);
-            CloseHandle(hproc);
 
             //TODO: need to check this works with long paths?
             if (_wcsicmp(path.c_str(), fullExePath.c_str()) == 0) {
@@ -132,7 +137,7 @@ DWORD findMinecraftProcess(std::wstring& fullExePath) {
     return result;
 }
 
-int activateRunningInstance(PWSTR lpCmdLine, int titleId) {
+int activateRunningInstance(PWSTR lpCmdLine, unsigned int titleId) {
     HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
     IGameProtocolProvider_V1* iface = NULL;
@@ -146,13 +151,13 @@ int activateRunningInstance(PWSTR lpCmdLine, int titleId) {
         isUri = true;
     } else {
         //strip long path prefix
-        if (wcsncmp(lpCmdLine, L"\\?\\\\", 4) == 0 || wcsncmp(lpCmdLine, L"\\??\\", 4) == 0) {
+        if (wcsncmp(lpCmdLine, L"\\\\?\\", 4) == 0 || wcsncmp(lpCmdLine, L"\\??\\", 4) == 0) {
             lpCmdLine = &lpCmdLine[4];
         }
     }
 
-    HSTRING hstring;
-    hr = WindowsCreateString(lpCmdLine, wcslen(lpCmdLine), &hstring);
+    HSTRING hstring = NULL;
+    hr = WindowsCreateString(lpCmdLine, static_cast<UINT32>(wcslen(lpCmdLine)), &hstring);
     if (hr < 0) {
         iface->Release();
         return showError(L"WindowsCreateString failed", hr);
@@ -162,9 +167,10 @@ int activateRunningInstance(PWSTR lpCmdLine, int titleId) {
     if (isUri) {
         hr = iface->NotifyGameProtocolActivation(titleId, hstring, &wasRegistered);
     } else {
-        IGameProtocolProvider_V2* iface2;
+        IGameProtocolProvider_V2* iface2 = NULL;
         hr = iface->QueryInterface(&iface2);
         if (hr < 0) {
+            WindowsDeleteString(hstring);
             iface->Release();
             return showError(L"Your version of GamingServices doesn't support importing files while the game is running. Try opening the file while the game is not running.", hr);
         } else {
@@ -175,6 +181,7 @@ int activateRunningInstance(PWSTR lpCmdLine, int titleId) {
         iface2->Release();
     }
 
+    WindowsDeleteString(hstring);
     iface->Release();
     return hr < 0 ? showError((std::wstring(isUri ? L"NotifyGameProtocolActivation failed" : L"NotifyGameFileActivation failed") + std::wstring(L" with args: ") + std::wstring(lpCmdLine)).data(), hr) : hr;
 }
@@ -201,7 +208,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLin
     
     if (findMinecraftProcess(mainExe) > 0) {
         if (lpCmdLine != NULL && lpCmdLine[0] != '\0') {
-            int titleId = getTitleId(dir);
+            unsigned int titleId = getTitleId(dir);
             activateRunningInstance(lpCmdLine, titleId);
             return 0;
         } else {
@@ -214,21 +221,21 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdLin
     }
 
     STARTUPINFOW si = { };
+    si.cb = sizeof(si);
     PROCESS_INFORMATION pi = { };
 
     //Wtf Windows. We need a space before the command line to make CreateProcess pass the args properly
-    wchar_t cmdLine[1024] = { 0 };
-    swprintf_s(cmdLine, L" %s", lpCmdLine);
+    std::wstring cmdLineStr = std::wstring(L" ") + (lpCmdLine ? lpCmdLine : L"");
 
     BOOL result = CreateProcessW(
-        mainExe.c_str(),   // application name
-        cmdLine,              // command line
-        NULL,              // process security
-        NULL,              // thread security
-        FALSE,             // inherit handles
-        0,                 // creation flags
-        NULL,              // environment
-        NULL,       // working directory
+        mainExe.c_str(),       // application name
+        cmdLineStr.data(),     // command line
+        NULL,                  // process security
+        NULL,                  // thread security
+        FALSE,                 // inherit handles
+        0,                     // creation flags
+        NULL,                  // environment
+        NULL,                  // working directory
         &si,
         &pi
     );

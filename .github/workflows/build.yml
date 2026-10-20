@@ -30,10 +30,10 @@ jobs:
         uses: NuGet/setup-nuget@v2
 
       - name: Restore NuGet Packages
-        run: nuget restore MCLauncher.sln
+        run: nuget restore BUGrockLauncher.sln
 
       - name: Build Solution (x64 Release)
-        run: msbuild MCLauncher.sln /p:Configuration=Release /p:Platform=x64 /p:RestorePackagesConfig=true /m
+        run: msbuild BUGrockLauncher.sln /p:Configuration=Release /p:Platform=x64 /p:RestorePackagesConfig=true /m
 
       - name: Package Release Files
         shell: pwsh

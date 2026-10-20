@@ -37,18 +37,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     std::filesystem::path logPath = logFile;
     std::ofstream log(logPath, std::ios::app);
 
-    WCHAR tempPath[MAX_PATH];
-    WCHAR tempFile[MAX_PATH];
-
-    DWORD length = GetTempPathW(MAX_PATH, tempPath);
-    if (length == 0 || length > MAX_PATH) {
-        return error(log, "Failed to get system temp path", doneFile);
-    }
-
-    if (GetTempFileNameW(tempPath, L"MCLauncher", 0, tempFile) == 0) {
-        return error(log, "Failed to allocate temporary file for copying exe", doneFile);
-    }
-
     if (CopyFileW(exeSrcPath, exeDstPath, 0) == 0) {
         return error(log, "Failed to copy exe to temporary file", doneFile);
     }

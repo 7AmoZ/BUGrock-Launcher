@@ -1,4 +1,4 @@
-# MCLauncher
+# BUGrock Launcher
 
 This tool allows you to install several versions of Minecraft: Windows 10 Edition (Bedrock) side-by-side.
 This is useful if you want to test beta versions, releases or anything else side-by-side without needing to uninstall and reinstall the game.
@@ -15,7 +15,7 @@ This tool will **not** help you to pirate the game; it requires that you have a 
 
 ## Setup
 - Download the latest release from the [Releases](https://github.com/MCMrARM/mc-w10-version-launcher/releases) section. Unzip it somewhere.
-- Run `MCLauncher.exe` to start the launcher.
+- Run `BUGrock_Launcher.exe` to start the launcher.
 
 ## Common Pitfalls and Issues
 Unfortunately the launcher has become quite unreliable with the migration to GDK.
