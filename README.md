@@ -1,55 +1,83 @@
 # BUGrock Launcher
 
-This tool allows you to install several versions of Minecraft: Windows 10 Edition (Bedrock) side-by-side.
-This is useful if you want to test beta versions, releases or anything else side-by-side without needing to uninstall and reinstall the game.
+A modern, feature-rich custom launcher for **Minecraft: Bedrock Edition** on Windows 10 & Windows 11, supporting both modern **GDK (`.msixvc`)** and legacy **UWP (`.appx`)** builds side-by-side.
 
-## Disclaimer
-This tool will **not** help you to pirate the game; it requires that you have a Microsoft account which can be used to download Minecraft from the Store.
+---
 
-## Prerequisites
-- A Microsoft account connected to Microsoft Store which **owns Minecraft for Windows 10**
-- **Administrator permissions** on your user account (or access to an account that has)
-- **Developer mode** enabled for app installation in Windows 10 Settings
-- If you want to be able to use beta versions, you'll additionally need to **subscribe to the Minecraft Beta program using Xbox Insider Hub**.
-- [Microsoft Visual C++ Redistributable](https://aka.ms/vs/16/release/vc_redist.x64.exe) installed.
+## ✨ Features
 
-## Setup
-- Download the latest release from the [Releases](https://github.com/MCMrARM/mc-w10-version-launcher/releases) section. Unzip it somewhere.
-- Run `BUGrock_Launcher.exe` to start the launcher.
+- **Side-by-Side Installations**: Install and manage multiple **Release**, **Preview**, **Beta**, and **Imported** versions of Minecraft Bedrock without losing your worlds or reinstalling from scratch.
+- **Quick Play & Instant Version Switcher**: Switch between installed versions or local `.msixvc` / `.appx` packages directly from the **Play** tab with one click (supports automatic upgrading, downgrading, and live cancellation).
+- **GDK (`.msixvc`) & UWP (`.appx`) Support**:
+  - Full staging, extraction, and manifest patching for modern GDK versions (`1.21+`).
+  - Automatic background GDK decryption key check (`Auto-fetch decryption keys`) and PE header verification.
+  - Full support for legacy UWP `.appx` versions.
+- **Interactive 3D Skin Preview**: Built-in 3D character head viewport in the sidebar that tracks mouse movement, with support for uploading custom `.png` skins and switching presets.
+- **Smart World Backup & Migration**: Automatically detects, backs up, and restores Minecraft world data across UWP (`LocalState`) and GDK (`Minecraft Bedrock\Users`) directories with an interactive conflict resolution dialog.
+- **Custom Installation Paths & Live Speed Meter**: Choose custom install directories per version and monitor real-time download speeds (`MB/s` / `KB/s`) and progress percentages.
 
-## Common Pitfalls and Issues
-Unfortunately the launcher has become quite unreliable with the migration to GDK.
-Combined with Windows 11's steady worsening in quality and stability, most of these issues seem to be caused by Windows itself, while others are caused by the method the launcher uses to extract the game files.
+---
 
-As I (@dktapps) don't use Windows as my primary OS anymore, and find Windows very tiresome to deal with, it's not likely these will get significantly improved, so here are some known issues and workarounds.
+## 📋 Prerequisites
 
-### `Invalid argument` error when launching the game via the start menu
-Move the launcher to a shorter path, and launch it at least one time from inside the launcher after moving it.
+> [!IMPORTANT]
+> **BUGrock Launcher does NOT bypass game ownership.** You must be signed into the Microsoft Store with a Microsoft account that owns **Minecraft for Windows** (or Xbox Game Pass).
 
-This seems to be a result of the path to `Minecraft.Windows.exe` being too long somehow, and the issue seems to occur on newer versions of Windows even if MAX_PATH is increased.
-Older versions didn't have this issue, so it's not clear what caused the issue.
+1. **Windows 10 / Windows 11 (64-bit)**.
+2. **Valid Minecraft License**: Signed into Microsoft Store with an account that owns Minecraft: Bedrock Edition.
+   - *Note*: For **GDK (`.msixvc`)** versions, having installed Minecraft (or Minecraft Preview) from the Microsoft Store at least once on your PC ensures Windows registers the system decryption keys (`ClipSvc`).
+3. **Developer Mode Enabled**:
+   - Open **Windows Settings** $\rightarrow$ **System** (or **Privacy & Security**) $\rightarrow$ **For developers** $\rightarrow$ Enable **Developer Mode**.
+4. **Runtimes**:
+   - [.NET 8.0 Desktop Runtime (x64)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+   - [Microsoft Visual C++ Redistributable (x64)](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+5. *(Optional)* **Xbox Insider Hub**: Required only if you wish to download legacy UWP **Beta** builds.
 
-### Failed to decrypt Minecraft.Windows.exe
-- Make sure you installed Minecraft (or Minecraft Preview) from the Store before using the launcher
-- A valid license is required, you can't pirate the game using the launcher
-- Sometimes using `Tools -> Cleanup for installing Minecraft from Microsoft Store` may help resolve issues
-- Try rebooting the machine if all else fails. Sometimes Windows's services get glitchy for no obvious reason and cause issues that a reboot will sometimes clear out
+---
 
-### Invalid 16-bit application or SmartScreen saying "this app can't run on your PC"
-This is usually a failure to get a decrypted version of the Minecraft exe. Try the steps above first, but also check `File -> Open log file` and see if any errors are present
+## 🚀 Setup & Usage
 
-### `minecraft://` and similar deeplinks not working
-Check keys like `HKEY_CLASSES_ROOT\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\PackageRepository\Extensions\windows.protocol\minecraft` and similar keys for duplicate entries.
+1. Download the latest build from the [Releases](https://github.com/7AmoZ/BUGrock-Launcher/releases) page (or Actions artifacts) and extract the archive to a folder with a short path (e.g., `C:\Games\BUGrockLauncher`).
+2. Run **`BUGrock_Launcher.exe`**.
+3. Use the **Installations** tab to download any Release, Preview, or Beta version, or click **Import** to install a local `.msixvc` or `.appx` package.
+4. Use the **Play** tab to select your active version and launch the game.
 
-Sometimes the registry ends up with duplicate entries for these protocols for reasons that aren't yet clear.
+---
 
-Deleting the dead entries may help fix deeplinks.
+## 🛠️ Building from Source
 
-## Compiling the launcher yourself
-You'll need Visual Studio with Windows 10 SDK version 10.0.17763 and .NET Framework 4.6.1 SDK installed. You can find these in the Visual Studio Installer if you don't have them out of the box.
-The project should build out of the box with VS as long as you haven't done anything bizarre.
+### Requirements
+- **Visual Studio 2022** (or newer) with:
+  - **.NET desktop development** workload (`.NET 8.0 SDK`)
+  - **Desktop development with C++** workload (`MSVC v143`)
+  - **Windows 10/11 SDK** (`10.0.17763.0` or newer)
+- **NuGet CLI** (for restoring native C++/WinRT packages in `WUTokenHelper`).
 
-## Frequently Asked Questions
-**Does this allow running multiple instances of Minecraft: Bedrock at the same time?**
+### Build Commands
+```powershell
+nuget restore BUGrockLauncher.sln
+msbuild BUGrockLauncher.sln /p:Configuration=Release /p:Platform=x64 /p:RestorePackagesConfig=true
+```
+The compiled binaries will be placed in `x64\Release\`.
 
-At the time of writing, no. It allows you to _install_ multiple versions, but only one version can run at a time.
+---
+
+## 🔧 Troubleshooting
+
+### `Minecraft.Windows.exe is encrypted` / Decryption Keys Required
+Modern GDK versions (`.msixvc`) use Windows EFS / `ClipSvc` encryption tied to your Microsoft Store license.
+- Ensure **Auto-fetch decryption keys** is enabled under **Options** in the top bar.
+- If the system decryption key is missing, start downloading **Minecraft** (or **Minecraft Preview**) from the **Microsoft Store** for a few seconds until it begins acquiring the license/downloading, then cancel it in the Store and retry in **BUGrock Launcher**.
+- You can also run **Tools $\rightarrow$ Cleanup for installing Minecraft from Microsoft Store** if an existing development-mode registration blocks the Store.
+
+### `Invalid argument` when launching via Start Menu
+Move the launcher folder to a shorter path (such as `C:\BUGrockLauncher`) and launch the version at least once from inside the launcher.
+
+### Running Multiple Instances Simultaneously
+Because all Bedrock Release builds share the same Windows package family (`Microsoft.MinecraftUWP_8wekyb3d8bbwe`), Windows only allows one active registration per package family at a time. You can keep as many versions installed side-by-side as you like and switch between them before launching.
+
+---
+
+## 📄 License
+
+This project is licensed under the **GNU General Public License v3.0 (GPL-3.0)** — see the [LICENSE.txt](LICENSE.txt) file for details.
