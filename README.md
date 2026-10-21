@@ -1,7 +1,7 @@
 # BUGrock Launcher
 
 [![Latest Release](https://img.shields.io/github/v/release/7AmoZ/BUGrock-Launcher?style=for-the-badge&label=Download%20Latest%20Release&color=38a169)](https://github.com/7AmoZ/BUGrock-Launcher/releases/latest)
-[![Direct Download](https://img.shields.io/badge/Direct%20Download-Windows%20x64%20(.zip)-2b6cb0?style=for-the-badge&logo=windows)](https://github.com/7AmoZ/BUGrock-Launcher/releases/latest/download/BUGrock_Launcher_v1.0.0_win-x64.zip)
+[![Direct Download](https://img.shields.io/badge/Direct%20Download-Windows%20x64%20(.zip)-2b6cb0?style=for-the-badge&logo=windows)](https://github.com/7AmoZ/BUGrock-Launcher/releases/latest/download/BUGrock_Launcher_v1.0.1_win-x64.zip)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](LICENSE.txt)
 
 A modern, feature-rich custom launcher for **Minecraft: Bedrock Edition** on Windows 10 & Windows 11, supporting both modern **GDK (`.msixvc`)** and legacy **UWP (`.appx`)** builds side-by-side.
@@ -50,7 +50,7 @@ Make sure these services are **NOT disabled** (leave them on **Automatic** or **
 
 ## 🚀 Setup & Usage
 
-1. Download **`BUGrock_Launcher_v1.0.0_win-x64.zip`** from [Releases](https://github.com/7AmoZ/BUGrock-Launcher/releases/latest).
+1. Download **`BUGrock_Launcher_v1.0.1_win-x64.zip`** from [Releases](https://github.com/7AmoZ/BUGrock-Launcher/releases/latest).
 2. Extract the `.zip` archive to a folder with a short path (e.g. `C:\Games\BUGrockLauncher`).
 3. Run **`BUGrock_Launcher.exe`**.
 4. In the **Installations** tab, download any version or click **Import** to select local `.msixvc` / `.appx` files.
