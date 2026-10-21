@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BUGrockLauncher.WPFDataTypes"
         mc:Ignorable="d"
-        Title="BUGrock Launcher" 
+        Title="BUGrock Launcher [Beta]" 
         Height="780" Width="1200"
         MinHeight="660" MinWidth="1020"
         WindowStartupLocation="CenterScreen"
@@ -395,6 +395,9 @@
                         <Image Source="Assets/bugrock_block.png" Width="18" Height="18" RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Border>
                     <TextBlock Text="BUGrock Launcher" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
+                    <Border Background="#D97706" CornerRadius="3" Padding="4,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="BETA" Foreground="#FFFFFF" FontSize="9" FontWeight="Bold"/>
+                    </Border>
                 </StackPanel>
 
                 <!-- Menus: File, Tools, Options -->
@@ -999,7 +1002,7 @@
                     <TextBlock Text="|" Foreground="#232530" Margin="0,0,14,0"/>
                     <TextBlock Text="&#x1F4F6;" FontSize="11" Foreground="#38A169" Margin="0,0,6,0"/>
                     <TextBlock Text="Client Version: " Foreground="#8E92A4" FontSize="11"/>
-                    <TextBlock Text="2.4.12-stable" Foreground="#FFFFFF" FontSize="11"/>
+                    <TextBlock Text="v1.0.1 (Beta)" Foreground="#FFFFFF" FontSize="11"/>
                 </StackPanel>
 
                 <!-- Original Loading Progress Grid (Preserved for background tasks) -->

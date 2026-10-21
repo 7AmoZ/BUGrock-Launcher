@@ -2,7 +2,12 @@
 
 [![Latest Release](https://img.shields.io/github/v/release/7AmoZ/BUGrock-Launcher?style=for-the-badge&label=Download%20Latest%20Release&color=38a169)](https://github.com/7AmoZ/BUGrock-Launcher/releases/latest)
 [![Direct Download](https://img.shields.io/badge/Direct%20Download-Windows%20x64%20(.zip)-2b6cb0?style=for-the-badge&logo=windows)](https://github.com/7AmoZ/BUGrock-Launcher/releases/latest/download/BUGrock_Launcher_v1.0.1_win-x64.zip)
+[![Project Status: Public Beta](https://img.shields.io/badge/Status-Public%20Beta-f59e0b?style=for-the-badge&logo=git)](https://github.com/7AmoZ/BUGrock-Launcher)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](LICENSE.txt)
+
+> [!IMPORTANT]
+> **Project Status: Public Beta**
+> BUGrock Launcher is currently in active Public Beta. Core features (side-by-side versions, GDK & UWP package staging, offline sideloading, and world preservation) are fully operational, but you may occasionally encounter minor bugs or UI quirks. We welcome your feedback, suggestions, and [issue reports](https://github.com/7AmoZ/BUGrock-Launcher/issues)!
 
 A modern, feature-rich custom launcher for **Minecraft: Bedrock Edition** on Windows 10 & Windows 11, supporting both modern **GDK (`.msixvc`)** and legacy **UWP (`.appx`)** builds side-by-side.
 
