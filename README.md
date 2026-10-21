@@ -1,4 +1,4 @@
-# BUGrock Launcher
+# BUGrock Launcher (BETA !)
 
 [![Latest Release](https://img.shields.io/github/v/release/7AmoZ/BUGrock-Launcher?style=for-the-badge&label=Download%20Latest%20Release&color=38a169)](https://github.com/7AmoZ/BUGrock-Launcher/releases/latest)
 [![Direct Download](https://img.shields.io/badge/Direct%20Download-Windows%20x64%20(.zip)-2b6cb0?style=for-the-badge&logo=windows)](https://github.com/7AmoZ/BUGrock-Launcher/releases/latest/download/BUGrock_Launcher_v1.0.1_win-x64.zip)
