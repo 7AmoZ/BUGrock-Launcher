@@ -19,7 +19,7 @@ A modern, feature-rich custom launcher for **Minecraft: Bedrock Edition** on Win
   - Automatic background GDK decryption key check (`Auto-fetch decryption keys`) and PE header verification.
   - Full support for legacy UWP `.appx` versions.
 - **Interactive 3D Skin Preview**: Built-in 3D character head viewport in the sidebar that tracks mouse movement, with support for uploading custom `.png` skins and switching presets.
-- **Smart World Backup & Migration**: Automatically detects, backs up, and restores Minecraft world data across UWP (`LocalState`) and GDK (`Minecraft Bedrock\Users`) directories with an interactive conflict resolution dialog.
+- **World Preservation & Conflict Resolution**: Safeguards your Minecraft saves from deletion when uninstalling or switching UWP packages via temporary safe-holding, and detects multiple save paths across UWP (`LocalState`) and GDK (`Minecraft Bedrock\Users`) with an interactive conflict resolution dialog (plus a built-in "Find my data" scanner). Note: This protects saves during package operations and does not create automated periodic archives.
 - **Custom Installation Paths & Live Speed Meter**: Choose custom install directories per version and monitor real-time download speeds (`MB/s` / `KB/s`) and progress percentages.
 
 ---
