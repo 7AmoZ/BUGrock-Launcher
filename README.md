@@ -24,63 +24,64 @@ A modern, feature-rich custom launcher for **Minecraft: Bedrock Edition** on Win
 
 ---
 
-## 📋 Prerequisites
+## ⚙️ Quick System & Service Checklist
 
-> [!IMPORTANT]
-> **BUGrock Launcher does NOT bypass game ownership.** You must be signed into the Microsoft Store with a Microsoft account that owns **Minecraft for Windows** (or Xbox Game Pass).
+Before launching, make sure your PC meets the following requirements:
 
-1. **Windows 10 / Windows 11 (64-bit)**.
-2. **Valid Minecraft License**: Signed into Microsoft Store with an account that owns Minecraft: Bedrock Edition.
-   - *Note*: For **GDK (`.msixvc`)** versions, having installed Minecraft (or Minecraft Preview) from the Microsoft Store at least once on your PC ensures Windows registers the system decryption keys (`ClipSvc`).
-3. **Developer Mode Enabled**:
-   - Open **Windows Settings** $\rightarrow$ **System** (or **Privacy & Security**) $\rightarrow$ **For developers** $\rightarrow$ Enable **Developer Mode**.
-4. **Runtimes**:
-   - [.NET 8.0 Desktop Runtime (x64)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
-   - [Microsoft Visual C++ Redistributable (x64)](https://aka.ms/vs/17/release/vc_redist.x64.exe)
-5. *(Optional)* **Xbox Insider Hub**: Required only if you wish to download legacy UWP **Beta** builds.
+### 1. Essential Runtimes
+- [x] **[.NET 8.0 Desktop Runtime (x64)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)** — Required to open the launcher GUI.
+- [x] **[Visual C++ 2015–2022 x64](https://aka.ms/vs/17/release/vc_redist.x64.exe)** — Required for C++ helper shims and Minecraft Bedrock engine.
+- [x] **GPU Driver (DirectX 11+)** — Your graphics card must support DirectX 11 Feature Level 11_0 (Intel HD 4000+, Nvidia GTX 400+, or AMD HD 7000+).
+
+### 2. Windows Settings
+- [x] **Developer Mode: ON** — Go to `Settings -> System (or Privacy & Security) -> For developers` and toggle **Developer Mode** to **ON** (needed to register sideloaded packages).
+- [x] **Short Path Folder** — Extract the launcher to a short path like `C:\BUGrock` or `D:\Games\BUGrock` (avoids Windows 260-character MAX_PATH launch errors).
+
+### 3. Critical Windows Services (Run `services.msc`)
+Make sure these services are **NOT disabled** (leave them on **Automatic** or **Manual**):
+- **`AppXSvc` (AppX Deployment Service)** — Required to install and register packages.
+- **`ClipSvc` (Client License Service)** — Required to decrypt modern GDK versions using your Store license.
+- **`GamingServices` (Gaming Services)** — Required for modern Bedrock versions & protocol activation.
+- **`wuauserv` (Windows Update)** — Required to fetch official download packages from Microsoft servers.
+
+> [!WARNING]
+> **Windows "Lite" / "Ghost" Editions**: If you use a stripped-down custom Windows ISO with Microsoft Store or Xbox services removed, you must reinstall the **Microsoft Store** and **Xbox App** for the launcher to function.
 
 ---
 
 ## 🚀 Setup & Usage
 
-1. Download the latest build from the [Releases](https://github.com/7AmoZ/BUGrock-Launcher/releases) page (or Actions artifacts) and extract the archive to a folder with a short path (e.g., `C:\Games\BUGrockLauncher`).
-2. Run **`BUGrock_Launcher.exe`**.
-3. Use the **Installations** tab to download any Release, Preview, or Beta version, or click **Import** to install a local `.msixvc` or `.appx` package.
-4. Use the **Play** tab to select your active version and launch the game.
+1. Download **`BUGrock_Launcher_v1.0.0_win-x64.zip`** from [Releases](https://github.com/7AmoZ/BUGrock-Launcher/releases/latest).
+2. Extract the `.zip` archive to a folder with a short path (e.g. `C:\Games\BUGrockLauncher`).
+3. Run **`BUGrock_Launcher.exe`**.
+4. In the **Installations** tab, download any version or click **Import** to select local `.msixvc` / `.appx` files.
+5. In the **Play** tab, pick your version and hit **PLAY**.
+
+---
+
+## 🔧 Quick Troubleshooting
+
+| Issue | Quick Fix |
+| :--- | :--- |
+| **`Minecraft.Windows.exe is encrypted`** | Make sure your Microsoft account owns the game in Microsoft Store. Start downloading Minecraft from the Store for 3 seconds to let Windows register the decryption key, cancel the Store download, and retry in BUGrock Launcher. |
+| **`Invalid argument` / launch error** | The launcher path is too long. Move the launcher to a shorter path (e.g., `C:\BUGrock`) and launch once from inside the launcher. |
+| **Cannot run two versions simultaneously** | Windows allows only one active Minecraft Bedrock process at a time. Close the running version before launching another. |
+| **`Unable to fetch download URL` (Beta)** | Beta versions require your account to be enrolled in the Minecraft Beta program via the **Xbox Insider Hub** app. |
+| **Launcher closes immediately on startup** | You are missing [.NET 8.0 Desktop Runtime (x64)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0). Install it and reopen. |
 
 ---
 
 ## 🛠️ Building from Source
 
 ### Requirements
-- **Visual Studio 2022** (or newer) with:
-  - **.NET desktop development** workload (`.NET 8.0 SDK`)
-  - **Desktop development with C++** workload (`MSVC v143`)
-  - **Windows 10/11 SDK** (`10.0.17763.0` or newer)
-- **NuGet CLI** (for restoring native C++/WinRT packages in `WUTokenHelper`).
+- **Visual Studio 2022** (or newer) with `.NET desktop development` (.NET 8.0), `Desktop development with C++` (MSVC v143), and Windows 10/11 SDK.
+- **NuGet CLI** (for native C++/WinRT package restore).
 
-### Build Commands
 ```powershell
 nuget restore BUGrockLauncher.sln
 msbuild BUGrockLauncher.sln /p:Configuration=Release /p:Platform=x64 /p:RestorePackagesConfig=true
 ```
 The compiled binaries will be placed in `x64\Release\`.
-
----
-
-## 🔧 Troubleshooting
-
-### `Minecraft.Windows.exe is encrypted` / Decryption Keys Required
-Modern GDK versions (`.msixvc`) use Windows EFS / `ClipSvc` encryption tied to your Microsoft Store license.
-- Ensure **Auto-fetch decryption keys** is enabled under **Options** in the top bar.
-- If the system decryption key is missing, start downloading **Minecraft** (or **Minecraft Preview**) from the **Microsoft Store** for a few seconds until it begins acquiring the license/downloading, then cancel it in the Store and retry in **BUGrock Launcher**.
-- You can also run **Tools $\rightarrow$ Cleanup for installing Minecraft from Microsoft Store** if an existing development-mode registration blocks the Store.
-
-### `Invalid argument` when launching via Start Menu
-Move the launcher folder to a shorter path (such as `C:\BUGrockLauncher`) and launch the version at least once from inside the launcher.
-
-### Running Multiple Instances Simultaneously
-Because all Bedrock Release builds share the same Windows package family (`Microsoft.MinecraftUWP_8wekyb3d8bbwe`), Windows only allows one active registration per package family at a time. You can keep as many versions installed side-by-side as you like and switch between them before launching.
 
 ---
 
