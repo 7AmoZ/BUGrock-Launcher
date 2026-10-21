@@ -37,7 +37,7 @@ namespace BUGrockLauncher {
         private const string GDK_DECRYPT_HELPER_NAME = @"GDKDecryptHelper.exe";
         private static readonly string PREFS_PATH = @"preferences.json";
         private static readonly string IMPORTED_VERSIONS_PATH = @"imported_versions";
-        private static readonly string VERSIONS_API_UWP = "https://mrarm.io/r/w10-vdb";
+        private static readonly string VERSIONS_API_UWP = "https://raw.githubusercontent.com/7AmoZ/BUGrock-Launcher/master/uwp_versions.json";
         private static readonly string VERSIONS_API_GDK = "https://raw.githubusercontent.com/MinecraftBedrockArchiver/GdkLinks/refs/heads/master/urls.min.json";
 
         private VersionList _versions;
