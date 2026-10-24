@@ -966,6 +966,34 @@
                                 </Border>
                                 <!-- Live Server WebView2 -->
                                 <wv2:WebView2 Grid.Row="1" x:Name="ServersWebView" Source="https://minecraftpocket-servers.com/"/>
+
+                                <!-- 3D Block Loading Overlay -->
+                                <Border Grid.Row="1" x:Name="ServersLoadingOverlay" Background="#151720" Panel.ZIndex="5" Visibility="Visible">
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Border Width="44" Height="44" CornerRadius="6" Background="#1A1C28" BorderBrush="#38A169" BorderThickness="1" HorizontalAlignment="Center" Margin="0,0,0,10">
+                                            <Image Source="Assets/bugrock_block.png" Width="32" Height="32" HorizontalAlignment="Center" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality">
+                                                <Image.RenderTransform>
+                                                    <TransformGroup>
+                                                        <ScaleTransform x:Name="BlockScale" ScaleX="1.0" ScaleY="1.0" CenterX="16" CenterY="16"/>
+                                                        <TranslateTransform x:Name="BlockBounce" Y="0"/>
+                                                    </TransformGroup>
+                                                </Image.RenderTransform>
+                                                <Image.Triggers>
+                                                    <EventTrigger RoutedEvent="Loaded">
+                                                        <BeginStoryboard>
+                                                            <Storyboard RepeatBehavior="Forever">
+                                                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TransformGroup.Children)[1].(TranslateTransform.Y)" From="0" To="-8" Duration="0:0:0.45" AutoReverse="True"/>
+                                                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TransformGroup.Children)[0].(ScaleTransform.ScaleX)" From="1.0" To="1.15" Duration="0:0:0.45" AutoReverse="True"/>
+                                                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TransformGroup.Children)[0].(ScaleTransform.ScaleY)" From="1.0" To="1.15" Duration="0:0:0.45" AutoReverse="True"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </EventTrigger>
+                                                </Image.Triggers>
+                                            </Image>
+                                        </Border>
+                                        <TextBlock Text="Loading Bedrock Servers..." Foreground="#38A169" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
                             </Grid>
                         </Border>
 

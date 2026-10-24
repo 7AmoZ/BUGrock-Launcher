@@ -132,13 +132,7 @@ namespace BUGrockLauncher {
         #region Community Hub & DDFW Downloads
         private const string ANTI_COOKIE_AND_POPUP_SCRIPT = @"
             (function() {
-                // 1. Enforce Strict Privacy & Do Not Track
-                try {
-                    Object.defineProperty(navigator, 'doNotTrack', { get: function() { return '1'; }, configurable: true });
-                    Object.defineProperty(navigator, 'globalPrivacyControl', { get: function() { return true; }, configurable: true });
-                } catch(e) {}
-
-                // 2. Bypass Adblock Detectors (Fake ad existence so CurseForge/MCPEDL never show disable adblock banners)
+                // 1. Bypass Adblock Detectors (Fake ad properties so CurseForge/MCPEDL never show disable adblock banners)
                 try {
                     window.canRunAds = true;
                     window.isAdBlockActive = false;
@@ -147,158 +141,74 @@ namespace BUGrockLauncher {
                     window.adsbygoogle = { push: function() {}, loaded: true };
                 } catch(e) {}
 
-                // 3. Neutralize Analytics & Tracking Handlers
-                try {
-                    window.ga = function() {};
-                    window.gtag = function() {};
-                    window.dataLayer = { push: function() {} };
-                    window.fbq = function() {};
-                } catch(e) {}
+                // 2. Inject Safe CSS to Hide Cookie Banners, Consent Dialogs & Anti-Adblock Modals
+                var style = document.createElement('style');
+                style.innerHTML = `
+                    #onetrust-consent-sdk, #onetrust-banner-sdk, .qc-cmp2-container, #cmpbox,
+                    .cookie-banner, .cookie-notice, .cookieConsent, div[class*='cookie' i], div[id*='cookie' i],
+                    div[class*='consent' i], div[id*='consent' i], .fc-consent-root,
+                    div[class*='adblock' i], div[id*='adblock' i], div[class*='ad-block' i], div[id*='ad-block' i],
+                    .modal-adblock, .adblock-overlay, #adblock-overlay {
+                        display: none !important;
+                        visibility: hidden !important;
+                        pointer-events: none !important;
+                        opacity: 0 !important;
+                    }
+                    body, html {
+                        overflow: auto !important;
+                    }
+                `;
+                if (document.head) document.head.appendChild(style);
 
-                // 4. Set Strict Cookie Rejection / Opt-Out Flags
-                try {
-                    localStorage.setItem('cookie_consent', 'false');
-                    localStorage.setItem('gdpr_consent', 'false');
-                    localStorage.setItem('tracking_consent', 'denied');
-                    localStorage.setItem('OptanonAlertBoxClosed', new Date().toISOString());
-                    document.cookie = 'OptanonAlertBoxClosed=' + new Date().toISOString() + '; path=/; max-age=31536000';
-                    document.cookie = 'cookie_consent=false; path=/; max-age=31536000';
-                    document.cookie = 'cookieconsent_status=deny; path=/; max-age=31536000';
-                    document.cookie = 'gdpr_consent=0; path=/; max-age=31536000';
-                } catch(e) {}
-
-                // 5. Actively find and trigger any 'Reject All' / 'Decline' buttons & purge banners and adblock popups
-                function rejectAllAndPurge() {
-                    // Known Reject buttons
-                    var rejectSelectors = [
+                // 3. Auto-dismiss any detected consent/adblock popups
+                function dismissOverlays() {
+                    var selectors = [
                         '#onetrust-reject-all-handler',
                         'button#didomi-notice-disagree-button',
                         'button[aria-label=""Reject all""]',
                         'button[aria-label=""Decline all""]',
-                        '.qc-cmp2-buttons-desktop button:last-child',
-                        'button.cmp-button-reject'
+                        '.qc-cmp2-buttons-desktop button:last-child'
                     ];
-                    for (var k = 0; k < rejectSelectors.length; k++) {
-                        var rBtn = document.querySelector(rejectSelectors[k]);
-                        if (rBtn && typeof rBtn.click === 'function') {
-                            try { rBtn.click(); } catch(e) {}
+                    for (var k = 0; k < selectors.length; k++) {
+                        var btn = document.querySelector(selectors[k]);
+                        if (btn && typeof btn.click === 'function') {
+                            try { btn.click(); } catch(e) {}
                         }
                     }
-
-                    // Scan buttons for reject/decline text
-                    var btns = document.querySelectorAll('button, a[role=""button""], input[type=""button""]');
-                    for (var b = 0; b < btns.length; b++) {
-                        var text = (btns[b].innerText || btns[b].value || '').trim().toLowerCase();
-                        if (text === 'reject all' || text === 'decline all' || text === 'reject' || text === 'decline' || text === 'disagree' || text === 'رفض الكل' || text === 'رفض') {
-                            try { btns[b].click(); } catch(e) {}
-                        }
-                    }
-
-                    // Purge banner containers, overlays and anti-adblock modals
-                    var selectors = [
-                        '#onetrust-consent-sdk',
-                        '#onetrust-banner-sdk',
-                        '.qc-cmp2-container',
-                        '#cmpbox',
-                        '#cmpbox2',
-                        '.cookie-banner',
-                        '.cookie-notice',
-                        '.cookieConsent',
-                        'div[class*=""cookie""]',
-                        'div[id*=""cookie""]',
-                        'div[class*=""consent""]',
-                        'div[id*=""consent""]',
-                        'div[class*=""didomi""]',
-                        'div[class*=""sp_message_container""]',
-                        '.fc-consent-root',
-                        '#sp_message_container',
-                        'div[class*=""adblock"" i]',
-                        'div[id*=""adblock"" i]',
-                        'div[class*=""ad-block"" i]',
-                        'div[id*=""ad-block"" i]',
-                        'div[class*=""adblocker"" i]',
-                        'div[id*=""adblocker"" i]',
-                        '.modal-adblock',
-                        '.adblock-overlay',
-                        '#adblock-overlay'
-                    ];
-                    for (var i = 0; i < selectors.length; i++) {
-                        var els = document.querySelectorAll(selectors[i]);
-                        for (var j = 0; j < els.length; j++) {
-                            try {
-                                els[j].style.setProperty('display', 'none', 'important');
-                                els[j].style.setProperty('pointer-events', 'none', 'important');
-                                els[j].remove();
-                            } catch(e) {}
-                        }
-                    }
-
-                    // Scan any popup/modal for adblock warning text
-                    var popups = document.querySelectorAll('div[class*=""modal"" i], div[class*=""popup"" i], div[class*=""overlay"" i], div[class*=""dialog"" i]');
-                    for (var p = 0; p < popups.length; p++) {
-                        var pText = (popups[p].innerText || '').toLowerCase();
-                        if (pText.includes('ad blocker') || pText.includes('ad-blocker') || pText.includes('adblock') || pText.includes('disable your ad') || pText.includes('turn off your ad')) {
-                            try {
-                                popups[p].style.setProperty('display', 'none', 'important');
-                                popups[p].remove();
-                            } catch(e) {}
-                        }
-                    }
-
-                    // Unlock document scrolling
                     if (document.body) {
                         document.body.style.setProperty('overflow', 'auto', 'important');
-                        document.body.style.setProperty('pointer-events', 'auto', 'important');
-                    }
-                    if (document.documentElement) {
-                        document.documentElement.style.setProperty('overflow', 'auto', 'important');
                     }
                 }
 
                 if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', rejectAllAndPurge);
+                    document.addEventListener('DOMContentLoaded', dismissOverlays);
                 } else {
-                    rejectAllAndPurge();
+                    dismissOverlays();
                 }
-                setInterval(rejectAllAndPurge, 350);
+                setTimeout(dismissOverlays, 800);
             })();
         ";
 
         private const string SERVERS_VIEW_POLISH_SCRIPT = @"
             (function() {
-                try {
-                    localStorage.setItem('cookie_consent', 'false');
-                    localStorage.setItem('gdpr_consent', 'false');
-                } catch(e) {}
-
                 var style = document.createElement('style');
                 style.innerHTML = `
-                    * {
-                        background-color: transparent !important;
+                    nav.navbar, header, footer, .card.bg-light, .alert, .adsbygoogle {
+                        display: none !important;
                     }
                     html, body {
                         background-color: #12131A !important;
                         color: #E2E8F0 !important;
                         margin: 0 !important;
                         padding: 0 !important;
-                        overflow-x: hidden !important;
                     }
                     .container, .container-fluid, .row, .col-12 {
                         background-color: #12131A !important;
                         padding-left: 2px !important;
                         padding-right: 2px !important;
                         padding-top: 0 !important;
-                        margin-top: 0 !important;
-                        margin-left: 0 !important;
-                        margin-right: 0 !important;
-                        max-width: 100% !important;
-                    }
-                    header, footer, nav, .navbar, h1, .card, .bg-light, .card-body, .card-text, .alert, .adsbygoogle, .banner-ads, #navbar,
-                    #onetrust-consent-sdk, .qc-cmp2-container, div[class*='cookie'], div[id*='cookie'], div[class*='consent'] {
-                        display: none !important;
-                        height: 0 !important;
                         margin: 0 !important;
-                        padding: 0 !important;
+                        max-width: 100% !important;
                     }
                     .table, .servers-table, table {
                         background-color: #151720 !important;
@@ -330,55 +240,19 @@ namespace BUGrockLauncher {
                         border: 1px solid #2B2F42 !important;
                     }
                 `;
-                document.head.appendChild(style);
+                if (document.head) document.head.appendChild(style);
 
-                function purgeTopElements() {
+                function jumpToFirstServer() {
                     var serverTable = document.querySelector('.servers-table');
                     if (serverTable) {
-                        var el = serverTable;
-                        while (el && el !== document.body) {
-                            var prev = el.previousElementSibling;
-                            while (prev) {
-                                prev.style.setProperty('display', 'none', 'important');
-                                prev.remove();
-                                prev = el.previousElementSibling;
-                            }
-                            el = el.parentElement;
-                        }
                         serverTable.scrollIntoView({ behavior: 'instant', block: 'start' });
                     }
                 }
-
-                if (document.readyState === 'complete') {
-                    purgeTopElements();
-                } else {
-                    window.addEventListener('load', purgeTopElements);
-                }
-                setTimeout(purgeTopElements, 100);
-                setTimeout(purgeTopElements, 500);
-                setTimeout(purgeTopElements, 1500);
+                jumpToFirstServer();
+                setTimeout(jumpToFirstServer, 300);
+                setTimeout(jumpToFirstServer, 1000);
             })();
         ";
-
-        private static bool IsTrackerOrTelemetry(string uri) {
-            if (string.IsNullOrEmpty(uri)) return false;
-            string lower = uri.ToLowerInvariant();
-            return lower.Contains("google-analytics.com") ||
-                   lower.Contains("googletagmanager.com") ||
-                   lower.Contains("doubleclick.net") ||
-                   lower.Contains("adservice.google.") ||
-                   lower.Contains("pagead2.googlesyndication.com") ||
-                   lower.Contains("facebook.net") ||
-                   lower.Contains("connect.facebook.net") ||
-                   lower.Contains("criteo.com") ||
-                   lower.Contains("outbrain.com") ||
-                   lower.Contains("taboola.com") ||
-                   lower.Contains("scorecardresearch.com") ||
-                   lower.Contains("hotjar.com") ||
-                   lower.Contains("clarity.ms") ||
-                   lower.Contains("quantserve.com") ||
-                   lower.Contains("moatads.com");
-        }
 
         private string? _lastDownloadedFilePath;
         private string? _lastDownloadedFolder;
@@ -389,51 +263,42 @@ namespace BUGrockLauncher {
 
                 // 1. Initialize Servers WebView
                 if (ServersWebView != null) {
-                    ServersWebView.DefaultBackgroundColor = System.Drawing.Color.FromArgb(255, 18, 19, 26);
                     await ServersWebView.EnsureCoreWebView2Async();
                     if (ServersWebView.CoreWebView2 != null) {
                         ServersWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
                         ServersWebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
-                        ServersWebView.CoreWebView2.Settings.IsGeneralAutofillEnabled = false;
-                        ServersWebView.CoreWebView2.Settings.IsPasswordAutosaveEnabled = false;
-                        ServersWebView.CoreWebView2.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
-                        ServersWebView.CoreWebView2.WebResourceRequested += (s, args) => {
-                            if (IsTrackerOrTelemetry(args.Request.Uri)) {
-                                string headers = "Content-Type: application/javascript\r\nAccess-Control-Allow-Origin: *\r\n";
-                                args.Response = ServersWebView.CoreWebView2.Environment.CreateWebResourceResponse(new MemoryStream(Encoding.UTF8.GetBytes("/* blocked */")), 200, "OK", headers);
-                            }
+                        
+                        ServersWebView.NavigationStarting += (s, e) => {
+                            Dispatcher.Invoke(() => {
+                                if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Visible;
+                            });
                         };
-                        await ServersWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(SERVERS_VIEW_POLISH_SCRIPT);
+
                         ServersWebView.NavigationCompleted += (s, e) => {
-                            try {
-                                ServersWebView.CoreWebView2?.ExecuteScriptAsync(SERVERS_VIEW_POLISH_SCRIPT);
-                            } catch { }
+                            Dispatcher.Invoke(() => {
+                                if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Collapsed;
+                                try {
+                                    ServersWebView.CoreWebView2?.ExecuteScriptAsync(SERVERS_VIEW_POLISH_SCRIPT);
+                                } catch { }
+                            });
                         };
+
+                        await ServersWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(SERVERS_VIEW_POLISH_SCRIPT);
                     }
                 }
 
                 // 2. Initialize In-App Browser WebView
                 if (BrowserWebView != null) {
-                    BrowserWebView.DefaultBackgroundColor = System.Drawing.Color.FromArgb(255, 15, 16, 21);
                     await BrowserWebView.EnsureCoreWebView2Async();
                     if (BrowserWebView.CoreWebView2 != null) {
                         BrowserWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
-                        BrowserWebView.CoreWebView2.Settings.IsGeneralAutofillEnabled = false;
-                        BrowserWebView.CoreWebView2.Settings.IsPasswordAutosaveEnabled = false;
-                        BrowserWebView.CoreWebView2.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
-                        BrowserWebView.CoreWebView2.WebResourceRequested += (s, args) => {
-                            if (IsTrackerOrTelemetry(args.Request.Uri)) {
-                                string headers = "Content-Type: application/javascript\r\nAccess-Control-Allow-Origin: *\r\n";
-                                args.Response = BrowserWebView.CoreWebView2.Environment.CreateWebResourceResponse(new MemoryStream(Encoding.UTF8.GetBytes("/* blocked */")), 200, "OK", headers);
-                            }
-                        };
                         await BrowserWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
-                        
+
                         // Guard against navigating away from Bedrock on CurseForge
                         BrowserWebView.CoreWebView2.NavigationStarting += (s, args) => {
                             string navUri = (args.Uri ?? "").ToLowerInvariant();
                             if (navUri.Contains("curseforge.com")) {
-                                if (!navUri.Contains("/minecraft-bedrock") && !navUri.Contains("/login") && !navUri.Contains("/auth")) {
+                                if (!navUri.Contains("/minecraft-bedrock") && !navUri.Contains("/login") && !navUri.Contains("/auth") && !navUri.Contains("/oauth")) {
                                     args.Cancel = true;
                                     Dispatcher.InvokeAsync(() => {
                                         ThemedMessageBox.Show("تم تغيير الرابط إلى قسم آخر خارج Bedrock.\nهذه المودات لن تعمل مع ماينكرافت بيدروك (Bedrock)!\n\nسيتم إعادتك الآن إلى قسم البيدروك.", "تنبيه عدم التوافق");
@@ -449,15 +314,18 @@ namespace BUGrockLauncher {
                                 BrowserUrlText.Text = BrowserWebView.Source?.ToString() ?? "";
                             }
                         };
+
                         BrowserWebView.CoreWebView2.NavigationCompleted += (s, e) => {
                             try {
                                 BrowserWebView.CoreWebView2?.ExecuteScriptAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
                             } catch { }
                         };
+
                         BrowserWebView.CoreWebView2.NewWindowRequested += (s, e) => {
                             e.Handled = true;
                             BrowserWebView.CoreWebView2.Navigate(e.Uri);
                         };
+
                         BrowserWebView.CoreWebView2.DownloadStarting += Browser_DownloadStarting;
                     }
                 }
@@ -559,6 +427,7 @@ namespace BUGrockLauncher {
 
         private void RefreshServersBtn_Click(object sender, RoutedEventArgs e) {
             try {
+                if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Visible;
                 ServersWebView?.Reload();
             } catch { }
         }
