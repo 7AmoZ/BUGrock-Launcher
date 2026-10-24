@@ -27,20 +27,15 @@ namespace BUGrockLauncher {
             };
 
             var splash = new SplashScreenWindow();
-            splash.Topmost = true;
             splash.Show();
 
             var main = new MainWindow();
-            // Start main hidden behind the topmost splash screen
-            main.Opacity = 0;
-            main.Show();
 
             // Wait for ServersWebView to load in background before displaying MainWindow
             await main.WaitForServersReadyAsync(splash);
 
             // Display fully loaded MainWindow and close splash
-            main.Opacity = 1;
-            main.Activate();
+            main.Show();
             splash.Close();
         }
     }

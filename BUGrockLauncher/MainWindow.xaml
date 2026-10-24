@@ -965,8 +965,8 @@
                                         </StackPanel>
                                     </Grid>
                                 </Border>
-                                <!-- Live Server WebView2 -->
-                                <wv2:WebView2 Grid.Row="1" x:Name="ServersWebView" Source="https://minecraftpocket-servers.com/"/>
+                                <!-- Live Server WebView2 (Hidden initially to prevent Win32 Airspace leaks while loading) -->
+                                <wv2:WebView2 Grid.Row="1" x:Name="ServersWebView" Visibility="Hidden"/>
 
                                 <!-- 3D Block Loading Overlay -->
                                 <Border Grid.Row="1" x:Name="ServersLoadingOverlay" Background="#151720" Panel.ZIndex="5" Visibility="Visible">

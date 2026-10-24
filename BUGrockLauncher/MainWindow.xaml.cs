@@ -122,10 +122,18 @@ namespace BUGrockLauncher {
             _userVersionDownloaderLoginTask = new Task(() => {
                 _userVersionDownloader.EnableUserAuthorization();
             });
-            Loaded += async (s, e) => {
+
+            // Ensure Win32 window handle is created so WebView2 can initialize in the background
+            try {
+                var helper = new System.Windows.Interop.WindowInteropHelper(this);
+                helper.EnsureHandle();
+            } catch { }
+
+            _ = InitializeWebViewsAsync();
+
+            Loaded += (s, e) => {
                 InitSteveHead();
                 _ = LoadVersionListAsync();
-                await InitializeWebViewsAsync();
             };
         }
 
@@ -443,11 +451,13 @@ namespace BUGrockLauncher {
                             Dispatcher.Invoke(() => {
                                 UpdateServersZoom();
                                 if (!e.IsSuccess) {
+                                    ServersWebView.Visibility = Visibility.Collapsed;
                                     if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Collapsed;
                                     if (ServersNoInternetOverlay != null) ServersNoInternetOverlay.Visibility = Visibility.Visible;
                                 } else {
                                     if (ServersNoInternetOverlay != null) ServersNoInternetOverlay.Visibility = Visibility.Collapsed;
                                     if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Collapsed;
+                                    ServersWebView.Visibility = Visibility.Visible;
                                     try {
                                         ServersWebView.CoreWebView2?.ExecuteScriptAsync(SERVERS_VIEW_POLISH_SCRIPT);
                                     } catch { }
@@ -457,6 +467,7 @@ namespace BUGrockLauncher {
                         };
 
                         await ServersWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(SERVERS_VIEW_POLISH_SCRIPT);
+                        ServersWebView.CoreWebView2.Navigate("https://minecraftpocket-servers.com/");
                     }
                 }
             } catch (Exception ex) {
@@ -688,6 +699,7 @@ namespace BUGrockLauncher {
             try {
                 if (ServersNoInternetOverlay != null) ServersNoInternetOverlay.Visibility = Visibility.Collapsed;
                 if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Visible;
+                if (ServersWebView != null) ServersWebView.Visibility = Visibility.Hidden;
 
                 bool isNetworkUp = System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable();
                 if (!isNetworkUp) {
@@ -702,7 +714,7 @@ namespace BUGrockLauncher {
                 if (ServersWebView?.CoreWebView2 != null) {
                     ServersWebView.Reload();
                 } else if (ServersWebView != null) {
-                    ServersWebView.Source = new Uri("https://minecraftpocket-servers.com/");
+                    ServersWebView.CoreWebView2?.Navigate("https://minecraftpocket-servers.com/");
                 }
             } catch { }
         }
@@ -711,6 +723,7 @@ namespace BUGrockLauncher {
             try {
                 if (ServersNoInternetOverlay != null) ServersNoInternetOverlay.Visibility = Visibility.Collapsed;
                 if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Visible;
+                if (ServersWebView != null) ServersWebView.Visibility = Visibility.Hidden;
 
                 bool isNetworkUp = System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable();
                 if (!isNetworkUp) {
