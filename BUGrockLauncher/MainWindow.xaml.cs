@@ -174,7 +174,7 @@ namespace BUGrockLauncher {
                     window.adsbygoogle = { push: function() {}, loaded: true };
                 } catch(e) {}
 
-                // 3. Inject Safe CSS to Hide Cookie Banners, Consent Dialogs & Fix Background Colors
+                // 3. Inject Safe CSS to Hide Ads, Sidebars, Floating Videos, Cookie Banners & Fix Colors
                 var style = document.createElement('style');
                 style.innerHTML = `
                     #onetrust-consent-sdk, #onetrust-banner-sdk, .qc-cmp2-container, #cmpbox,
@@ -187,6 +187,72 @@ namespace BUGrockLauncher {
                         pointer-events: none !important;
                         opacity: 0 !important;
                     }
+                    /* Obliterate all ad banners, AdSense, video players and ad wrappers */
+                    ins.adsbygoogle, .adsbygoogle, iframe[src*='googlesyndication'],
+                    iframe[id*='google_ads'], div[id*='google_ads'], div[class*='ad-container'],
+                    div[class*='ad-slot'], div[class*='advertisement'], div[class*='ad-banner'],
+                    div[class*='ad-wrapper'], div[id*='ad-wrapper'],
+                    div[id*='primis'], div[class*='primis'], div[id*='connatix'], div[class*='connatix'],
+                    div[id*='playwire'], div[class*='playwire'], div[id*='anyclip'], div[class*='anyclip'],
+                    div[id*='taboola'], div[class*='taboola'], div[id*='outbrain'], div[class*='outbrain'],
+                    div[class*='sticky-player'], div[class*='floating-player'], div[id*='floating-player'],
+                    div[class*='video-ad'], div[id*='video-ad'], div[class*='jwplayer'], div[id*='jwplayer'],
+                    div[class*='vdo'], div[id*='vdo'], lite-youtube, .lite-youtube,
+                    iframe[src*='youtube'], iframe[src*='youtu.be'],
+                    div[data-ad], div[data-ad-unit], div[id*='gpt-ad'] {
+                        display: none !important;
+                        visibility: hidden !important;
+                        pointer-events: none !important;
+                        opacity: 0 !important;
+                        height: 0 !important;
+                        width: 0 !important;
+                        min-height: 0 !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                    }
+                    /* Remove MCPEDL empty right sidebar and expand main content full-width */
+                    aside, .sidebar, .right-sidebar, .layout__sidebar, .post__sidebar,
+                    div[class*='sidebar'], div[id*='sidebar'] {
+                        display: none !important;
+                        visibility: hidden !important;
+                        width: 0 !important;
+                        max-width: 0 !important;
+                        min-width: 0 !important;
+                        flex: 0 0 0% !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        pointer-events: none !important;
+                    }
+                    .layout__main, .layout-main, .content__main, .content-main,
+                    main, .main-content, .posts-list, .posts, .app-layout__content,
+                    div[class*='layout__main'], div[class*='content__main'] {
+                        max-width: 100% !important;
+                        width: 100% !important;
+                        flex: 1 1 100% !important;
+                        margin-right: 0 !important;
+                        padding-right: 0 !important;
+                    }
+                    /* Bright readable text for Introduction, Description, and content on MCPEDL */
+                    .post__description, .post__description *,
+                    .post-description, .post-description *,
+                    .article__content, .article__content *,
+                    .post__content, .post__content *,
+                    .entry-content, .entry-content *,
+                    .text-formatted, .text-formatted *,
+                    .details, .details *,
+                    .description, .description *,
+                    article p, article span, article div, article li,
+                    div[class*='description'] p, div[class*='description'] span, div[class*='description'] div,
+                    div[class*='content'] p, div[class*='content'] span,
+                    p, li, .text-muted {
+                        color: #E2E8F0 !important;
+                    }
+                    h1, h2, h3, h4, h5, h6, strong, b, dt {
+                        color: #FFFFFF !important;
+                    }
+                    a {
+                        color: #48BB78 !important;
+                    }
                     html, body, #__nuxt, #__layout, div#app {
                         background-color: #161C23 !important;
                         background: #161C23 !important;
@@ -195,7 +261,7 @@ namespace BUGrockLauncher {
                 `;
                 if (document.head) document.head.appendChild(style);
 
-                // 4. Auto-dismiss any detected consent/adblock popups
+                // 4. Auto-dismiss any detected consent/adblock popups, ads, floating videos, and sidebars
                 function dismissOverlays() {
                     var selectors = [
                         '#onetrust-reject-all-handler',
@@ -210,6 +276,39 @@ namespace BUGrockLauncher {
                             try { btn.click(); } catch(e) {}
                         }
                     }
+
+                    // Purge ads, videos, and sidebars
+                    var bads = document.querySelectorAll(`
+                        ins.adsbygoogle, .adsbygoogle, iframe[src*='googlesyndication'],
+                        div[id*='google_ads'], div[class*='ad-container'], div[class*='ad-slot'],
+                        div[id*='primis'], div[class*='primis'], div[id*='connatix'], div[class*='connatix'],
+                        div[id*='playwire'], div[class*='playwire'], div[id*='anyclip'],
+                        aside, .sidebar, .layout__sidebar, .post__sidebar, div[class*='sidebar'],
+                        div[class*='floating-player'], div[class*='sticky-player'], div[id*='floating-player'],
+                        div[class*='video-ad'], div[id*='video-ad'], div[class*='jwplayer'],
+                        lite-youtube, .lite-youtube, iframe[src*='youtube']
+                    `);
+                    for (var b = 0; b < bads.length; b++) {
+                        bads[b].remove();
+                    }
+
+                    // Kill any floating video container docked at bottom-right
+                    var fixedEls = document.querySelectorAll('div, iframe');
+                    for (var j = 0; j < fixedEls.length; j++) {
+                        var el = fixedEls[j];
+                        var pos = window.getComputedStyle(el).position;
+                        if (pos === 'fixed') {
+                            var r = window.getComputedStyle(el).right;
+                            var bot = window.getComputedStyle(el).bottom;
+                            if (r !== 'auto' && bot !== 'auto' && r !== '0px') {
+                                var inner = el.innerHTML || '';
+                                if (inner.indexOf('Terms of Use') !== -1 || inner.indexOf('Privacy') !== -1 || inner.indexOf('video') !== -1 || inner.indexOf('player') !== -1) {
+                                    el.remove();
+                                }
+                            }
+                        }
+                    }
+
                     if (document.body) {
                         document.body.style.setProperty('overflow', 'auto', 'important');
                         document.body.style.setProperty('background-color', '#161C23', 'important');
@@ -223,6 +322,14 @@ namespace BUGrockLauncher {
                             r.classList.add('dark-mode');
                             r.classList.remove('light-mode');
                         }
+                        var descEls = document.querySelectorAll('.post__description, .article__content, div[class*=""description""], article');
+                        for (var d = 0; d < descEls.length; d++) {
+                            descEls[d].style.setProperty('color', '#E2E8F0', 'important');
+                            var kids = descEls[d].querySelectorAll('p, span, div, li');
+                            for (var c = 0; c < kids.length; c++) {
+                                kids[c].style.setProperty('color', '#E2E8F0', 'important');
+                            }
+                        }
                     }
                 }
 
@@ -231,8 +338,20 @@ namespace BUGrockLauncher {
                 } else {
                     dismissOverlays();
                 }
-                setTimeout(dismissOverlays, 800);
-                setTimeout(dismissOverlays, 2000);
+                setTimeout(dismissOverlays, 400);
+                setTimeout(dismissOverlays, 1000);
+                setTimeout(dismissOverlays, 2500);
+
+                if (window.MutationObserver) {
+                    try {
+                        var observer = new MutationObserver(function() {
+                            dismissOverlays();
+                        });
+                        if (document.body) {
+                            observer.observe(document.body, { childList: true, subtree: true });
+                        }
+                    } catch(e) {}
+                }
             })();
         ";
 
@@ -285,8 +404,22 @@ namespace BUGrockLauncher {
                         padding-left: 2px !important;
                         padding-right: 2px !important;
                         padding-top: 0 !important;
+                        margin-top: 0 !important;
                         max-width: 100% !important;
                         overflow-x: hidden !important;
+                    }
+                    h1, h2, .server-title-responsive {
+                        margin-top: 0 !important;
+                        padding-top: 0 !important;
+                        margin-bottom: 6px !important;
+                    }
+                    nav.navbar, header, .breadcrumb, ol.breadcrumb, ul.breadcrumb,
+                    .leaderboard, #leaderboard, .top-banner, div[class*='banner'],
+                    div[class*='ad-'], div[id*='ad-'], .alert, .my-4, .mt-4 {
+                        display: none !important;
+                        height: 0 !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
                     }
                     /* Cards & Server Containers */
                     .card, .card-header, .card-body, .card-footer, .list-group, .list-group-item,
@@ -579,8 +712,36 @@ namespace BUGrockLauncher {
                     applyDarkStylesDirectly();
                 }
 
+                function removeTopSpacing() {
+                    if (document.body) {
+                        document.body.style.setProperty('padding-top', '0px', 'important');
+                        document.body.style.setProperty('margin-top', '0px', 'important');
+                    }
+                    if (document.documentElement) {
+                        document.documentElement.style.setProperty('padding-top', '0px', 'important');
+                        document.documentElement.style.setProperty('margin-top', '0px', 'important');
+                    }
+                    var heading = document.querySelector('h1, h2, .servers-table');
+                    if (heading && heading.parentElement) {
+                        heading.style.setProperty('margin-top', '0px', 'important');
+                        heading.style.setProperty('padding-top', '0px', 'important');
+                        var prev = heading.previousElementSibling;
+                        while (prev) {
+                            var toRemove = prev;
+                            prev = prev.previousElementSibling;
+                            toRemove.remove();
+                        }
+                    }
+                }
+
                 function jumpToFirstServer() {
-                    var serverTable = document.querySelector('.servers-table, .card, div[class*=""server""]');
+                    if (window.location.pathname.indexOf('/server/') !== -1) {
+                        window.scrollTo(0, 0);
+                        if (document.documentElement) document.documentElement.scrollTop = 0;
+                        if (document.body) document.body.scrollTop = 0;
+                        return;
+                    }
+                    var serverTable = document.querySelector('.servers-table');
                     if (serverTable) {
                         serverTable.scrollIntoView({ behavior: 'instant', block: 'start' });
                     }
@@ -730,11 +891,12 @@ namespace BUGrockLauncher {
                 }, true);
 
                 cleanBottomContent();
+                removeTopSpacing();
                 jumpToFirstServer();
-                setTimeout(function() { cleanBottomContent(); jumpToFirstServer(); }, 150);
-                setTimeout(function() { cleanBottomContent(); jumpToFirstServer(); }, 400);
-                setTimeout(function() { cleanBottomContent(); jumpToFirstServer(); }, 1000);
-                setTimeout(function() { cleanBottomContent(); jumpToFirstServer(); }, 2500);
+                setTimeout(function() { cleanBottomContent(); removeTopSpacing(); jumpToFirstServer(); }, 150);
+                setTimeout(function() { cleanBottomContent(); removeTopSpacing(); jumpToFirstServer(); }, 400);
+                setTimeout(function() { cleanBottomContent(); removeTopSpacing(); jumpToFirstServer(); }, 1000);
+                setTimeout(function() { cleanBottomContent(); removeTopSpacing(); jumpToFirstServer(); }, 2500);
 
                 if (window.MutationObserver) {
                     try {
@@ -881,6 +1043,9 @@ namespace BUGrockLauncher {
                                     try {
                                         ServersWebView.CoreWebView2?.ExecuteScriptAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
                                         ServersWebView.CoreWebView2?.ExecuteScriptAsync(SERVERS_VIEW_POLISH_SCRIPT);
+                                        if ((ServersWebView.Source?.ToString() ?? "").Contains("/server/")) {
+                                            ServersWebView.CoreWebView2?.ExecuteScriptAsync("window.scrollTo(0,0); if(document.documentElement) document.documentElement.scrollTop=0; if(document.body) document.body.scrollTop=0;");
+                                        }
                                     } catch { }
                                 }
                                 _serversReadyTcs.TrySetResult(true);
@@ -998,6 +1163,9 @@ namespace BUGrockLauncher {
                             BrowserWebView.CoreWebView2?.ExecuteScriptAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
                             if ((BrowserWebView.Source?.ToString() ?? "").Contains("minecraftpocket-servers.com")) {
                                 BrowserWebView.CoreWebView2?.ExecuteScriptAsync(SERVERS_VIEW_POLISH_SCRIPT);
+                                if ((BrowserWebView.Source?.ToString() ?? "").Contains("/server/")) {
+                                    BrowserWebView.CoreWebView2?.ExecuteScriptAsync("window.scrollTo(0,0); if(document.documentElement) document.documentElement.scrollTop=0; if(document.body) document.body.scrollTop=0;");
+                                }
                             }
                         } catch { }
                     };
