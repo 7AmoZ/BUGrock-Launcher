@@ -133,6 +133,7 @@ namespace BUGrockLauncher {
 
             Loaded += (s, e) => {
                 InitSteveHead();
+                UpdateQuickPlayStatus();
                 _ = LoadVersionListAsync();
             };
         }
@@ -2223,12 +2224,79 @@ namespace BUGrockLauncher {
 
         public ICommand DownloadCommand => new RelayCommand((v) => InvokeDownload((Version)v));
 
+        private bool _externalSwitchWarningConfirmed = false;
+
         private void InvokeLaunch(Version v) {
             if (_hasLaunchTask)
                 return;
             _hasLaunchTask = true;
             Task.Run(async () => {
                 try {
+                    // Check if switching away from external Minecraft without prior confirmation
+                    if (!v.IsExternal) {
+                        var currentActive = GetCurrentlyActiveVersion();
+                        if (currentActive != null && currentActive.IsExternal && currentActive != v) {
+                            if (_externalSwitchWarningConfirmed) {
+                                _externalSwitchWarningConfirmed = false;
+                            } else {
+                                bool confirmed = false;
+                                Dispatcher.Invoke(() => {
+                                    var res = ThemedMessageBox.Show(
+                                        $"Warning: An externally installed Minecraft ({currentActive.Name}) was detected.\n\n" +
+                                        "Installing or switching to this version will replace your external Minecraft installation. " +
+                                        "You will NOT be able to restore it unless you have its .appx package or re-download it from the Microsoft Store.\n\n" +
+                                        "Do you want to proceed?",
+                                        "External Minecraft Detected",
+                                        MessageBoxButton.YesNo,
+                                        MessageBoxImage.Warning
+                                    );
+                                    confirmed = (res == MessageBoxResult.Yes);
+                                });
+
+                                if (!confirmed) {
+                                    _hasLaunchTask = false;
+                                    HideHeroProgress();
+                                    return;
+                                }
+                            }
+                        }
+                    }
+
+                    // External Minecraft launch: direct launch without data move or re-registering
+                    if (v.IsExternal) {
+                        UpdateHeroProgress("Launching Minecraft...", 100, isIndeterminate: true);
+                        bool launched = false;
+                        try {
+                            var pkgList = await AppDiagnosticInfo.RequestInfoForPackageAsync(v.GamePackageFamily);
+                            if (pkgList.Count > 0) {
+                                var res = await pkgList[0].LaunchAsync();
+                                if (res.ExtendedError == null) {
+                                    launched = true;
+                                }
+                            }
+                        } catch (Exception ex) {
+                            Trace.WriteLine("External launch via AppDiagnosticInfo failed: " + ex);
+                        }
+
+                        if (!launched) {
+                            try {
+                                string uri = v.VersionType == VersionType.Preview ? "minecraft-preview://" : "minecraft://";
+                                Process.Start(new ProcessStartInfo {
+                                    FileName = uri,
+                                    UseShellExecute = true
+                                });
+                                launched = true;
+                            } catch (Exception ex) {
+                                Trace.WriteLine("External protocol launch failed: " + ex);
+                            }
+                        }
+
+                        await Task.Delay(1500);
+                        HideHeroProgress();
+                        _hasLaunchTask = false;
+                        return;
+                    }
+
                     v.StateChangeInfo = new VersionStateChangeInfo(VersionState.MovingData);
                     UpdateHeroProgress("Restoring Minecraft worlds...", 100, isIndeterminate: true);
                     if (!MoveMinecraftData(v.GamePackageFamily, v.PackageType)) {
@@ -2854,6 +2922,17 @@ namespace BUGrockLauncher {
 
         private async Task<bool> Remove(Version v) {
             try {
+                if (v.IsExternal) {
+                    ThemedMessageBox.Show(
+                        "This version was installed outside the launcher (Microsoft Store / Windows).\n\n" +
+                        "To uninstall it, please use Windows Settings or the Microsoft Store.",
+                        "External Minecraft Installation",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information
+                    );
+                    return false;
+                }
+
                 if (UserPrefs?.CustomInstallDirectories != null && UserPrefs.CustomInstallDirectories.ContainsKey(v.Name)) {
                     UserPrefs.CustomInstallDirectories.Remove(v.Name);
                     RewritePrefs();
@@ -3114,6 +3193,81 @@ namespace BUGrockLauncher {
             public Version? VersionEntry { get; set; }
             public bool IsInstalled => !string.IsNullOrEmpty(InstalledDirectory) && Directory.Exists(InstalledDirectory);
             public bool IsActive { get; set; }
+            public bool IsExternal { get; set; }
+        }
+
+        private string GetPackageVersionName(Package pkg, string location) {
+            try {
+                string resPacks = Path.Combine(location, "data", "resource_packs");
+                if (Directory.Exists(resPacks)) {
+                    var vanillaDirs = Directory.GetDirectories(resPacks, "vanilla_*");
+                    string? bestVer = null;
+                    foreach (var d in vanillaDirs) {
+                        string name = Path.GetFileName(d);
+                        var match = Regex.Match(name, @"^vanilla_(\d+(?:\.\d+)+)$");
+                        if (match.Success) {
+                            string ver = match.Groups[1].Value;
+                            if (bestVer == null || CompareVersionStrings(ver, bestVer) > 0) {
+                                bestVer = ver;
+                            }
+                        }
+                    }
+                    if (!string.IsNullOrEmpty(bestVer)) {
+                        return bestVer;
+                    }
+                }
+            } catch {
+            }
+
+            try {
+                var v = pkg.Id.Version;
+                if (v.Revision > 0) {
+                    return $"{v.Major}.{v.Minor}.{v.Build}.{v.Revision}";
+                }
+                return $"{v.Major}.{v.Minor}.{v.Build}";
+            } catch {
+                return "1.0.0";
+            }
+        }
+
+        private Version? GetOrCreateExternalVersion(Package pkg, string family) {
+            try {
+                string loc = GetPackagePath(pkg);
+                if (string.IsNullOrEmpty(loc) || !Directory.Exists(loc)) return null;
+
+                var match = _versions.FirstOrDefault(v => !v.IsExternal && string.Equals(Path.GetFullPath(v.GameDirectory), Path.GetFullPath(loc), StringComparison.OrdinalIgnoreCase));
+                if (match != null) return match;
+
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                if (Path.GetFullPath(loc).StartsWith(Path.GetFullPath(baseDir), StringComparison.OrdinalIgnoreCase)) {
+                    return null;
+                }
+
+                string verName = GetPackageVersionName(pkg, loc);
+                var verType = family == MinecraftPackageFamilies.MINECRAFT_PREVIEW ? VersionType.Preview : VersionType.Release;
+
+                var existingExt = _versions.FirstOrDefault(v => v.IsExternal && v.Name == verName && v.VersionType == verType);
+                if (existingExt != null) {
+                    existingExt.GameDirectory = loc;
+                    return existingExt;
+                }
+
+                var extVer = new Version(verName, loc, this, PackageType.UWP) {
+                    VersionType = verType,
+                    IsExternal = true
+                };
+
+                if (Dispatcher.CheckAccess()) {
+                    _versions.Add(extVer);
+                } else {
+                    Dispatcher.Invoke(() => _versions.Add(extVer));
+                }
+
+                return extVer;
+            } catch (Exception ex) {
+                Trace.WriteLine("GetOrCreateExternalVersion error: " + ex);
+                return null;
+            }
         }
 
         private Version? GetCurrentlyActiveVersion() {
@@ -3126,9 +3280,14 @@ namespace BUGrockLauncher {
                     foreach (var pkg in new PackageManager().FindPackages(family)) {
                         string loc = GetPackagePath(pkg);
                         if (!string.IsNullOrEmpty(loc)) {
-                            var match = _versions.FirstOrDefault(v => string.Equals(Path.GetFullPath(v.GameDirectory), Path.GetFullPath(loc), StringComparison.OrdinalIgnoreCase));
+                            var match = _versions.FirstOrDefault(v => !v.IsExternal && string.Equals(Path.GetFullPath(v.GameDirectory), Path.GetFullPath(loc), StringComparison.OrdinalIgnoreCase));
                             if (match != null) {
                                 return match;
+                            }
+
+                            var ext = GetOrCreateExternalVersion(pkg, family);
+                            if (ext != null) {
+                                return ext;
                             }
                         }
                     }
@@ -3231,10 +3390,17 @@ namespace BUGrockLauncher {
             if (QuickPlayVersionLabel == null) return;
             var current = GetCurrentlyActiveVersion();
             if (current != null) {
-                string verTypeStr = current.VersionType == VersionType.Preview ? "Preview" : "Release";
-                QuickPlayVersionLabel.Text = $"{current.Name} {verTypeStr}";
+                if (current.IsExternal) {
+                    QuickPlayVersionLabel.Text = $"{current.Name} (External)";
+                    QuickPlayVersionLabel.ToolTip = $"External Minecraft detected: {current.Name}";
+                } else {
+                    string verTypeStr = current.VersionType == VersionType.Preview ? "Preview" : "Release";
+                    QuickPlayVersionLabel.Text = $"{current.Name} {verTypeStr}";
+                    QuickPlayVersionLabel.ToolTip = $"{current.Name} ({verTypeStr})";
+                }
             } else {
                 QuickPlayVersionLabel.Text = "Select Version";
+                QuickPlayVersionLabel.ToolTip = null;
             }
         }
 
@@ -3290,6 +3456,20 @@ namespace BUGrockLauncher {
 
             var currentActive = GetCurrentlyActiveVersion();
 
+            // 0. Include external version if active
+            if (currentActive != null && currentActive.IsExternal) {
+                candidates[currentActive.Name] = new LocalVersionCandidate {
+                    Name = currentActive.Name,
+                    DisplayName = $"{currentActive.Name} (External)",
+                    InstalledDirectory = currentActive.GameDirectory,
+                    PackageType = PackageType.UWP,
+                    VersionType = currentActive.VersionType,
+                    VersionEntry = currentActive,
+                    IsExternal = true,
+                    IsActive = true
+                };
+            }
+
             // 1. Scan for package files (*.appx, *.msixvc)
             foreach (var dir in dirsToScan) {
                 if (!Directory.Exists(dir)) continue;
@@ -3341,15 +3521,17 @@ namespace BUGrockLauncher {
                 if (v.IsInstalled && !candidates.ContainsKey(v.Name)) {
                     candidates[v.Name] = new LocalVersionCandidate {
                         Name = v.Name,
-                        DisplayName = $"{v.Name} ({(v.VersionType == VersionType.Preview ? "Preview" : "Release")})",
+                        DisplayName = v.IsExternal ? $"{v.Name} (External)" : $"{v.Name} ({(v.VersionType == VersionType.Preview ? "Preview" : "Release")})",
                         InstalledDirectory = v.GameDirectory,
                         PackageType = v.PackageType,
                         VersionType = v.VersionType,
-                        VersionEntry = v
+                        VersionEntry = v,
+                        IsExternal = v.IsExternal
                     };
                 } else if (v.IsInstalled && candidates.TryGetValue(v.Name, out var c)) {
                     c.VersionEntry = v;
                     c.InstalledDirectory = v.GameDirectory;
+                    c.IsExternal = v.IsExternal;
                 }
             }
 
@@ -3451,7 +3633,9 @@ namespace BUGrockLauncher {
                     FontSize = 13
                 };
                 var subText = new TextBlock {
-                    Text = $"{(candidate.VersionType == VersionType.Preview ? "Preview" : "Release")} â€¢ {candidate.PackageType}",
+                    Text = candidate.IsExternal
+                        ? $"{(candidate.VersionType == VersionType.Preview ? "Preview" : "Release")} • External (System)"
+                        : $"{(candidate.VersionType == VersionType.Preview ? "Preview" : "Release")} • {candidate.PackageType}",
                     Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x92, 0xA4)),
                     FontSize = 10,
                     Margin = new Thickness(0, 2, 0, 0)
@@ -3471,6 +3655,11 @@ namespace BUGrockLauncher {
                     badgeBg = Color.FromRgb(0x1C, 0x2E, 0x22);
                     badgeFg = Color.FromRgb(0x38, 0xA1, 0x69);
                     badgeBorder = Color.FromRgb(0x38, 0xA1, 0x69);
+                } else if (candidate.IsExternal) {
+                    badgeText = "EXTERNAL";
+                    badgeBg = Color.FromRgb(0x1A, 0x27, 0x36);
+                    badgeFg = Color.FromRgb(0x38, 0xBD, 0xF8);
+                    badgeBorder = Color.FromRgb(0x02, 0x84, 0xC7);
                 } else if (candidate.IsInstalled) {
                     badgeText = "READY";
                     badgeBg = Color.FromRgb(0x1E, 0x24, 0x33);
@@ -3540,6 +3729,25 @@ namespace BUGrockLauncher {
                     ShowHeroProgress("LAUNCHING", "Launching Minecraft...");
                     InvokeLaunch(targetVer);
                     return;
+                }
+
+                // If currently running an external Minecraft and user is switching away to a different version
+                if (current != null && current.IsExternal && (!candidate.IsExternal || candidate.Name != current.Name)) {
+                    var warnRes = ThemedMessageBox.Show(
+                        $"Warning: An externally installed Minecraft ({current.Name}) was detected.\n\n" +
+                        "Installing or switching to this version will replace your external Minecraft installation. " +
+                        "You will NOT be able to restore it unless you have its .appx package or re-download it from the Microsoft Store.\n\n" +
+                        "Do you want to proceed?",
+                        "External Minecraft Detected",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning
+                    );
+
+                    if (warnRes != MessageBoxResult.Yes) {
+                        UpdateQuickPlayStatus();
+                        return;
+                    }
+                    _externalSwitchWarningConfirmed = true;
                 }
 
                 int cmp = CompareVersionStrings(candidate.Name, current?.Name);

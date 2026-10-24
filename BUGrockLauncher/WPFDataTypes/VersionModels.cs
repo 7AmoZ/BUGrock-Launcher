@@ -89,12 +89,14 @@ namespace BUGrockLauncher {
                 get => VersionType == VersionType.Imported;
             }
 
-            public string DisplayVersionType => VersionType switch {
+            public bool IsExternal { get; set; } = false;
+
+            public string DisplayVersionType => IsExternal ? "EXTERNAL" : (VersionType switch {
                 VersionType.Preview => "PREVIEW",
                 VersionType.Beta => "BETA",
                 VersionType.Imported => "IMPORTED",
                 _ => "RELEASE"
-            };
+            });
 
             public string GameDirectory { get; set; }
 
@@ -110,6 +112,9 @@ namespace BUGrockLauncher {
 
             public string DisplayName {
                 get {
+                    if (IsExternal) {
+                        return Name + " (External)";
+                    }
                     string typeTag = "";
                     if (VersionType == VersionType.Beta)
                         typeTag = "(beta)";
@@ -127,6 +132,9 @@ namespace BUGrockLauncher {
             }
             public string DisplayInstallStatus {
                 get {
+                    if (IsExternal) {
+                        return "External Installation (Microsoft Store / Windows)";
+                    }
                     return IsInstalled ? "Installed" : "Not installed";
                 }
             }
