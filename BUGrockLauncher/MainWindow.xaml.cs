@@ -238,6 +238,21 @@ namespace BUGrockLauncher {
 
         private const string SERVERS_VIEW_POLISH_SCRIPT = @"
             (function() {
+                // Neutralize Adblock, Admiral, CMP and alert dialogs
+                try {
+                    window.alert = function() {};
+                    window.confirm = function() { return true; };
+                    window.prompt = function() { return null; };
+                    window.canRunAds = true;
+                    window.isAdBlockActive = false;
+                    window.adBlockerDetected = false;
+                    window.google_ad_client = 'ca-pub-fake';
+                    window.adsbygoogle = { push: function() {}, loaded: true };
+                    window.admiral = function() {};
+                    window.admiral.q = [];
+                    window.admiral.v = 2;
+                } catch(e) {}
+
                 var style = document.createElement('style');
                 style.innerHTML = `
                     nav.navbar, header, footer, #footer, .footer, .card.bg-light, .alert, .adsbygoogle,
@@ -245,6 +260,22 @@ namespace BUGrockLauncher {
                     a[href*='youtube.com'], a[href*='youtu.be'], i.fa-youtube-play, .fa-youtube-play,
                     section, article {
                         display: none !important;
+                    }
+                    /* Eradicate any modals, popups, cookie notices, overlays, Admiral adblock prompts */
+                    .modal, .modal-backdrop, .modal-open, .fade.show,
+                    div[role='dialog'], div[aria-modal='true'],
+                    .fc-dialog-container, .fc-consent-root, .fc-ab-root, .fc-dialog,
+                    div[class*='admiral' i], div[id*='admiral' i], iframe[id*='admiral' i],
+                    #onetrust-consent-sdk, #onetrust-banner-sdk, .qc-cmp2-container, #cmpbox,
+                    .cookie-banner, .cookie-notice, .cookieConsent, div[class*='cookie' i], div[id*='cookie' i],
+                    div[class*='consent' i], div[id*='consent' i],
+                    div[class*='adblock' i], div[id*='adblock' i], div[class*='ad-block' i], div[id*='ad-block' i],
+                    .modal-adblock, .adblock-overlay, #adblock-overlay,
+                    .sweet-alert, .swal2-container, .popover, .tooltip {
+                        display: none !important;
+                        visibility: hidden !important;
+                        pointer-events: none !important;
+                        opacity: 0 !important;
                     }
                     html, body, .content, .container, .container-fluid, .row, .col, div[class*='col'] {
                         background-color: #12131A !important;
@@ -433,7 +464,21 @@ namespace BUGrockLauncher {
                 `;
                 if (document.head) document.head.appendChild(style);
 
+                function killPopupsAndModals() {
+                    var badEls = document.querySelectorAll('.modal, .modal-backdrop, div[role=""dialog""], div[aria-modal=""true""], .fc-dialog-container, .fc-consent-root, .fc-ab-root, div[class*=""admiral"" i], div[id*=""admiral"" i], iframe[id*=""admiral"" i], div[class*=""cookie"" i], div[class*=""consent"" i]');
+                    for (var i = 0; i < badEls.length; i++) {
+                        badEls[i].remove();
+                    }
+                    if (document.body) {
+                        document.body.classList.remove('modal-open');
+                        document.body.style.removeProperty('overflow');
+                        document.body.style.removeProperty('padding-right');
+                    }
+                }
+
                 function applyDarkStylesDirectly() {
+                    killPopupsAndModals();
+
                     var ipEls = document.querySelectorAll('.btn-server-ip, a.btn-server-ip, button.btn-server-ip, .clipboard, .btn-group, input, .form-control');
                     for (var i = 0; i < ipEls.length; i++) {
                         ipEls[i].style.setProperty('background-color', '#1A1C28', 'important');
@@ -466,6 +511,8 @@ namespace BUGrockLauncher {
                 }
 
                 function cleanBottomContent() {
+                    killPopupsAndModals();
+
                     // 1. Remove all YouTube videos, wrappers, and trailer links
                     document.querySelectorAll('lite-youtube, .lite-youtube, iframe[src*=""youtube""], iframe[src*=""youtu.be""], .fa-youtube-play').forEach(function(el) {
                         var container = el.closest('.row, .col-md-4, .form-group, h2');
@@ -540,6 +587,7 @@ namespace BUGrockLauncher {
                 if (window.MutationObserver) {
                     try {
                         var observer = new MutationObserver(function() {
+                            killPopupsAndModals();
                             applyDarkStylesDirectly();
                         });
                         if (document.body) {
@@ -610,6 +658,15 @@ namespace BUGrockLauncher {
                         ServersWebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
                         ServersWebView.CoreWebView2.Settings.IsZoomControlEnabled = true;
 
+                        ServersWebView.CoreWebView2.NewWindowRequested += (s, e) => {
+                            e.Handled = true;
+                        };
+
+                        ServersWebView.CoreWebView2.ScriptDialogOpening += (s, e) => {
+                            e.Handled = true;
+                            e.Accept();
+                        };
+
                         ServersWebView.SizeChanged += (s, e) => UpdateServersZoom();
 
                         ServersWebView.NavigationStarting += (s, e) => {
@@ -640,6 +697,7 @@ namespace BUGrockLauncher {
                                     if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Collapsed;
                                     ServersWebView.Visibility = Visibility.Visible;
                                     try {
+                                        ServersWebView.CoreWebView2?.ExecuteScriptAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
                                         ServersWebView.CoreWebView2?.ExecuteScriptAsync(SERVERS_VIEW_POLISH_SCRIPT);
                                     } catch { }
                                 }
@@ -647,6 +705,7 @@ namespace BUGrockLauncher {
                             });
                         };
 
+                        await ServersWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
                         await ServersWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(SERVERS_VIEW_POLISH_SCRIPT);
                         ServersWebView.CoreWebView2.Navigate("https://minecraftpocket-servers.com/");
                     }
