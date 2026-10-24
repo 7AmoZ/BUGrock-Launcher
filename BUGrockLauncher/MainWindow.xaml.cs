@@ -232,26 +232,22 @@ namespace BUGrockLauncher {
                         margin-right: 0 !important;
                         padding-right: 0 !important;
                     }
-                    /* Bright readable text for Introduction, Description, and content on MCPEDL */
-                    .post__description, .post__description *,
-                    .post-description, .post-description *,
-                    .article__content, .article__content *,
-                    .post__content, .post__content *,
-                    .entry-content, .entry-content *,
-                    .text-formatted, .text-formatted *,
-                    .details, .details *,
-                    .description, .description *,
-                    article p, article span, article div, article li,
-                    div[class*='description'] p, div[class*='description'] span, div[class*='description'] div,
-                    div[class*='content'] p, div[class*='content'] span,
-                    p, li, .text-muted {
+                    /* Bright readable text ONLY for Introduction and Description bodies on MCPEDL */
+                    .post__description, .post__description p, .post__description span, .post__description div, .post__description li,
+                    .post-description, .post-description p, .post-description span,
+                    .article__content, .article__content p, .article__content span, .article__content div, .article__content li,
+                    .post__content, .post__content p, .post__content span,
+                    .entry-content, .entry-content p, .entry-content span,
+                    div[class*='description'] p, div[class*='description'] span {
                         color: #E2E8F0 !important;
                     }
-                    h1, h2, h3, h4, h5, h6, strong, b, dt {
+                    .post__description h1, .post__description h2, .post__description h3, .post__description h4,
+                    .article__content h1, .article__content h2, .article__content h3, .article__content h4 {
                         color: #FFFFFF !important;
                     }
-                    a {
-                        color: #48BB78 !important;
+                    /* Preserve native colors and styles of all buttons and nav links */
+                    button, .btn, a.btn, a.button, [role='button'], .nav-link, .menu-link {
+                        color: inherit;
                     }
                     html, body, #__nuxt, #__layout, div#app {
                         background-color: #161C23 !important;
@@ -322,12 +318,13 @@ namespace BUGrockLauncher {
                             r.classList.add('dark-mode');
                             r.classList.remove('light-mode');
                         }
-                        var descEls = document.querySelectorAll('.post__description, .article__content, div[class*=""description""], article');
+                        var descEls = document.querySelectorAll('.post__description, .article__content, .post-content, .entry-content');
                         for (var d = 0; d < descEls.length; d++) {
-                            descEls[d].style.setProperty('color', '#E2E8F0', 'important');
-                            var kids = descEls[d].querySelectorAll('p, span, div, li');
+                            var kids = descEls[d].querySelectorAll('p, span, li');
                             for (var c = 0; c < kids.length; c++) {
-                                kids[c].style.setProperty('color', '#E2E8F0', 'important');
+                                if (!kids[c].closest('button, .btn, a, [role=""button""]')) {
+                                    kids[c].style.setProperty('color', '#E2E8F0', 'important');
+                                }
                             }
                         }
                     }
@@ -414,12 +411,23 @@ namespace BUGrockLauncher {
                         margin-bottom: 6px !important;
                     }
                     nav.navbar, header, .breadcrumb, ol.breadcrumb, ul.breadcrumb,
-                    .leaderboard, #leaderboard, .top-banner, div[class*='banner'],
-                    div[class*='ad-'], div[id*='ad-'], .alert, .my-4, .mt-4 {
+                    .leaderboard, #leaderboard, div[id*='leaderboard'],
+                    div[class*='ad-slot'], div[id*='ad-slot'], div[class*='ad-container'],
+                    .adsbygoogle, .alert, .my-4, .mt-4 {
                         display: none !important;
                         height: 0 !important;
                         margin: 0 !important;
                         padding: 0 !important;
+                    }
+                    /* Server Banners and GIFs - Always visible and centered */
+                    .server-banner-wrap, .server-banner, div[class*='server-banner'],
+                    .server-banner-wrap img, .server-banner img, .card img, img.server-banner,
+                    img[src*='banner'], img[src*='.gif'] {
+                        display: block !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                        max-width: 100% !important;
+                        height: auto !important;
                     }
                     /* Cards & Server Containers */
                     .card, .card-header, .card-body, .card-footer, .list-group, .list-group-item,
@@ -721,15 +729,19 @@ namespace BUGrockLauncher {
                         document.documentElement.style.setProperty('padding-top', '0px', 'important');
                         document.documentElement.style.setProperty('margin-top', '0px', 'important');
                     }
-                    var heading = document.querySelector('h1, h2, .servers-table');
-                    if (heading && heading.parentElement) {
-                        heading.style.setProperty('margin-top', '0px', 'important');
-                        heading.style.setProperty('padding-top', '0px', 'important');
-                        var prev = heading.previousElementSibling;
+                    var h1 = document.querySelector('h1');
+                    if (h1 && h1.parentElement && window.location.pathname.indexOf('/server/') === -1) {
+                        h1.style.setProperty('margin-top', '0px', 'important');
+                        h1.style.setProperty('padding-top', '0px', 'important');
+                        var prev = h1.previousElementSibling;
                         while (prev) {
                             var toRemove = prev;
                             prev = prev.previousElementSibling;
-                            toRemove.remove();
+                            if (toRemove.querySelector('.server-banner-wrap, .server-banner, img')) break;
+                            var tag = toRemove.tagName.toLowerCase();
+                            if (tag === 'nav' || tag === 'header' || tag === 'ol' || !toRemove.textContent.trim()) {
+                                toRemove.remove();
+                            }
                         }
                     }
                 }
