@@ -317,7 +317,11 @@ namespace BUGrockLauncher {
                     for (var i = 0; i < allLinks.length; i++) {
                         var aEl = allLinks[i];
                         var aTxt = (aEl.textContent || '').trim().toLowerCase();
-                        if (aTxt.indexOf('skip to download') !== -1) {
+                        var aHref = aEl.getAttribute('href') || '';
+                        if (aTxt.indexOf('skip to download') !== -1 || (aHref.indexOf('#download') !== -1 && aTxt.indexOf('download') !== -1)) {
+                            if (aEl.textContent.indexOf('NOT AD :)') === -1) {
+                                aEl.textContent = 'Skip to Downloads - NOT AD :) >';
+                            }
                             aEl.style.setProperty('display', 'flex', 'important');
                             aEl.style.setProperty('align-items', 'center', 'important');
                             aEl.style.setProperty('justify-content', 'center', 'important');
