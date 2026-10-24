@@ -23,6 +23,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
     <ProjectReference Include="..\GDKDecryptHelper\GDKDecryptHelper.vcxproj" />
     <ProjectReference Include="..\GDKLaunchShim\GDKLaunchShim.vcxproj" />
     <ProjectReference Include="..\WUTokenHelper\WUTokenHelper.vcxproj" />

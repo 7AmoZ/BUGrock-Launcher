@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Microsoft.Web.WebView2.Core;
 
 namespace BUGrockLauncher {
     using System.Collections.Generic;
@@ -122,8 +123,193 @@ namespace BUGrockLauncher {
                 _userVersionDownloader.EnableUserAuthorization();
             });
             Dispatcher.Invoke(LoadVersionList);
-            Loaded += (s, e) => InitSteveHead();
+            Loaded += (s, e) => {
+                InitSteveHead();
+                InitializeWebViews();
+            };
         }
+
+        #region Community Hub & DDFW Downloads
+        private string? _lastDownloadedFilePath;
+        private string? _lastDownloadedFolder;
+
+        private async void InitializeWebViews() {
+            try {
+                DDFWManager.EnsureDirectories();
+
+                // 1. Initialize Servers WebView
+                if (ServersWebView != null) {
+                    await ServersWebView.EnsureCoreWebView2Async();
+                    if (ServersWebView.CoreWebView2 != null) {
+                        ServersWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
+                        ServersWebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
+                        ServersWebView.NavigationCompleted += (s, e) => {
+                            try {
+                                ServersWebView.CoreWebView2?.ExecuteScriptAsync(@"
+                                    (function() {
+                                        var style = document.createElement('style');
+                                        style.innerHTML = 'header, footer, .adsbygoogle, .banner-ads, #navbar { display: none !important; } body { background-color: #12131A !important; color: #E2E8F0 !important; }';
+                                        document.head.appendChild(style);
+                                    })();
+                                ");
+                            } catch { }
+                        };
+                    }
+                }
+
+                // 2. Initialize In-App Browser WebView
+                if (BrowserWebView != null) {
+                    await BrowserWebView.EnsureCoreWebView2Async();
+                    if (BrowserWebView.CoreWebView2 != null) {
+                        BrowserWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
+                        BrowserWebView.CoreWebView2.SourceChanged += (s, e) => {
+                            if (BrowserUrlText != null) {
+                                BrowserUrlText.Text = BrowserWebView.Source?.ToString() ?? "";
+                            }
+                        };
+                        BrowserWebView.CoreWebView2.DownloadStarting += Browser_DownloadStarting;
+                    }
+                }
+            } catch (Exception ex) {
+                Trace.WriteLine("Failed to initialize WebView2: " + ex.Message);
+            }
+        }
+
+        private void Browser_DownloadStarting(object? sender, CoreWebView2DownloadStartingEventArgs e) {
+            try {
+                string fileName = Path.GetFileName(e.ResultFilePath);
+                string sourceUri = e.DownloadOperation.Uri ?? "";
+
+                string targetDir = DDFWManager.DetermineTargetFolder(sourceUri, fileName);
+                string finalPath = Path.Combine(targetDir, fileName);
+
+                e.ResultFilePath = finalPath;
+                e.Handled = true;
+
+                e.DownloadOperation.StateChanged += (s, ev) => {
+                    if (e.DownloadOperation.State == CoreWebView2DownloadState.Completed) {
+                        Dispatcher.Invoke(() => {
+                            try {
+                                string recheckDir = DDFWManager.DetermineTargetFolder(sourceUri, fileName, finalPath);
+                                if (!string.Equals(targetDir, recheckDir, StringComparison.OrdinalIgnoreCase)) {
+                                    string newFinalPath = Path.Combine(recheckDir, fileName);
+                                    if (File.Exists(finalPath)) {
+                                        File.Move(finalPath, newFinalPath, true);
+                                        finalPath = newFinalPath;
+                                        targetDir = recheckDir;
+                                    }
+                                }
+                            } catch { }
+
+                            _lastDownloadedFilePath = finalPath;
+                            _lastDownloadedFolder = targetDir;
+                            string catName = DDFWManager.GetCategoryDisplayName(targetDir);
+                            ShowDownloadToast($"✅ {fileName} saved to DDFW/{Path.GetFileName(targetDir)} ({catName})");
+                        });
+                    }
+                };
+            } catch (Exception ex) {
+                Trace.WriteLine("Download starting exception: " + ex.Message);
+            }
+        }
+
+        private void ShowDownloadToast(string message) {
+            if (DownloadToastBar == null || DownloadToastText == null) return;
+            DownloadToastText.Text = message;
+            DownloadToastBar.Visibility = Visibility.Visible;
+        }
+
+        private void ToastDismiss_Click(object sender, RoutedEventArgs e) {
+            if (DownloadToastBar != null) DownloadToastBar.Visibility = Visibility.Collapsed;
+        }
+
+        private void ToastShowInFolder_Click(object sender, RoutedEventArgs e) {
+            try {
+                string folder = _lastDownloadedFolder ?? DDFWManager.RootFolder;
+                if (!string.IsNullOrEmpty(_lastDownloadedFilePath) && File.Exists(_lastDownloadedFilePath)) {
+                    Process.Start("explorer.exe", $"/select,\"{_lastDownloadedFilePath}\"");
+                } else if (Directory.Exists(folder)) {
+                    Process.Start("explorer.exe", $"\"{folder}\"");
+                }
+            } catch (Exception ex) {
+                ThemedMessageBox.Show($"Could not open folder: {ex.Message}", "Error");
+            }
+        }
+
+        private void OpenInAppBrowser(string url) {
+            if (InAppBrowserOverlay == null || BrowserWebView == null) return;
+            InAppBrowserOverlay.Visibility = Visibility.Visible;
+            if (BrowserWebView.CoreWebView2 != null) {
+                BrowserWebView.CoreWebView2.Navigate(url);
+            } else {
+                BrowserWebView.Source = new Uri(url);
+            }
+        }
+
+        private void CardModsSection_Click(object sender, MouseButtonEventArgs e) {
+            OpenInAppBrowser("https://mcpedl.com/category/mods/");
+        }
+
+        private void CardTexturesSection_Click(object sender, MouseButtonEventArgs e) {
+            OpenInAppBrowser("https://mcpedl.com/category/texture-packs/");
+        }
+
+        private void CardMapsSection_Click(object sender, MouseButtonEventArgs e) {
+            OpenInAppBrowser("https://mcpedl.com/category/maps/");
+        }
+
+        private void CardSkinsSection_Click(object sender, MouseButtonEventArgs e) {
+            OpenInAppBrowser("https://mcpedl.com/skins/skin-packs/");
+        }
+
+        private void RefreshServersBtn_Click(object sender, RoutedEventArgs e) {
+            try {
+                ServersWebView?.Reload();
+            } catch { }
+        }
+
+        private void ExpandServersBtn_Click(object sender, RoutedEventArgs e) {
+            OpenInAppBrowser("https://minecraftpocket-servers.com/");
+        }
+
+        private void BrowserBackBtn_Click(object sender, RoutedEventArgs e) {
+            try { if (BrowserWebView?.CanGoBack == true) BrowserWebView.GoBack(); } catch { }
+        }
+
+        private void BrowserForwardBtn_Click(object sender, RoutedEventArgs e) {
+            try { if (BrowserWebView?.CanGoForward == true) BrowserWebView.GoForward(); } catch { }
+        }
+
+        private void BrowserRefreshBtn_Click(object sender, RoutedEventArgs e) {
+            try { BrowserWebView?.Reload(); } catch { }
+        }
+
+        private void BrowserMCPEDLToggleBtn_Click(object sender, RoutedEventArgs e) {
+            OpenInAppBrowser("https://mcpedl.com");
+        }
+
+        private void BrowserCurseForgeToggleBtn_Click(object sender, RoutedEventArgs e) {
+            OpenInAppBrowser("https://www.curseforge.com/minecraft-bedrock");
+        }
+
+        private void OpenDDFWFolderBtn_Click(object sender, RoutedEventArgs e) {
+            try {
+                DDFWManager.EnsureDirectories();
+                Process.Start("explorer.exe", $"\"{DDFWManager.RootFolder}\"");
+            } catch (Exception ex) {
+                ThemedMessageBox.Show($"Could not open DDFW folder: {ex.Message}", "Error");
+            }
+        }
+
+        private void CloseBrowserBtn_Click(object sender, RoutedEventArgs e) {
+            if (InAppBrowserOverlay != null) {
+                InAppBrowserOverlay.Visibility = Visibility.Collapsed;
+            }
+            if (DownloadToastBar != null) {
+                DownloadToastBar.Visibility = Visibility.Collapsed;
+            }
+        }
+        #endregion
 
         private async void LoadVersionList() {
             if (_isLoadingVersionList) return;

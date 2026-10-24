@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:BUGrockLauncher.WPFDataTypes"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         mc:Ignorable="d"
         Title="BUGrock Launcher [Beta]" 
         Height="780" Width="1200"
@@ -800,65 +801,273 @@
                         </Border>
                     </Grid>
 
-                    <!-- News & Community Highlights (3 Cards matching the exact HTML) -->
+                    <!-- Community & Content Hub (3 Interactive Cards) -->
                     <Grid Grid.Row="1" Margin="16,8,16,14">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="14"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="1.15*"/>
                             <ColumnDefinition Width="14"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Card 1: What's new in 1.21? -->
-                        <Border Grid.Column="0" Background="#1C1E2A" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="8" Padding="12">
-                            <StackPanel>
-                                <Border Height="110" CornerRadius="6" Margin="0,0,0,10" ClipToBounds="True">
-                                    <Image Source="Assets/news_update.png" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        <!-- Card 1: Addons & Textures Split Card (Left) -->
+                        <Border Grid.Column="0" Background="#161822" BorderBrush="#252736" BorderThickness="1" CornerRadius="8" ClipToBounds="True" RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1.0" ScaleY="1.0"/>
+                            </Border.RenderTransform>
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Panel.ZIndex" Value="10"/>
+                                            <Setter Property="BorderBrush" Value="#38A169"/>
+                                            <Trigger.EnterActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)" To="1.035" Duration="0:0:0.18"/>
+                                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)" To="1.035" Duration="0:0:0.18"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </Trigger.EnterActions>
+                                            <Trigger.ExitActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)" To="1.0" Duration="0:0:0.18"/>
+                                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)" To="1.0" Duration="0:0:0.18"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </Trigger.ExitActions>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="1"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Top Half: Add-ons & Mods (MCPEDL / CurseForge) -->
+                                <Border Grid.Row="0" x:Name="CardModsSection" Background="#181A24" Padding="12,10" Cursor="Hand" MouseLeftButtonDown="CardModsSection_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#222736"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <!-- MCPEDL DL Badge -->
+                                        <Border Grid.Column="0" Width="38" Height="38" CornerRadius="6" Background="#2E7D32" Margin="0,0,10,0" VerticalAlignment="Center">
+                                            <TextBlock Text="DL" Foreground="#FFFFFF" FontWeight="Black" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="Add-ons &amp; Mods" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13"/>
+                                            <TextBlock Text="Browse MCPEDL &amp; CurseForge" Foreground="#8E92A4" FontSize="10.5"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Text="➔" Foreground="#38A169" FontSize="13" VerticalAlignment="Center" FontWeight="Bold" Margin="4,0,2,0"/>
+                                    </Grid>
                                 </Border>
-                                <Grid Margin="0,0,0,4">
-                                    <Border HorizontalAlignment="Left" Background="#1C2E22" BorderBrush="#38A169" BorderThickness="1" CornerRadius="4" Padding="6,2">
-                                        <TextBlock Text="NEWS" Foreground="#38A169" FontWeight="Bold" FontSize="10"/>
-                                    </Border>
-                                    <TextBlock Text="1.21 Tricky Trials" HorizontalAlignment="Right" Foreground="#606478" FontSize="10" VerticalAlignment="Center"/>
-                                </Grid>
-                                <TextBlock Text="What's new in 1.21?" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" Margin="0,2,0,4"/>
-                                <TextBlock Text="Discover the latest mobs, blocks, and technical changes in the Bedrock ecosystem." Foreground="#8E92A4" FontSize="11" TextWrapping="Wrap" LineHeight="16"/>
-                            </StackPanel>
+
+                                <!-- Divider -->
+                                <Border Grid.Row="1" Background="#262838"/>
+
+                                <!-- Bottom Half: Texture & Resource Packs -->
+                                <Border Grid.Row="2" x:Name="CardTexturesSection" Background="#181A24" Padding="12,10" Cursor="Hand" MouseLeftButtonDown="CardTexturesSection_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#252433"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <!-- Anvil / Texture Badge -->
+                                        <Border Grid.Column="0" Width="38" Height="38" CornerRadius="6" Background="#D97706" Margin="0,0,10,0" VerticalAlignment="Center">
+                                            <TextBlock Text="🔥" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="Texture Packs" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13"/>
+                                            <TextBlock Text="Resource packs &amp; Shaders" Foreground="#8E92A4" FontSize="10.5"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Text="➔" Foreground="#F59E0B" FontSize="13" VerticalAlignment="Center" FontWeight="Bold" Margin="4,0,2,0"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
                         </Border>
 
-                        <!-- Card 2: Manage Your Realm -->
-                        <Border Grid.Column="2" Background="#1C1E2A" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="8" Padding="12">
-                            <StackPanel>
-                                <Border Height="110" CornerRadius="6" Margin="0,0,0,10" ClipToBounds="True">
-                                    <Image Source="Assets/news_realms.png" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        <!-- Card 2: Featured Bedrock Servers (Center - Live Web View) -->
+                        <Border Grid.Column="2" x:Name="ServerCardBorder" Background="#151720" BorderBrush="#252736" BorderThickness="1" CornerRadius="8" ClipToBounds="True" RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1.0" ScaleY="1.0"/>
+                            </Border.RenderTransform>
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Panel.ZIndex" Value="10"/>
+                                            <Setter Property="BorderBrush" Value="#38A169"/>
+                                            <Trigger.EnterActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)" To="1.025" Duration="0:0:0.18"/>
+                                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)" To="1.025" Duration="0:0:0.18"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </Trigger.EnterActions>
+                                            <Trigger.ExitActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)" To="1.0" Duration="0:0:0.18"/>
+                                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)" To="1.0" Duration="0:0:0.18"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </Trigger.ExitActions>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="30"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <!-- Header Bar -->
+                                <Border Grid.Row="0" Background="#12131A" BorderBrush="#222430" BorderThickness="0,0,0,1" Padding="10,0">
+                                    <Grid VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Ellipse Width="6" Height="6" Fill="#38A169" Margin="0,0,6,0"/>
+                                            <TextBlock Text="Featured Bedrock Servers" Foreground="#FFFFFF" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                            <Border Background="#1C2E22" BorderBrush="#38A169" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="6,0,0,0">
+                                                <TextBlock Text="LIVE" Foreground="#38A169" FontSize="8.5" FontWeight="Bold"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <Button x:Name="RefreshServersBtn" Content="⟳" Style="{StaticResource DarkButtonStyle}" Width="22" Height="22" Padding="0" FontSize="11" ToolTip="Refresh Servers" Click="RefreshServersBtn_Click"/>
+                                            <Button x:Name="ExpandServersBtn" Content="↗" Style="{StaticResource DarkButtonStyle}" Width="22" Height="22" Padding="0" FontSize="10" Margin="4,0,0,0" ToolTip="Open Full Server Browser" Click="ExpandServersBtn_Click"/>
+                                        </StackPanel>
+                                    </Grid>
                                 </Border>
-                                <Grid Margin="0,0,0,4">
-                                    <Border HorizontalAlignment="Left" Background="#2B1530" BorderBrush="#D05CE3" BorderThickness="1" CornerRadius="4" Padding="6,2">
-                                        <TextBlock Text="REALMS" Foreground="#D05CE3" FontWeight="Bold" FontSize="10"/>
-                                    </Border>
-                                    <TextBlock Text="Cloud Servers" HorizontalAlignment="Right" Foreground="#606478" FontSize="10" VerticalAlignment="Center"/>
-                                </Grid>
-                                <TextBlock Text="Manage Your Realm" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" Margin="0,2,0,4"/>
-                                <TextBlock Text="Connect with friends on a dedicated server. Always online, always available." Foreground="#8E92A4" FontSize="11" TextWrapping="Wrap" LineHeight="16"/>
-                            </StackPanel>
+                                <!-- Live Server WebView2 -->
+                                <wv2:WebView2 Grid.Row="1" x:Name="ServersWebView" Source="https://minecraftpocket-servers.com/"/>
+                            </Grid>
                         </Border>
 
-                        <!-- Card 3: Explore Marketplace -->
-                        <Border Grid.Column="4" Background="#1C1E2A" BorderBrush="#2D3042" BorderThickness="1" CornerRadius="8" Padding="12">
-                            <StackPanel>
-                                <Border Height="110" CornerRadius="6" Margin="0,0,0,10" ClipToBounds="True">
-                                    <Image Source="Assets/news_addons.png" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                        <!-- Card 3: Maps & Skins Split Card (Right) -->
+                        <Border Grid.Column="4" Background="#161822" BorderBrush="#252736" BorderThickness="1" CornerRadius="8" ClipToBounds="True" RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1.0" ScaleY="1.0"/>
+                            </Border.RenderTransform>
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Panel.ZIndex" Value="10"/>
+                                            <Setter Property="BorderBrush" Value="#38A169"/>
+                                            <Trigger.EnterActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)" To="1.035" Duration="0:0:0.18"/>
+                                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)" To="1.035" Duration="0:0:0.18"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </Trigger.EnterActions>
+                                            <Trigger.ExitActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleX)" To="1.0" Duration="0:0:0.18"/>
+                                                        <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(ScaleTransform.ScaleY)" To="1.0" Duration="0:0:0.18"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </Trigger.ExitActions>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="1"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Top Half: Maps & Worlds -->
+                                <Border Grid.Row="0" x:Name="CardMapsSection" Background="#181A24" Padding="12,10" Cursor="Hand" MouseLeftButtonDown="CardMapsSection_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#1C2333"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <!-- Map Badge -->
+                                        <Border Grid.Column="0" Width="38" Height="38" CornerRadius="6" Background="#1E40AF" Margin="0,0,10,0" VerticalAlignment="Center">
+                                            <TextBlock Text="🗺️" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="Maps &amp; Worlds" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13"/>
+                                            <TextBlock Text="Adventures, survival &amp; parkour" Foreground="#8E92A4" FontSize="10.5"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Text="➔" Foreground="#60A5FA" FontSize="13" VerticalAlignment="Center" FontWeight="Bold" Margin="4,0,2,0"/>
+                                    </Grid>
                                 </Border>
-                                <Grid Margin="0,0,0,4">
-                                    <Border HorizontalAlignment="Left" Background="#1C2E22" BorderBrush="#38A169" BorderThickness="1" CornerRadius="4" Padding="6,2">
-                                        <TextBlock Text="ADD-ONS" Foreground="#38A169" FontWeight="Bold" FontSize="10"/>
-                                    </Border>
-                                    <TextBlock Text="Community Packs" HorizontalAlignment="Right" Foreground="#606478" FontSize="10" VerticalAlignment="Center"/>
-                                </Grid>
-                                <TextBlock Text="Explore Marketplace" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" Margin="0,2,0,4"/>
-                                <TextBlock Text="Find thousands of skins, worlds, and textures created by the community." Foreground="#8E92A4" FontSize="11" TextWrapping="Wrap" LineHeight="16"/>
-                            </StackPanel>
+
+                                <!-- Divider -->
+                                <Border Grid.Row="1" Background="#262838"/>
+
+                                <!-- Bottom Half: Skins & Skin Packs -->
+                                <Border Grid.Row="2" x:Name="CardSkinsSection" Background="#181A24" Padding="12,10" Cursor="Hand" MouseLeftButtonDown="CardSkinsSection_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#261E33"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <!-- Skin Badge -->
+                                        <Border Grid.Column="0" Width="38" Height="38" CornerRadius="6" Background="#7E22CE" Margin="0,0,10,0" VerticalAlignment="Center">
+                                            <TextBlock Text="👤" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="Skins &amp; Packs" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13"/>
+                                            <TextBlock Text="Player skins &amp; custom packs" Foreground="#8E92A4" FontSize="10.5"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Text="➔" Foreground="#C084FC" FontSize="13" VerticalAlignment="Center" FontWeight="Bold" Margin="4,0,2,0"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
                         </Border>
                     </Grid>
                 </Grid>
@@ -979,6 +1188,72 @@
                             </Border>
                         </StackPanel>
                     </ScrollViewer>
+                </Grid>
+
+                <!-- In-App Web Browser Overlay (for Community Hub & Downloads) -->
+                <Grid x:Name="InAppBrowserOverlay" Grid.Row="1" Visibility="Collapsed" Panel.ZIndex="100" Background="#0F1015">
+                    <Grid.RowDefinitions>
+                        <!-- Browser Toolbar (42px) -->
+                        <RowDefinition Height="42"/>
+                        <!-- Browser Content -->
+                        <RowDefinition Height="*"/>
+                        <!-- Download Notification Toast Bar -->
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Top Browser Navigation Bar -->
+                    <Border Grid.Row="0" Background="#13141A" BorderBrush="#232530" BorderThickness="0,0,0,1" Padding="12,0">
+                        <Grid VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Navigation controls -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button x:Name="BrowserBackBtn" Content="←" Style="{StaticResource DarkButtonStyle}" Width="28" Height="26" Padding="0" FontSize="13" Click="BrowserBackBtn_Click" ToolTip="Go Back"/>
+                                <Button x:Name="BrowserForwardBtn" Content="→" Style="{StaticResource DarkButtonStyle}" Width="28" Height="26" Padding="0" FontSize="13" Margin="4,0,0,0" Click="BrowserForwardBtn_Click" ToolTip="Go Forward"/>
+                                <Button x:Name="BrowserRefreshBtn" Content="⟳" Style="{StaticResource DarkButtonStyle}" Width="28" Height="26" Padding="0" FontSize="12" Margin="4,0,0,0" Click="BrowserRefreshBtn_Click" ToolTip="Refresh Page"/>
+                                <Button x:Name="BrowserMCPEDLToggleBtn" Content="MCPEDL" Style="{StaticResource DarkButtonStyle}" Height="26" Padding="10,0" FontSize="11" Margin="10,0,0,0" Click="BrowserMCPEDLToggleBtn_Click" ToolTip="Switch to MCPEDL"/>
+                                <Button x:Name="BrowserCurseForgeToggleBtn" Content="CurseForge" Style="{StaticResource DarkButtonStyle}" Height="26" Padding="10,0" FontSize="11" Margin="4,0,0,0" Click="BrowserCurseForgeToggleBtn_Click" ToolTip="Switch to CurseForge Bedrock"/>
+                            </StackPanel>
+
+                            <!-- URL Bar & Status -->
+                            <Border Grid.Column="1" Background="#181921" BorderBrush="#282A36" BorderThickness="1" CornerRadius="5" Height="28" Margin="12,0" Padding="10,0">
+                                <Grid VerticalAlignment="Center">
+                                    <TextBlock x:Name="BrowserUrlText" Text="https://mcpedl.com" Foreground="#8E92A4" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Right controls: Open DDFW Folder & Close -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button x:Name="OpenDDFWFolderBtn" Content="📁 DDFW Folder" Style="{StaticResource DarkButtonStyle}" Height="26" Padding="10,0" FontSize="11" Click="OpenDDFWFolderBtn_Click" ToolTip="Open DDFW Downloads Folder"/>
+                                <Button x:Name="CloseBrowserBtn" Content="✕ Close" Style="{StaticResource DangerButtonStyle}" Height="26" Padding="10,0" FontSize="11" Margin="8,0,0,0" Click="CloseBrowserBtn_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Browser Main WebView2 -->
+                    <wv2:WebView2 Grid.Row="1" x:Name="BrowserWebView"/>
+
+                    <!-- Download Notification Toast Bar -->
+                    <Border Grid.Row="2" x:Name="DownloadToastBar" Visibility="Collapsed" Background="#172A1E" BorderBrush="#38A169" BorderThickness="0,1,0,0" Padding="16,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="✅ " FontSize="13" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="DownloadToastText" Text="File downloaded successfully to DDFW/Addons" Foreground="#E2E8F0" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="Show in Folder" Style="{StaticResource DarkButtonStyle}" Height="24" Padding="8,0" FontSize="11" Click="ToastShowInFolder_Click"/>
+                                <Button Content="✕" Style="{StaticResource DarkButtonStyle}" Width="22" Height="24" Padding="0" Margin="6,0,0,0" FontSize="11" Click="ToastDismiss_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
                 </Grid>
             </Grid>
         </Grid>
