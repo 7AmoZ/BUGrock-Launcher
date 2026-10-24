@@ -995,6 +995,28 @@
                                         <TextBlock Text="Loading Bedrock Servers..." Foreground="#38A169" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
+
+                                <!-- No Internet Overlay (Shown if network connection is lost or offline) -->
+                                <Border Grid.Row="1" x:Name="ServersNoInternetOverlay" Background="#151720" Panel.ZIndex="6" Visibility="Collapsed">
+                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <!-- Block + X Icon Row -->
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,12">
+                                            <Border Width="44" Height="44" CornerRadius="6" Background="#1A1C28" BorderBrush="#2D3748" BorderThickness="1" VerticalAlignment="Center">
+                                                <Image Source="Assets/bugrock_block.png" Width="32" Height="32" HorizontalAlignment="Center" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                            </Border>
+                                            <Border Width="26" Height="26" CornerRadius="13" Background="#742A2A" BorderBrush="#E53E3E" BorderThickness="1.5" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="✕" Foreground="#E53E3E" FontWeight="Bold" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0"/>
+                                            </Border>
+                                        </StackPanel>
+
+                                        <!-- No Internet Text -->
+                                        <TextBlock Text="No Internet" Foreground="#FFFFFF" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                                        <TextBlock Text="Check your network connection" Foreground="#8E92A4" FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+
+                                        <!-- Retry Button -->
+                                        <Button x:Name="ServersRetryBtn" Content="⟳ Retry" Style="{StaticResource DarkButtonStyle}" Height="26" Padding="12,0" FontSize="11" HorizontalAlignment="Center" Click="ServersRetryBtn_Click"/>
+                                    </StackPanel>
+                                </Border>
                             </Grid>
                         </Border>
 

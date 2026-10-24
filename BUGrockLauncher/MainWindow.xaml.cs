@@ -356,12 +356,31 @@ namespace BUGrockLauncher {
             if (_isStartupCompleted) return;
 
             try {
-                splash.SetStatus("Loading versions from cache...");
-                await LoadVersionListAsync(splash);
+                splash.SetStatus("Connecting to community servers...");
 
-                splash.SetStatus("Initializing community servers...");
+                // Run version loading asynchronously in background so splash is never blocked by GDK/UWP downloads
+                _ = Task.Run(async () => {
+                    try {
+                        await Dispatcher.InvokeAsync(() => LoadVersionListAsync(null));
+                    } catch { }
+                });
+
+                // Check network connectivity
+                bool isNetworkUp = System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable();
+                if (!isNetworkUp) {
+                    Dispatcher.Invoke(() => {
+                        if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Collapsed;
+                        if (ServersNoInternetOverlay != null) ServersNoInternetOverlay.Visibility = Visibility.Visible;
+                    });
+                    splash.SetStatus("Offline mode");
+                    await Task.Delay(300);
+                    return;
+                }
+
+                // Initialize WebViews
                 await InitializeWebViewsAsync();
 
+                // Wait for ServersWebView navigation with a quick timeout (max 2 seconds)
                 var tcs = new TaskCompletionSource<bool>();
                 EventHandler<CoreWebView2NavigationCompletedEventArgs>? navHandler = null;
                 navHandler = (s, e) => {
@@ -370,12 +389,12 @@ namespace BUGrockLauncher {
 
                 if (ServersWebView != null) {
                     ServersWebView.NavigationCompleted += navHandler;
-                    await Task.WhenAny(tcs.Task, Task.Delay(4000));
+                    await Task.WhenAny(tcs.Task, Task.Delay(2000));
                     ServersWebView.NavigationCompleted -= navHandler;
                 }
 
-                splash.SetStatus("Starting BUGrock Launcher...");
-                await Task.Delay(400);
+                splash.SetStatus("Ready!");
+                await Task.Delay(200);
             } catch (Exception ex) {
                 Trace.WriteLine("Startup sequence error: " + ex.Message);
             } finally {
@@ -403,6 +422,7 @@ namespace BUGrockLauncher {
 
                             if (navUri.Contains("minecraftpocket-servers.com") || navUri.Contains("cloudflare.com")) {
                                 Dispatcher.Invoke(() => {
+                                    if (ServersNoInternetOverlay != null) ServersNoInternetOverlay.Visibility = Visibility.Collapsed;
                                     if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Visible;
                                 });
                                 return;
@@ -417,11 +437,17 @@ namespace BUGrockLauncher {
 
                         ServersWebView.NavigationCompleted += (s, e) => {
                             Dispatcher.Invoke(() => {
-                                if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Collapsed;
                                 UpdateServersZoom();
-                                try {
-                                    ServersWebView.CoreWebView2?.ExecuteScriptAsync(SERVERS_VIEW_POLISH_SCRIPT);
-                                } catch { }
+                                if (!e.IsSuccess) {
+                                    if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Collapsed;
+                                    if (ServersNoInternetOverlay != null) ServersNoInternetOverlay.Visibility = Visibility.Visible;
+                                } else {
+                                    if (ServersNoInternetOverlay != null) ServersNoInternetOverlay.Visibility = Visibility.Collapsed;
+                                    if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Collapsed;
+                                    try {
+                                        ServersWebView.CoreWebView2?.ExecuteScriptAsync(SERVERS_VIEW_POLISH_SCRIPT);
+                                    } catch { }
+                                }
                             });
                         };
 
@@ -629,21 +655,57 @@ namespace BUGrockLauncher {
             OpenInAppBrowser("https://mcpedl.com/skins/skin-packs/");
         }
 
-        private void HomeServersBtn_Click(object sender, RoutedEventArgs e) {
+        private void ServersRetryBtn_Click(object sender, RoutedEventArgs e) {
+            RetryServersLoad();
+        }
+
+        private void RefreshServersBtn_Click(object sender, RoutedEventArgs e) {
+            RetryServersLoad();
+        }
+
+        private void RetryServersLoad() {
             try {
+                if (ServersNoInternetOverlay != null) ServersNoInternetOverlay.Visibility = Visibility.Collapsed;
                 if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Visible;
+
+                bool isNetworkUp = System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable();
+                if (!isNetworkUp) {
+                    Dispatcher.InvokeAsync(async () => {
+                        await Task.Delay(500);
+                        if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Collapsed;
+                        if (ServersNoInternetOverlay != null) ServersNoInternetOverlay.Visibility = Visibility.Visible;
+                    });
+                    return;
+                }
+
                 if (ServersWebView?.CoreWebView2 != null) {
-                    ServersWebView.CoreWebView2.Navigate("https://minecraftpocket-servers.com/");
+                    ServersWebView.Reload();
                 } else if (ServersWebView != null) {
                     ServersWebView.Source = new Uri("https://minecraftpocket-servers.com/");
                 }
             } catch { }
         }
 
-        private void RefreshServersBtn_Click(object sender, RoutedEventArgs e) {
+        private void HomeServersBtn_Click(object sender, RoutedEventArgs e) {
             try {
+                if (ServersNoInternetOverlay != null) ServersNoInternetOverlay.Visibility = Visibility.Collapsed;
                 if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Visible;
-                ServersWebView?.Reload();
+
+                bool isNetworkUp = System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable();
+                if (!isNetworkUp) {
+                    Dispatcher.InvokeAsync(async () => {
+                        await Task.Delay(500);
+                        if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Collapsed;
+                        if (ServersNoInternetOverlay != null) ServersNoInternetOverlay.Visibility = Visibility.Visible;
+                    });
+                    return;
+                }
+
+                if (ServersWebView?.CoreWebView2 != null) {
+                    ServersWebView.CoreWebView2.Navigate("https://minecraftpocket-servers.com/");
+                } else if (ServersWebView != null) {
+                    ServersWebView.Source = new Uri("https://minecraftpocket-servers.com/");
+                }
             } catch { }
         }
 
