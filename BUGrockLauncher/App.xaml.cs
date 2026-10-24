@@ -31,8 +31,8 @@ namespace BUGrockLauncher {
 
             var main = new MainWindow();
 
-            // Run version loading, GDK download & WebView2 setup behind splash screen
-            await main.WaitForStartupReadyAsync(splash);
+            // Snappy startup delay (1 second) so splash pulses nicely and launcher opens immediately
+            await Task.Delay(1000);
 
             main.Show();
             splash.Close();

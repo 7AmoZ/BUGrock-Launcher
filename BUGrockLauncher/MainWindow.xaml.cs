@@ -124,10 +124,8 @@ namespace BUGrockLauncher {
             });
             Loaded += async (s, e) => {
                 InitSteveHead();
-                if (!_isStartupCompleted) {
-                    await LoadVersionListAsync();
-                    await InitializeWebViewsAsync();
-                }
+                _ = LoadVersionListAsync();
+                await InitializeWebViewsAsync();
             };
         }
 
@@ -326,7 +324,6 @@ namespace BUGrockLauncher {
         private string? _lastDownloadedFilePath;
         private string? _lastDownloadedFolder;
         private string _currentInAppPlatform = "MCPEDL";
-        private bool _isStartupCompleted = false;
 
         private void UpdateServersZoom() {
             try {
@@ -352,55 +349,6 @@ namespace BUGrockLauncher {
             } catch { }
         }
 
-        public async Task WaitForStartupReadyAsync(SplashScreenWindow splash) {
-            if (_isStartupCompleted) return;
-
-            try {
-                splash.SetStatus("Connecting to community servers...");
-
-                // Run version loading asynchronously in background so splash is never blocked by GDK/UWP downloads
-                _ = Task.Run(async () => {
-                    try {
-                        await Dispatcher.InvokeAsync(() => LoadVersionListAsync(null));
-                    } catch { }
-                });
-
-                // Check network connectivity
-                bool isNetworkUp = System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable();
-                if (!isNetworkUp) {
-                    Dispatcher.Invoke(() => {
-                        if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Collapsed;
-                        if (ServersNoInternetOverlay != null) ServersNoInternetOverlay.Visibility = Visibility.Visible;
-                    });
-                    splash.SetStatus("Offline mode");
-                    await Task.Delay(300);
-                    return;
-                }
-
-                // Initialize WebViews
-                await InitializeWebViewsAsync();
-
-                // Wait for ServersWebView navigation with a quick timeout (max 2 seconds)
-                var tcs = new TaskCompletionSource<bool>();
-                EventHandler<CoreWebView2NavigationCompletedEventArgs>? navHandler = null;
-                navHandler = (s, e) => {
-                    tcs.TrySetResult(true);
-                };
-
-                if (ServersWebView != null) {
-                    ServersWebView.NavigationCompleted += navHandler;
-                    await Task.WhenAny(tcs.Task, Task.Delay(2000));
-                    ServersWebView.NavigationCompleted -= navHandler;
-                }
-
-                splash.SetStatus("Ready!");
-                await Task.Delay(200);
-            } catch (Exception ex) {
-                Trace.WriteLine("Startup sequence error: " + ex.Message);
-            } finally {
-                _isStartupCompleted = true;
-            }
-        }
 
         public async Task InitializeWebViewsAsync() {
             try {
@@ -454,95 +402,105 @@ namespace BUGrockLauncher {
                         await ServersWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(SERVERS_VIEW_POLISH_SCRIPT);
                     }
                 }
+            } catch (Exception ex) {
+                Trace.WriteLine("Failed to initialize ServersWebView: " + ex.Message);
+                Dispatcher.Invoke(() => {
+                    if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Collapsed;
+                    if (ServersNoInternetOverlay != null) ServersNoInternetOverlay.Visibility = Visibility.Visible;
+                });
+            }
+        }
 
-                // 2. Initialize In-App Browser WebView
-                if (BrowserWebView != null) {
-                    await BrowserWebView.EnsureCoreWebView2Async();
-                    if (BrowserWebView.CoreWebView2 != null) {
-                        BrowserWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
-                        BrowserWebView.CoreWebView2.Settings.IsZoomControlEnabled = true;
+        private bool _browserInitialized = false;
 
-                        BrowserWebView.SizeChanged += (s, e) => UpdateBrowserZoom();
+        private async Task EnsureBrowserInitializedAsync() {
+            if (_browserInitialized || BrowserWebView == null) return;
+            try {
+                await BrowserWebView.EnsureCoreWebView2Async();
+                if (BrowserWebView.CoreWebView2 != null) {
+                    BrowserWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
+                    BrowserWebView.CoreWebView2.Settings.IsZoomControlEnabled = true;
 
-                        await BrowserWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
+                    BrowserWebView.SizeChanged += (s, e) => UpdateBrowserZoom();
+                    await BrowserWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
 
-                        // Domain Whitelist & Bedrock Guard (100% English warnings)
-                        BrowserWebView.CoreWebView2.NavigationStarting += (s, args) => {
-                            string navUri = (args.Uri ?? "").ToLowerInvariant();
-                            if (string.IsNullOrWhiteSpace(navUri) || navUri == "about:blank") return;
+                    // Domain Whitelist & Bedrock Guard (100% English warnings)
+                    BrowserWebView.CoreWebView2.NavigationStarting += (s, args) => {
+                        string navUri = (args.Uri ?? "").ToLowerInvariant();
+                        if (string.IsNullOrWhiteSpace(navUri) || navUri == "about:blank") return;
 
-                            // Allow Cloudflare verification & file downloads
-                            if (navUri.Contains("challenges.cloudflare.com") || navUri.Contains("cloudflare.com") ||
-                                navUri.EndsWith(".mcaddon") || navUri.EndsWith(".mcpack") || navUri.EndsWith(".mcworld") || navUri.EndsWith(".zip")) {
-                                return;
-                            }
+                        // Allow Cloudflare verification & file downloads
+                        if (navUri.Contains("challenges.cloudflare.com") || navUri.Contains("cloudflare.com") ||
+                            navUri.EndsWith(".mcaddon") || navUri.EndsWith(".mcpack") || navUri.EndsWith(".mcworld") || navUri.EndsWith(".zip")) {
+                            return;
+                        }
 
-                            if (_currentInAppPlatform == "CurseForge") {
-                                if (navUri.Contains("curseforge.com") || navUri.Contains("forgecdn.net") || navUri.Contains("overwolf.com") || navUri.Contains("twitch.tv")) {
-                                    if (navUri.Contains("curseforge.com")) {
-                                        if (!navUri.Contains("/minecraft-bedrock") && !navUri.Contains("/login") && !navUri.Contains("/auth") && !navUri.Contains("/oauth") && !navUri.Contains("/api/")) {
-                                            args.Cancel = true;
-                                            Dispatcher.InvokeAsync(() => {
-                                                ThemedMessageBox.Show("Notice: URL changed to an unsupported section outside Bedrock.\nThese mods are not compatible with Minecraft Bedrock Edition!\n\nReturning to CurseForge Bedrock home.", "Bedrock Incompatibility Notice");
-                                                BrowserWebView.CoreWebView2?.Navigate("https://www.curseforge.com/minecraft-bedrock");
-                                            });
-                                            return;
-                                        }
+                        if (_currentInAppPlatform == "CurseForge") {
+                            if (navUri.Contains("curseforge.com") || navUri.Contains("forgecdn.net") || navUri.Contains("overwolf.com") || navUri.Contains("twitch.tv")) {
+                                if (navUri.Contains("curseforge.com")) {
+                                    if (!navUri.Contains("/minecraft-bedrock") && !navUri.Contains("/login") && !navUri.Contains("/auth") && !navUri.Contains("/oauth") && !navUri.Contains("/api/")) {
+                                        args.Cancel = true;
+                                        Dispatcher.InvokeAsync(() => {
+                                            ThemedMessageBox.Show("Notice: URL changed to an unsupported section outside Bedrock.\nThese mods are not compatible with Minecraft Bedrock Edition!\n\nReturning to CurseForge Bedrock home.", "Bedrock Incompatibility Notice");
+                                            BrowserWebView.CoreWebView2?.Navigate("https://www.curseforge.com/minecraft-bedrock");
+                                        });
+                                        return;
                                     }
-                                    return;
                                 }
-
-                                args.Cancel = true;
-                                Dispatcher.InvokeAsync(() => {
-                                    ThemedMessageBox.Show("Navigation restricted: You cannot navigate outside of CurseForge from BUGrock Launcher.", "Navigation Restricted");
-                                });
-                                return;
-                            } else if (_currentInAppPlatform == "MCPEDL") {
-                                if (navUri.Contains("mcpedl.com") || navUri.Contains("mediafire.com")) {
-                                    return;
-                                }
-
-                                args.Cancel = true;
-                                Dispatcher.InvokeAsync(() => {
-                                    ThemedMessageBox.Show("Navigation restricted: You cannot navigate outside of MCPEDL from BUGrock Launcher.", "Navigation Restricted");
-                                });
-                                return;
-                            } else if (_currentInAppPlatform == "minecraftpocket-servers.com") {
-                                if (navUri.Contains("minecraftpocket-servers.com")) {
-                                    return;
-                                }
-
-                                args.Cancel = true;
-                                Dispatcher.InvokeAsync(() => {
-                                    ThemedMessageBox.Show("Navigation restricted: You cannot navigate outside of minecraftpocket-servers.com from BUGrock Launcher.", "Navigation Restricted");
-                                });
                                 return;
                             }
-                        };
 
-                        BrowserWebView.CoreWebView2.SourceChanged += (s, e) => {
-                            if (BrowserUrlText != null) {
-                                BrowserUrlText.Text = BrowserWebView.Source?.ToString() ?? "";
+                            args.Cancel = true;
+                            Dispatcher.InvokeAsync(() => {
+                                ThemedMessageBox.Show("Navigation restricted: You cannot navigate outside of CurseForge from BUGrock Launcher.", "Navigation Restricted");
+                            });
+                            return;
+                        } else if (_currentInAppPlatform == "MCPEDL") {
+                            if (navUri.Contains("mcpedl.com") || navUri.Contains("mediafire.com")) {
+                                return;
                             }
-                        };
 
-                        BrowserWebView.CoreWebView2.NavigationCompleted += (s, e) => {
-                            UpdateBrowserZoom();
-                            try {
-                                BrowserWebView.CoreWebView2?.ExecuteScriptAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
-                            } catch { }
-                        };
+                            args.Cancel = true;
+                            Dispatcher.InvokeAsync(() => {
+                                ThemedMessageBox.Show("Navigation restricted: You cannot navigate outside of MCPEDL from BUGrock Launcher.", "Navigation Restricted");
+                            });
+                            return;
+                        } else if (_currentInAppPlatform == "minecraftpocket-servers.com") {
+                            if (navUri.Contains("minecraftpocket-servers.com")) {
+                                return;
+                            }
 
-                        BrowserWebView.CoreWebView2.NewWindowRequested += (s, e) => {
-                            e.Handled = true;
-                            BrowserWebView.CoreWebView2.Navigate(e.Uri);
-                        };
+                            args.Cancel = true;
+                            Dispatcher.InvokeAsync(() => {
+                                ThemedMessageBox.Show("Navigation restricted: You cannot navigate outside of minecraftpocket-servers.com from BUGrock Launcher.", "Navigation Restricted");
+                            });
+                            return;
+                        }
+                    };
 
-                        BrowserWebView.CoreWebView2.DownloadStarting += Browser_DownloadStarting;
-                    }
+                    BrowserWebView.CoreWebView2.SourceChanged += (s, e) => {
+                        if (BrowserUrlText != null) {
+                            BrowserUrlText.Text = BrowserWebView.Source?.ToString() ?? "";
+                        }
+                    };
+
+                    BrowserWebView.CoreWebView2.NavigationCompleted += (s, e) => {
+                        UpdateBrowserZoom();
+                        try {
+                            BrowserWebView.CoreWebView2?.ExecuteScriptAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
+                        } catch { }
+                    };
+
+                    BrowserWebView.CoreWebView2.NewWindowRequested += (s, e) => {
+                        e.Handled = true;
+                        BrowserWebView.CoreWebView2.Navigate(e.Uri);
+                    };
+
+                    BrowserWebView.CoreWebView2.DownloadStarting += Browser_DownloadStarting;
+                    _browserInitialized = true;
                 }
             } catch (Exception ex) {
-                Trace.WriteLine("Failed to initialize WebView2: " + ex.Message);
+                Trace.WriteLine("Failed to initialize BrowserWebView: " + ex.Message);
             }
         }
 
@@ -607,13 +565,14 @@ namespace BUGrockLauncher {
             }
         }
 
-        private void OpenInAppBrowser(string url) {
+        private async void OpenInAppBrowser(string url) {
             if (InAppBrowserOverlay == null || BrowserWebView == null) return;
             if (PlayViewGrid != null) PlayViewGrid.Visibility = Visibility.Collapsed;
             if (ServerCardBorder != null) ServerCardBorder.Visibility = Visibility.Collapsed;
             if (ServersWebView != null) ServersWebView.Visibility = Visibility.Collapsed;
 
             InAppBrowserOverlay.Visibility = Visibility.Visible;
+            await EnsureBrowserInitializedAsync();
 
             if (url.Contains("mcpedl.com")) {
                 _currentInAppPlatform = "MCPEDL";
