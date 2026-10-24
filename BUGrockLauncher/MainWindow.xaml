@@ -1286,7 +1286,9 @@
                     </Border>
 
                     <!-- Browser Main WebView2 -->
-                    <wv2:WebView2 Grid.Row="1" x:Name="BrowserWebView"/>
+                    <Border Grid.Row="1" Background="#161C23">
+                        <wv2:WebView2 x:Name="BrowserWebView"/>
+                    </Border>
 
                     <!-- Download Notification Toast Bar -->
                     <Border Grid.Row="2" x:Name="DownloadToastBar" Visibility="Collapsed" Background="#172A1E" BorderBrush="#38A169" BorderThickness="0,1,0,0" Padding="16,8">

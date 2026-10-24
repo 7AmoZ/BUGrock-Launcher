@@ -132,7 +132,7 @@ namespace BUGrockLauncher {
         #region Community Hub & DDFW Downloads
         private const string ANTI_COOKIE_AND_POPUP_SCRIPT = @"
             (function() {
-                // 1. Enforce MCPEDL Dark Mode
+                // 1. Enforce MCPEDL Dark Mode & Remove White Sidebars
                 try {
                     if (window.location.hostname.indexOf('mcpedl.com') !== -1) {
                         try { localStorage.setItem('nuxt-color-mode', 'dark'); } catch(e) {}
@@ -146,7 +146,13 @@ namespace BUGrockLauncher {
                             root.classList.remove('light-mode');
                             root.classList.remove('light');
                             root.setAttribute('data-theme', 'dark');
+                            root.style.setProperty('background-color', '#161C23', 'important');
+                            root.style.setProperty('background', '#161C23', 'important');
                             root.style.colorScheme = 'dark';
+                        }
+                        if (document.body) {
+                            document.body.style.setProperty('background-color', '#161C23', 'important');
+                            document.body.style.setProperty('background', '#161C23', 'important');
                         }
                     }
                 } catch(e) {}
@@ -160,7 +166,7 @@ namespace BUGrockLauncher {
                     window.adsbygoogle = { push: function() {}, loaded: true };
                 } catch(e) {}
 
-                // 3. Inject Safe CSS to Hide Cookie Banners, Consent Dialogs & Anti-Adblock Modals
+                // 3. Inject Safe CSS to Hide Cookie Banners, Consent Dialogs & Fix Background Colors
                 var style = document.createElement('style');
                 style.innerHTML = `
                     #onetrust-consent-sdk, #onetrust-banner-sdk, .qc-cmp2-container, #cmpbox,
@@ -173,7 +179,9 @@ namespace BUGrockLauncher {
                         pointer-events: none !important;
                         opacity: 0 !important;
                     }
-                    body, html {
+                    html, body, #__nuxt, #__layout, div#app {
+                        background-color: #161C23 !important;
+                        background: #161C23 !important;
                         overflow: auto !important;
                     }
                 `;
@@ -196,6 +204,10 @@ namespace BUGrockLauncher {
                     }
                     if (document.body) {
                         document.body.style.setProperty('overflow', 'auto', 'important');
+                        document.body.style.setProperty('background-color', '#161C23', 'important');
+                    }
+                    if (document.documentElement) {
+                        document.documentElement.style.setProperty('background-color', '#161C23', 'important');
                     }
                     if (window.location.hostname.indexOf('mcpedl.com') !== -1) {
                         var r = document.documentElement;
@@ -228,18 +240,36 @@ namespace BUGrockLauncher {
                     }
                     html, body {
                         background-color: #12131A !important;
+                        background: #12131A !important;
                         color: #E2E8F0 !important;
                         margin: 0 !important;
                         padding: 0 !important;
                         overflow-x: hidden !important;
                     }
-                    .container, .container-fluid, .row, .col-12 {
+                    .container, .container-fluid, .row, .col, div[class*='col'] {
                         background-color: #12131A !important;
+                        background: #12131A !important;
                         padding-left: 2px !important;
                         padding-right: 2px !important;
                         padding-top: 0 !important;
                         margin: 0 !important;
                         max-width: 100% !important;
+                    }
+                    /* Cards & Server Rows & Boxes */
+                    .card, .card-header, .card-body, .card-footer, .list-group, .list-group-item,
+                    .bg-white, .bg-light, div[class*='server'], div[class*='box'], div[class*='item'] {
+                        background-color: #151720 !important;
+                        background: #151720 !important;
+                        color: #E2E8F0 !important;
+                        border-color: #232530 !important;
+                    }
+                    /* Input boxes (Server IPs like bedrock.bosscraft.net) */
+                    input, input.form-control, .form-control, .input-group, .input-group-text, .input-group-append, .input-group-prepend,
+                    code, pre, .copy-ip, .btn-outline-secondary, .btn-secondary {
+                        background-color: #1A1C28 !important;
+                        background: #1A1C28 !important;
+                        color: #48BB78 !important;
+                        border-color: #2D3748 !important;
                     }
                     .table, .servers-table, table {
                         background-color: #151720 !important;
@@ -260,7 +290,7 @@ namespace BUGrockLauncher {
                     a {
                         color: #48BB78 !important;
                     }
-                    .text-dark {
+                    .text-dark, h1, h2, h3, h4, h5, h6, p, span, strong, b {
                         color: #E2E8F0 !important;
                     }
                     .text-muted {
@@ -305,10 +335,17 @@ namespace BUGrockLauncher {
                     document.querySelectorAll('footer, #footer, .footer, section.my-4, section.my-5, article').forEach(function(el) {
                         el.remove();
                     });
+
+                    // Force dark styling on all input fields, boxes, and white backgrounds
+                    document.querySelectorAll('input, .form-control, .bg-white, .card, .card-body, .list-group-item').forEach(function(el) {
+                        el.style.setProperty('background-color', '#1A1C28', 'important');
+                        el.style.setProperty('color', '#E2E8F0', 'important');
+                        el.style.setProperty('border-color', '#2D3748', 'important');
+                    });
                 }
 
                 function jumpToFirstServer() {
-                    var serverTable = document.querySelector('.servers-table');
+                    var serverTable = document.querySelector('.servers-table, .card, div[class*=""server""]');
                     if (serverTable) {
                         serverTable.scrollIntoView({ behavior: 'instant', block: 'start' });
                     }
@@ -350,12 +387,31 @@ namespace BUGrockLauncher {
         }
 
 
+        private TaskCompletionSource<bool> _serversReadyTcs = new TaskCompletionSource<bool>();
+
+        public async Task WaitForServersReadyAsync(SplashScreenWindow splash) {
+            try {
+                splash.SetStatus("Connecting to community servers...");
+                if (!System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable()) {
+                    await Task.Delay(300);
+                    return;
+                }
+                await Task.WhenAny(_serversReadyTcs.Task, Task.Delay(3500));
+                splash.SetStatus("Ready!");
+                await Task.Delay(100);
+            } catch { }
+        }
+
         public async Task InitializeWebViewsAsync() {
             try {
                 DDFWManager.EnsureDirectories();
 
                 // 1. Initialize Servers WebView
                 if (ServersWebView != null) {
+                    try {
+                        ServersWebView.DefaultBackgroundColor = System.Drawing.Color.FromArgb(18, 19, 26);
+                    } catch { }
+
                     await ServersWebView.EnsureCoreWebView2Async();
                     if (ServersWebView.CoreWebView2 != null) {
                         ServersWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
@@ -396,6 +452,7 @@ namespace BUGrockLauncher {
                                         ServersWebView.CoreWebView2?.ExecuteScriptAsync(SERVERS_VIEW_POLISH_SCRIPT);
                                     } catch { }
                                 }
+                                _serversReadyTcs.TrySetResult(true);
                             });
                         };
 
@@ -407,6 +464,7 @@ namespace BUGrockLauncher {
                 Dispatcher.Invoke(() => {
                     if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Collapsed;
                     if (ServersNoInternetOverlay != null) ServersNoInternetOverlay.Visibility = Visibility.Visible;
+                    _serversReadyTcs.TrySetResult(false);
                 });
             }
         }
@@ -416,6 +474,10 @@ namespace BUGrockLauncher {
         private async Task EnsureBrowserInitializedAsync() {
             if (_browserInitialized || BrowserWebView == null) return;
             try {
+                try {
+                    BrowserWebView.DefaultBackgroundColor = System.Drawing.Color.FromArgb(22, 28, 35);
+                } catch { }
+
                 await BrowserWebView.EnsureCoreWebView2Async();
                 if (BrowserWebView.CoreWebView2 != null) {
                     BrowserWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
