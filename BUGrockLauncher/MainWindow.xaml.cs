@@ -885,6 +885,7 @@ namespace BUGrockLauncher {
             if (ServersWebView != null) ServersWebView.Visibility = Visibility.Collapsed;
 
             InAppBrowserOverlay.Visibility = Visibility.Visible;
+            UpdateBrowserDependentControls(isBrowserOpen: true);
             await EnsureBrowserInitializedAsync();
 
             if (url.Contains("mcpedl.com")) {
@@ -1016,18 +1017,56 @@ namespace BUGrockLauncher {
             }
         }
 
-        private void CloseBrowserBtn_Click(object sender, RoutedEventArgs e) {
+        private void UpdateBrowserDependentControls(bool isBrowserOpen) {
+            bool enabled = !isBrowserOpen;
+            if (TopImportAppxButton != null) {
+                TopImportAppxButton.IsEnabled = enabled;
+                TopImportAppxButton.Opacity = enabled ? 1.0 : 0.45;
+            }
+            if (SidebarLocalDataDirButton != null) {
+                SidebarLocalDataDirButton.IsEnabled = enabled;
+                SidebarLocalDataDirButton.Opacity = enabled ? 1.0 : 0.45;
+            }
+            if (InstallationsImportAppxButton != null) {
+                InstallationsImportAppxButton.IsEnabled = enabled;
+                InstallationsImportAppxButton.Opacity = enabled ? 1.0 : 0.45;
+            }
+            if (MenuOpenDataDir != null) MenuOpenDataDir.IsEnabled = enabled;
+            if (MenuImportAppx != null) MenuImportAppx.IsEnabled = enabled;
+        }
+
+        private void CloseInAppBrowser() {
             if (InAppBrowserOverlay != null) {
                 InAppBrowserOverlay.Visibility = Visibility.Collapsed;
             }
             if (DownloadToastBar != null) {
                 DownloadToastBar.Visibility = Visibility.Collapsed;
             }
+            UpdateBrowserDependentControls(isBrowserOpen: false);
+
             if (TabNavPlay?.IsChecked == true) {
                 if (PlayViewGrid != null) PlayViewGrid.Visibility = Visibility.Visible;
                 if (ServerCardBorder != null) ServerCardBorder.Visibility = Visibility.Visible;
                 if (ServersWebView != null) ServersWebView.Visibility = Visibility.Visible;
+                if (InstallationsViewGrid != null) InstallationsViewGrid.Visibility = Visibility.Collapsed;
+                if (PatchNotesViewGrid != null) PatchNotesViewGrid.Visibility = Visibility.Collapsed;
+            } else if (TabNavInstallations?.IsChecked == true) {
+                if (PlayViewGrid != null) PlayViewGrid.Visibility = Visibility.Collapsed;
+                if (ServerCardBorder != null) ServerCardBorder.Visibility = Visibility.Collapsed;
+                if (ServersWebView != null) ServersWebView.Visibility = Visibility.Collapsed;
+                if (InstallationsViewGrid != null) InstallationsViewGrid.Visibility = Visibility.Visible;
+                if (PatchNotesViewGrid != null) PatchNotesViewGrid.Visibility = Visibility.Collapsed;
+            } else if (TabNavPatchNotes?.IsChecked == true) {
+                if (PlayViewGrid != null) PlayViewGrid.Visibility = Visibility.Collapsed;
+                if (ServerCardBorder != null) ServerCardBorder.Visibility = Visibility.Collapsed;
+                if (ServersWebView != null) ServersWebView.Visibility = Visibility.Collapsed;
+                if (InstallationsViewGrid != null) InstallationsViewGrid.Visibility = Visibility.Collapsed;
+                if (PatchNotesViewGrid != null) PatchNotesViewGrid.Visibility = Visibility.Visible;
             }
+        }
+
+        private void CloseBrowserBtn_Click(object sender, RoutedEventArgs e) {
+            CloseInAppBrowser();
         }
         #endregion
 
@@ -2570,6 +2609,30 @@ namespace BUGrockLauncher {
             ThemedMessageBox.Show("Cleanup completed. You should now be able to install Minecraft from Microsoft Store.", "Cleanup completed");
         }
 
+        private object? _lastNavTabClicked = null;
+        private DateTime _lastNavTabClickTime = DateTime.MinValue;
+
+        private void TabNav_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+            if (sender is not RadioButton tab) return;
+
+            bool isBrowserOpen = (InAppBrowserOverlay != null && InAppBrowserOverlay.Visibility == Visibility.Visible);
+            if (!isBrowserOpen) return;
+
+            // Check if clicked twice in a row (double click count >= 2 or two consecutive clicks within 800ms)
+            bool isSecondClick = (e.ClickCount >= 2) || 
+                                 (_lastNavTabClicked == tab && (DateTime.Now - _lastNavTabClickTime).TotalMilliseconds <= 800);
+
+            _lastNavTabClicked = tab;
+            _lastNavTabClickTime = DateTime.Now;
+
+            if (isSecondClick) {
+                e.Handled = true;
+                tab.IsChecked = true;
+                CloseInAppBrowser();
+                TabNav_Checked(tab, new RoutedEventArgs());
+            }
+        }
+
         private void TabNav_Checked(object sender, RoutedEventArgs e) {
             if (PlayViewGrid == null || InstallationsViewGrid == null || PatchNotesViewGrid == null) return;
             bool isPlay = (TabNavPlay?.IsChecked == true);
@@ -2579,8 +2642,8 @@ namespace BUGrockLauncher {
             if (ServerCardBorder != null) ServerCardBorder.Visibility = (isPlay && !isBrowserOpen) ? Visibility.Visible : Visibility.Collapsed;
             if (ServersWebView != null) ServersWebView.Visibility = (isPlay && !isBrowserOpen) ? Visibility.Visible : Visibility.Collapsed;
 
-            InstallationsViewGrid.Visibility = (TabNavInstallations.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
-            PatchNotesViewGrid.Visibility = (TabNavPatchNotes.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
+            InstallationsViewGrid.Visibility = (TabNavInstallations?.IsChecked == true && !isBrowserOpen) ? Visibility.Visible : Visibility.Collapsed;
+            PatchNotesViewGrid.Visibility = (TabNavPatchNotes?.IsChecked == true && !isBrowserOpen) ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void SubFilter_Checked(object sender, RoutedEventArgs e) {
