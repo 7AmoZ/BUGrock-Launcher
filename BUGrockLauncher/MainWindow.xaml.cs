@@ -122,17 +122,38 @@ namespace BUGrockLauncher {
             _userVersionDownloaderLoginTask = new Task(() => {
                 _userVersionDownloader.EnableUserAuthorization();
             });
-            Dispatcher.Invoke(LoadVersionList);
-            Loaded += (s, e) => {
+            Loaded += async (s, e) => {
                 InitSteveHead();
-                InitializeWebViews();
+                if (!_isStartupCompleted) {
+                    await LoadVersionListAsync();
+                    await InitializeWebViewsAsync();
+                }
             };
         }
 
         #region Community Hub & DDFW Downloads
         private const string ANTI_COOKIE_AND_POPUP_SCRIPT = @"
             (function() {
-                // 1. Bypass Adblock Detectors (Fake ad properties so CurseForge/MCPEDL never show disable adblock banners)
+                // 1. Enforce MCPEDL Dark Mode
+                try {
+                    if (window.location.hostname.indexOf('mcpedl.com') !== -1) {
+                        try { localStorage.setItem('nuxt-color-mode', 'dark'); } catch(e) {}
+                        try { localStorage.setItem('theme', 'dark'); } catch(e) {}
+                        document.cookie = 'color-mode=dark; path=/; max-age=31536000';
+                        document.cookie = 'nuxt-color-mode=dark; path=/; max-age=31536000';
+                        var root = document.documentElement;
+                        if (root) {
+                            root.classList.add('dark-mode');
+                            root.classList.add('dark');
+                            root.classList.remove('light-mode');
+                            root.classList.remove('light');
+                            root.setAttribute('data-theme', 'dark');
+                            root.style.colorScheme = 'dark';
+                        }
+                    }
+                } catch(e) {}
+
+                // 2. Bypass Adblock Detectors (Fake ad properties so CurseForge/MCPEDL never show disable adblock banners)
                 try {
                     window.canRunAds = true;
                     window.isAdBlockActive = false;
@@ -141,7 +162,7 @@ namespace BUGrockLauncher {
                     window.adsbygoogle = { push: function() {}, loaded: true };
                 } catch(e) {}
 
-                // 2. Inject Safe CSS to Hide Cookie Banners, Consent Dialogs & Anti-Adblock Modals
+                // 3. Inject Safe CSS to Hide Cookie Banners, Consent Dialogs & Anti-Adblock Modals
                 var style = document.createElement('style');
                 style.innerHTML = `
                     #onetrust-consent-sdk, #onetrust-banner-sdk, .qc-cmp2-container, #cmpbox,
@@ -160,7 +181,7 @@ namespace BUGrockLauncher {
                 `;
                 if (document.head) document.head.appendChild(style);
 
-                // 3. Auto-dismiss any detected consent/adblock popups
+                // 4. Auto-dismiss any detected consent/adblock popups
                 function dismissOverlays() {
                     var selectors = [
                         '#onetrust-reject-all-handler',
@@ -178,6 +199,13 @@ namespace BUGrockLauncher {
                     if (document.body) {
                         document.body.style.setProperty('overflow', 'auto', 'important');
                     }
+                    if (window.location.hostname.indexOf('mcpedl.com') !== -1) {
+                        var r = document.documentElement;
+                        if (r && !r.classList.contains('dark-mode')) {
+                            r.classList.add('dark-mode');
+                            r.classList.remove('light-mode');
+                        }
+                    }
                 }
 
                 if (document.readyState === 'loading') {
@@ -186,6 +214,7 @@ namespace BUGrockLauncher {
                     dismissOverlays();
                 }
                 setTimeout(dismissOverlays, 800);
+                setTimeout(dismissOverlays, 2000);
             })();
         ";
 
@@ -193,7 +222,10 @@ namespace BUGrockLauncher {
             (function() {
                 var style = document.createElement('style');
                 style.innerHTML = `
-                    nav.navbar, header, footer, .card.bg-light, .alert, .adsbygoogle {
+                    nav.navbar, header, footer, #footer, .card.bg-light, .alert, .adsbygoogle, iframe, embed, video, .embed-responsive {
+                        display: none !important;
+                    }
+                    .pagination ~ *, ul.pagination ~ *, nav[aria-label*='pagination'] ~ * {
                         display: none !important;
                     }
                     html, body {
@@ -201,6 +233,7 @@ namespace BUGrockLauncher {
                         color: #E2E8F0 !important;
                         margin: 0 !important;
                         padding: 0 !important;
+                        overflow-x: hidden !important;
                     }
                     .container, .container-fluid, .row, .col-12 {
                         background-color: #12131A !important;
@@ -215,6 +248,7 @@ namespace BUGrockLauncher {
                         color: #E2E8F0 !important;
                         border-color: #232530 !important;
                         margin-top: 0 !important;
+                        width: 100% !important;
                     }
                     .table td, .table th, table td, table th {
                         background-color: #151720 !important;
@@ -234,13 +268,46 @@ namespace BUGrockLauncher {
                     .text-muted {
                         color: #8E92A4 !important;
                     }
-                    .btn-light2 {
+                    .btn-light2, .page-link {
                         background-color: #212433 !important;
                         color: #E2E8F0 !important;
                         border: 1px solid #2B2F42 !important;
                     }
+                    .page-item.active .page-link {
+                        background-color: #38A169 !important;
+                        border-color: #38A169 !important;
+                        color: #FFFFFF !important;
+                    }
                 `;
                 if (document.head) document.head.appendChild(style);
+
+                function cleanBottomContent() {
+                    var iframes = document.querySelectorAll('iframe, embed, video, .embed-responsive');
+                    iframes.forEach(function(el) { el.remove(); });
+
+                    var pag = document.querySelector('.pagination, ul.pagination');
+                    if (pag) {
+                        var curr = pag.nextElementSibling;
+                        while (curr) {
+                            var next = curr.nextElementSibling;
+                            curr.remove();
+                            curr = next;
+                        }
+                        var pagParent = pag.closest('.row, .col-12, nav, .d-flex');
+                        if (pagParent && pagParent.parentElement) {
+                            var pcurr = pagParent.nextElementSibling;
+                            while (pcurr) {
+                                var pnext = pcurr.nextElementSibling;
+                                pcurr.remove();
+                                pcurr = pnext;
+                            }
+                        }
+                    }
+
+                    document.querySelectorAll('footer, #footer, .footer, section.my-4, section.my-5, article').forEach(function(el) {
+                        el.remove();
+                    });
+                }
 
                 function jumpToFirstServer() {
                     var serverTable = document.querySelector('.servers-table');
@@ -248,16 +315,75 @@ namespace BUGrockLauncher {
                         serverTable.scrollIntoView({ behavior: 'instant', block: 'start' });
                     }
                 }
+
+                cleanBottomContent();
                 jumpToFirstServer();
-                setTimeout(jumpToFirstServer, 300);
-                setTimeout(jumpToFirstServer, 1000);
+                setTimeout(function() { cleanBottomContent(); jumpToFirstServer(); }, 300);
+                setTimeout(function() { cleanBottomContent(); jumpToFirstServer(); }, 1000);
             })();
         ";
 
         private string? _lastDownloadedFilePath;
         private string? _lastDownloadedFolder;
+        private string _currentInAppPlatform = "MCPEDL";
+        private bool _isStartupCompleted = false;
 
-        private async void InitializeWebViews() {
+        private void UpdateServersZoom() {
+            try {
+                if (ServersWebView?.CoreWebView2 == null) return;
+                double w = ServersWebView.ActualWidth;
+                if (w <= 0) return;
+                if (w < 400) ServersWebView.ZoomFactor = 0.65;
+                else if (w < 500) ServersWebView.ZoomFactor = 0.72;
+                else if (w < 650) ServersWebView.ZoomFactor = 0.80;
+                else ServersWebView.ZoomFactor = 0.90;
+            } catch { }
+        }
+
+        private void UpdateBrowserZoom() {
+            try {
+                if (BrowserWebView?.CoreWebView2 == null) return;
+                double w = BrowserWebView.ActualWidth;
+                if (w <= 0) return;
+                if (w < 1100) BrowserWebView.ZoomFactor = 0.75;
+                else if (w < 1350) BrowserWebView.ZoomFactor = 0.82;
+                else if (w < 1600) BrowserWebView.ZoomFactor = 0.90;
+                else BrowserWebView.ZoomFactor = 1.0;
+            } catch { }
+        }
+
+        public async Task WaitForStartupReadyAsync(SplashScreenWindow splash) {
+            if (_isStartupCompleted) return;
+
+            try {
+                splash.SetStatus("Loading versions from cache...");
+                await LoadVersionListAsync(splash);
+
+                splash.SetStatus("Initializing community servers...");
+                await InitializeWebViewsAsync();
+
+                var tcs = new TaskCompletionSource<bool>();
+                EventHandler<CoreWebView2NavigationCompletedEventArgs>? navHandler = null;
+                navHandler = (s, e) => {
+                    tcs.TrySetResult(true);
+                };
+
+                if (ServersWebView != null) {
+                    ServersWebView.NavigationCompleted += navHandler;
+                    await Task.WhenAny(tcs.Task, Task.Delay(4000));
+                    ServersWebView.NavigationCompleted -= navHandler;
+                }
+
+                splash.SetStatus("Starting BUGrock Launcher...");
+                await Task.Delay(400);
+            } catch (Exception ex) {
+                Trace.WriteLine("Startup sequence error: " + ex.Message);
+            } finally {
+                _isStartupCompleted = true;
+            }
+        }
+
+        public async Task InitializeWebViewsAsync() {
             try {
                 DDFWManager.EnsureDirectories();
 
@@ -267,16 +393,32 @@ namespace BUGrockLauncher {
                     if (ServersWebView.CoreWebView2 != null) {
                         ServersWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
                         ServersWebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
-                        
+                        ServersWebView.CoreWebView2.Settings.IsZoomControlEnabled = true;
+
+                        ServersWebView.SizeChanged += (s, e) => UpdateServersZoom();
+
                         ServersWebView.NavigationStarting += (s, e) => {
-                            Dispatcher.Invoke(() => {
-                                if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Visible;
+                            string navUri = (e.Uri ?? "").ToLowerInvariant();
+                            if (string.IsNullOrWhiteSpace(navUri) || navUri == "about:blank") return;
+
+                            if (navUri.Contains("minecraftpocket-servers.com") || navUri.Contains("cloudflare.com")) {
+                                Dispatcher.Invoke(() => {
+                                    if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Visible;
+                                });
+                                return;
+                            }
+
+                            // Block external navigation outside servers domain
+                            e.Cancel = true;
+                            Dispatcher.InvokeAsync(() => {
+                                ThemedMessageBox.Show("Navigation restricted: You cannot navigate outside of minecraftpocket-servers.com from BUGrock Launcher.", "Navigation Restricted");
                             });
                         };
 
                         ServersWebView.NavigationCompleted += (s, e) => {
                             Dispatcher.Invoke(() => {
                                 if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Collapsed;
+                                UpdateServersZoom();
                                 try {
                                     ServersWebView.CoreWebView2?.ExecuteScriptAsync(SERVERS_VIEW_POLISH_SCRIPT);
                                 } catch { }
@@ -292,20 +434,63 @@ namespace BUGrockLauncher {
                     await BrowserWebView.EnsureCoreWebView2Async();
                     if (BrowserWebView.CoreWebView2 != null) {
                         BrowserWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
+                        BrowserWebView.CoreWebView2.Settings.IsZoomControlEnabled = true;
+
+                        BrowserWebView.SizeChanged += (s, e) => UpdateBrowserZoom();
+
                         await BrowserWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
 
-                        // Guard against navigating away from Bedrock on CurseForge
+                        // Domain Whitelist & Bedrock Guard (100% English warnings)
                         BrowserWebView.CoreWebView2.NavigationStarting += (s, args) => {
                             string navUri = (args.Uri ?? "").ToLowerInvariant();
-                            if (navUri.Contains("curseforge.com")) {
-                                if (!navUri.Contains("/minecraft-bedrock") && !navUri.Contains("/login") && !navUri.Contains("/auth") && !navUri.Contains("/oauth")) {
-                                    args.Cancel = true;
-                                    Dispatcher.InvokeAsync(() => {
-                                        ThemedMessageBox.Show("تم تغيير الرابط إلى قسم آخر خارج Bedrock.\nهذه المودات لن تعمل مع ماينكرافت بيدروك (Bedrock)!\n\nسيتم إعادتك الآن إلى قسم البيدروك.", "تنبيه عدم التوافق");
-                                        BrowserWebView.CoreWebView2?.Navigate("https://www.curseforge.com/minecraft-bedrock");
-                                    });
+                            if (string.IsNullOrWhiteSpace(navUri) || navUri == "about:blank") return;
+
+                            // Allow Cloudflare verification & file downloads
+                            if (navUri.Contains("challenges.cloudflare.com") || navUri.Contains("cloudflare.com") ||
+                                navUri.EndsWith(".mcaddon") || navUri.EndsWith(".mcpack") || navUri.EndsWith(".mcworld") || navUri.EndsWith(".zip")) {
+                                return;
+                            }
+
+                            if (_currentInAppPlatform == "CurseForge") {
+                                if (navUri.Contains("curseforge.com") || navUri.Contains("forgecdn.net") || navUri.Contains("overwolf.com") || navUri.Contains("twitch.tv")) {
+                                    if (navUri.Contains("curseforge.com")) {
+                                        if (!navUri.Contains("/minecraft-bedrock") && !navUri.Contains("/login") && !navUri.Contains("/auth") && !navUri.Contains("/oauth") && !navUri.Contains("/api/")) {
+                                            args.Cancel = true;
+                                            Dispatcher.InvokeAsync(() => {
+                                                ThemedMessageBox.Show("Notice: URL changed to an unsupported section outside Bedrock.\nThese mods are not compatible with Minecraft Bedrock Edition!\n\nReturning to CurseForge Bedrock home.", "Bedrock Incompatibility Notice");
+                                                BrowserWebView.CoreWebView2?.Navigate("https://www.curseforge.com/minecraft-bedrock");
+                                            });
+                                            return;
+                                        }
+                                    }
                                     return;
                                 }
+
+                                args.Cancel = true;
+                                Dispatcher.InvokeAsync(() => {
+                                    ThemedMessageBox.Show("Navigation restricted: You cannot navigate outside of CurseForge from BUGrock Launcher.", "Navigation Restricted");
+                                });
+                                return;
+                            } else if (_currentInAppPlatform == "MCPEDL") {
+                                if (navUri.Contains("mcpedl.com") || navUri.Contains("mediafire.com")) {
+                                    return;
+                                }
+
+                                args.Cancel = true;
+                                Dispatcher.InvokeAsync(() => {
+                                    ThemedMessageBox.Show("Navigation restricted: You cannot navigate outside of MCPEDL from BUGrock Launcher.", "Navigation Restricted");
+                                });
+                                return;
+                            } else if (_currentInAppPlatform == "minecraftpocket-servers.com") {
+                                if (navUri.Contains("minecraftpocket-servers.com")) {
+                                    return;
+                                }
+
+                                args.Cancel = true;
+                                Dispatcher.InvokeAsync(() => {
+                                    ThemedMessageBox.Show("Navigation restricted: You cannot navigate outside of minecraftpocket-servers.com from BUGrock Launcher.", "Navigation Restricted");
+                                });
+                                return;
                             }
                         };
 
@@ -316,6 +501,7 @@ namespace BUGrockLauncher {
                         };
 
                         BrowserWebView.CoreWebView2.NavigationCompleted += (s, e) => {
+                            UpdateBrowserZoom();
                             try {
                                 BrowserWebView.CoreWebView2?.ExecuteScriptAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
                             } catch { }
@@ -402,6 +588,24 @@ namespace BUGrockLauncher {
             if (ServersWebView != null) ServersWebView.Visibility = Visibility.Collapsed;
 
             InAppBrowserOverlay.Visibility = Visibility.Visible;
+
+            if (url.Contains("mcpedl.com")) {
+                _currentInAppPlatform = "MCPEDL";
+                try {
+                    if (BrowserWebView.CoreWebView2 != null) {
+                        var cm = BrowserWebView.CoreWebView2.CookieManager;
+                        cm.AddOrUpdateCookie(cm.CreateCookie("color-mode", "dark", ".mcpedl.com", "/"));
+                        cm.AddOrUpdateCookie(cm.CreateCookie("nuxt-color-mode", "dark", ".mcpedl.com", "/"));
+                    }
+                } catch { }
+            } else if (url.Contains("curseforge.com")) {
+                _currentInAppPlatform = "CurseForge";
+            } else if (url.Contains("minecraftpocket-servers.com")) {
+                _currentInAppPlatform = "minecraftpocket-servers.com";
+            }
+
+            UpdateBrowserZoom();
+
             if (BrowserWebView.CoreWebView2 != null) {
                 BrowserWebView.CoreWebView2.Navigate(url);
             } else {
@@ -423,6 +627,17 @@ namespace BUGrockLauncher {
 
         private void CardSkinsSection_Click(object sender, MouseButtonEventArgs e) {
             OpenInAppBrowser("https://mcpedl.com/skins/skin-packs/");
+        }
+
+        private void HomeServersBtn_Click(object sender, RoutedEventArgs e) {
+            try {
+                if (ServersLoadingOverlay != null) ServersLoadingOverlay.Visibility = Visibility.Visible;
+                if (ServersWebView?.CoreWebView2 != null) {
+                    ServersWebView.CoreWebView2.Navigate("https://minecraftpocket-servers.com/");
+                } else if (ServersWebView != null) {
+                    ServersWebView.Source = new Uri("https://minecraftpocket-servers.com/");
+                }
+            } catch { }
         }
 
         private void RefreshServersBtn_Click(object sender, RoutedEventArgs e) {
@@ -480,7 +695,11 @@ namespace BUGrockLauncher {
         }
         #endregion
 
-        private async void LoadVersionList() {
+        private void LoadVersionList() {
+            _ = LoadVersionListAsync();
+        }
+
+        public async Task LoadVersionListAsync(SplashScreenWindow? splash = null) {
             if (_isLoadingVersionList) return;
             _isLoadingVersionList = true;
             try {
@@ -488,6 +707,7 @@ namespace BUGrockLauncher {
                 _versions.VersionsApiGDK = UserPrefs.VersionsApiGDK != "" ? UserPrefs.VersionsApiGDK : VERSIONS_API_GDK;
                 _versions.PrepareForReload();
 
+                if (splash != null) splash.SetStatus("Loading GDK versions from cache...");
                 LoadingProgressLabel.Content = "Loading GDK versions from cache";
                 LoadingProgressBar.Value = 1;
 
@@ -499,6 +719,7 @@ namespace BUGrockLauncher {
                     Trace.WriteLine("List cache load failed:\n" + e.ToString());
                 }
 
+                if (splash != null) splash.SetStatus("Loading UWP versions from cache...");
                 LoadingProgressLabel.Content = "Loading UWP versions from cache";
                 LoadingProgressBar.Value = 2;
                 try {
@@ -509,6 +730,7 @@ namespace BUGrockLauncher {
 
                 _versions.PrepareForReload();
 
+                if (splash != null) splash.SetStatus("Downloading new GDK version data...");
                 LoadingProgressLabel.Content = "Downloading new GDK version data";
                 LoadingProgressBar.Value = 3;
                 try {
@@ -519,7 +741,7 @@ namespace BUGrockLauncher {
                     ThemedMessageBox.Show("Failed to update version list from the internet. Some new versions might be missing.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
 
-
+                if (splash != null) splash.SetStatus("Downloading new UWP version data...");
                 LoadingProgressLabel.Content = "Downloading new UWP version data";
                 LoadingProgressBar.Value = 4;
                 try {
@@ -530,6 +752,7 @@ namespace BUGrockLauncher {
                     ThemedMessageBox.Show("Failed to update version list from the internet. Some new versions might be missing.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
 
+                if (splash != null) splash.SetStatus("Loading imported versions...");
                 LoadingProgressLabel.Content = "Loading imported versions";
                 LoadingProgressBar.Value = 5;
                 await _versions.LoadImported();

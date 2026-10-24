@@ -953,13 +953,14 @@
                                     <Grid VerticalAlignment="Center">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <Ellipse Width="6" Height="6" Fill="#38A169" Margin="0,0,6,0"/>
-                                            <TextBlock Text="Featured Bedrock Servers" Foreground="#FFFFFF" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                            <TextBlock Text="minecraftpocket-servers.com" Foreground="#FFFFFF" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
                                             <Border Background="#1C2E22" BorderBrush="#38A169" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="6,0,0,0">
                                                 <TextBlock Text="LIVE" Foreground="#38A169" FontSize="8.5" FontWeight="Bold"/>
                                             </Border>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                            <Button x:Name="RefreshServersBtn" Content="⟳" Style="{StaticResource DarkButtonStyle}" Width="22" Height="22" Padding="0" FontSize="11" ToolTip="Refresh Servers" Click="RefreshServersBtn_Click"/>
+                                            <Button x:Name="HomeServersBtn" Content="🏠" Style="{StaticResource DarkButtonStyle}" Width="22" Height="22" Padding="0" FontSize="10" ToolTip="Return to Servers Home" Click="HomeServersBtn_Click"/>
+                                            <Button x:Name="RefreshServersBtn" Content="⟳" Style="{StaticResource DarkButtonStyle}" Width="22" Height="22" Padding="0" FontSize="11" Margin="4,0,0,0" ToolTip="Refresh Servers" Click="RefreshServersBtn_Click"/>
                                             <Button x:Name="ExpandServersBtn" Content="↗" Style="{StaticResource DarkButtonStyle}" Width="22" Height="22" Padding="0" FontSize="10" Margin="4,0,0,0" ToolTip="Open Full Server Browser" Click="ExpandServersBtn_Click"/>
                                         </StackPanel>
                                     </Grid>

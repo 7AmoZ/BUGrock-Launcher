@@ -31,8 +31,8 @@ namespace BUGrockLauncher {
 
             var main = new MainWindow();
 
-            // Allow smooth animation and initialization
-            await Task.Delay(1800);
+            // Run version loading, GDK download & WebView2 setup behind splash screen
+            await main.WaitForStartupReadyAsync(splash);
 
             main.Show();
             splash.Close();
