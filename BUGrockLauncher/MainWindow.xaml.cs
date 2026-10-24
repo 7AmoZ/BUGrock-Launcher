@@ -232,6 +232,49 @@ namespace BUGrockLauncher {
                         margin-right: 0 !important;
                         padding-right: 0 !important;
                     }
+                    /* NitroPay, Freestar, AdThrive, and in-article ad slots */
+                    div[id*='nitropay'], div[class*='nitropay'], iframe[src*='nitropay'],
+                    div[id*='np-'], div[class*='np-'], [id*='mcpedl_post'], [id*='article__ad'],
+                    [class*='article__ad'], [class*='post__ad'], [id*='post__ad'],
+                    div[class*='ad-container'], div[class*='ad-slot'], div[class*='ad-wrapper'],
+                    div[class*='ad-banner'], div[id*='ad-banner'], div[class*='advertisement'],
+                    div[id*='advertisement'], div[data-ad-width], div[data-ad-height] {
+                        display: none !important;
+                        height: 0 !important;
+                        width: 0 !important;
+                        min-height: 0 !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        pointer-events: none !important;
+                        opacity: 0 !important;
+                        visibility: hidden !important;
+                    }
+                    /* Prominent Skip to Downloads button in place of the ad banner */
+                    a[href*='#download'], .skip-to-downloads, a.skip-to-downloads {
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        width: 100% !important;
+                        box-sizing: border-box !important;
+                        background-color: #1F2937 !important;
+                        background: #1F2937 !important;
+                        color: #10B981 !important;
+                        border: 1px solid #374151 !important;
+                        border-radius: 8px !important;
+                        padding: 12px 20px !important;
+                        margin: 12px 0 16px 0 !important;
+                        font-size: 15px !important;
+                        font-weight: 700 !important;
+                        text-decoration: none !important;
+                        text-align: center !important;
+                        cursor: pointer !important;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+                    }
+                    a[href*='#download']:hover, .skip-to-downloads:hover, a.skip-to-downloads:hover {
+                        background-color: #283344 !important;
+                        border-color: #10B981 !important;
+                        color: #34D399 !important;
+                    }
                 `;
                 if (document.head) document.head.appendChild(style);
 
@@ -251,12 +294,15 @@ namespace BUGrockLauncher {
                         }
                     }
 
-                    // Purge ads, videos, and sidebars
+                    // Purge ads, videos, sidebars, and NitroPay units
                     var bads = document.querySelectorAll(`
                         ins.adsbygoogle, .adsbygoogle, iframe[src*='googlesyndication'],
                         div[id*='google_ads'], div[class*='ad-container'], div[class*='ad-slot'],
                         div[id*='primis'], div[class*='primis'], div[id*='connatix'], div[class*='connatix'],
                         div[id*='playwire'], div[class*='playwire'], div[id*='anyclip'],
+                        div[id*='nitropay'], div[class*='nitropay'], iframe[src*='nitropay'],
+                        div[id*='np-'], div[class*='np-'], [id*='mcpedl_post'], [id*='article__ad'],
+                        [class*='article__ad'], [class*='post__ad'], [id*='post__ad'],
                         aside, .sidebar, .layout__sidebar, .post__sidebar, div[class*='sidebar'],
                         div[class*='floating-player'], div[class*='sticky-player'], div[id*='floating-player'],
                         div[class*='video-ad'], div[id*='video-ad'], div[class*='jwplayer'],
@@ -264,6 +310,44 @@ namespace BUGrockLauncher {
                     `);
                     for (var b = 0; b < bads.length; b++) {
                         bads[b].remove();
+                    }
+
+                    // Format Skip to Downloads button and obliterate any ad between it and Introduction
+                    var allLinks = document.querySelectorAll('a');
+                    for (var i = 0; i < allLinks.length; i++) {
+                        var aEl = allLinks[i];
+                        var aTxt = (aEl.textContent || '').trim().toLowerCase();
+                        if (aTxt.indexOf('skip to download') !== -1) {
+                            aEl.style.setProperty('display', 'flex', 'important');
+                            aEl.style.setProperty('align-items', 'center', 'important');
+                            aEl.style.setProperty('justify-content', 'center', 'important');
+                            aEl.style.setProperty('width', '100%', 'important');
+                            aEl.style.setProperty('margin', '12px 0 16px 0', 'important');
+                            aEl.style.setProperty('padding', '12px 20px', 'important');
+                            aEl.style.setProperty('background-color', '#1F2937', 'important');
+                            aEl.style.setProperty('background', '#1F2937', 'important');
+                            aEl.style.setProperty('color', '#10B981', 'important');
+                            aEl.style.setProperty('border', '1px solid #374151', 'important');
+                            aEl.style.setProperty('border-radius', '8px', 'important');
+                            aEl.style.setProperty('font-size', '15px', 'important');
+                            aEl.style.setProperty('font-weight', '700', 'important');
+                            aEl.style.setProperty('text-decoration', 'none', 'important');
+                            aEl.style.setProperty('box-sizing', 'border-box', 'important');
+
+                            // Remove any sibling element between skip link and INTRODUCTION / DESCRIPTION
+                            var currEl = aEl.parentElement ? aEl.parentElement : aEl;
+                            var nextEl = currEl.nextElementSibling;
+                            while (nextEl) {
+                                var nextText = (nextEl.textContent || '').trim().toUpperCase();
+                                if (nextText.indexOf('INTRODUCTION') !== -1 || nextText.indexOf('DESCRIPTION') !== -1 || nextEl.querySelector('h2, h3')) {
+                                    break;
+                                }
+                                var toKill = nextEl;
+                                nextEl = nextEl.nextElementSibling;
+                                toKill.remove();
+                            }
+                            break;
+                        }
                     }
 
                     // Kill any floating video container docked at bottom-right
