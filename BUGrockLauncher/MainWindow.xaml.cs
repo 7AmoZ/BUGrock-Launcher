@@ -624,11 +624,8 @@ namespace BUGrockLauncher {
                                 return;
                             }
 
-                            // Block external navigation outside servers domain
+                            // Block external navigation outside servers domain silently without popup
                             e.Cancel = true;
-                            Dispatcher.InvokeAsync(() => {
-                                ThemedMessageBox.Show("Navigation restricted: You cannot navigate outside of minecraftpocket-servers.com from BUGrock Launcher.", "Navigation Restricted");
-                            });
                         };
 
                         ServersWebView.NavigationCompleted += (s, e) => {
@@ -727,10 +724,8 @@ namespace BUGrockLauncher {
                                 return;
                             }
 
+                            // Block external navigation silently for server list
                             args.Cancel = true;
-                            Dispatcher.InvokeAsync(() => {
-                                ThemedMessageBox.Show("Navigation restricted: You cannot navigate outside of minecraftpocket-servers.com from BUGrock Launcher.", "Navigation Restricted");
-                            });
                             return;
                         }
                     };
