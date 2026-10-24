@@ -240,10 +240,10 @@ namespace BUGrockLauncher {
             (function() {
                 var style = document.createElement('style');
                 style.innerHTML = `
-                    nav.navbar, header, footer, #footer, .card.bg-light, .alert, .adsbygoogle, iframe, embed, video, .embed-responsive {
-                        display: none !important;
-                    }
-                    .pagination ~ *, ul.pagination ~ *, nav[aria-label*='pagination'] ~ * {
+                    nav.navbar, header, footer, #footer, .footer, .card.bg-light, .alert, .adsbygoogle,
+                    lite-youtube, .lite-youtube, iframe[src*='youtube'], iframe[src*='youtu.be'],
+                    a[href*='youtube.com'], a[href*='youtu.be'], i.fa-youtube-play, .fa-youtube-play,
+                    section, article {
                         display: none !important;
                     }
                     html, body, .content, .container, .container-fluid, .row, .col, div[class*='col'] {
@@ -329,7 +329,7 @@ namespace BUGrockLauncher {
                         background: #191B26 !important;
                     }
                     /* Secondary Buttons like online, stars, player count, versions */
-                    .btn-light2, .btn-light2[href], .btn-version-fade, .page-link {
+                    .btn-light2, .btn-light2[href], .btn-version-fade {
                         background-color: #1A1C28 !important;
                         background: #1A1C28 !important;
                         color: #CBD5E0 !important;
@@ -342,10 +342,87 @@ namespace BUGrockLauncher {
                         color: #FFFFFF !important;
                         border-color: #4A5568 !important;
                     }
-                    .page-item.active .page-link {
+                    /* PAGINATION CONTROLS */
+                    .float-right, div.float-right {
+                        float: none !important;
+                        display: flex !important;
+                        justify-content: center !important;
+                        width: 100% !important;
+                    }
+                    nav[aria-label*='navigation'],
+                    nav[aria-label*='Page'],
+                    nav[aria-label*='page'],
+                    nav {
+                        display: flex !important;
+                        justify-content: center !important;
+                        width: 100% !important;
+                        margin: 12px 0 !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                    }
+                    .pagination, ul.pagination {
+                        display: flex !important;
+                        flex-wrap: wrap !important;
+                        justify-content: center !important;
+                        align-items: center !important;
+                        list-style: none !important;
+                        padding: 0 !important;
+                        margin: 8px auto !important;
+                        gap: 4px !important;
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                    }
+                    .pagination li,
+                    .pagination .page-item {
+                        display: inline-flex !important;
+                        margin: 2px !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                    }
+                    .pagination .page-link,
+                    .page-link,
+                    a.page-link {
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        min-width: 32px !important;
+                        height: 32px !important;
+                        padding: 2px 8px !important;
+                        background-color: #1A1C28 !important;
+                        background: #1A1C28 !important;
+                        color: #E2E8F0 !important;
+                        border: 1px solid #2D3748 !important;
+                        border-radius: 4px !important;
+                        font-size: 13px !important;
+                        font-weight: 600 !important;
+                        text-decoration: none !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                    }
+                    .pagination .page-link:hover,
+                    .page-link:hover,
+                    a.page-link:hover {
+                        background-color: #2D3748 !important;
+                        color: #48BB78 !important;
+                        border-color: #48BB78 !important;
+                    }
+                    .pagination li.active .page-link,
+                    .pagination .page-item.active .page-link,
+                    .pagination .active .page-link {
                         background-color: #38A169 !important;
+                        background: #38A169 !important;
                         border-color: #38A169 !important;
                         color: #FFFFFF !important;
+                        font-weight: bold !important;
+                    }
+                    .pagination li.disabled .page-link,
+                    .pagination .page-item.disabled .page-link {
+                        background-color: #12131A !important;
+                        color: #718096 !important;
+                        border-color: #232530 !important;
+                        cursor: not-allowed !important;
                     }
                     .server-description, .server-description-responsive, .text-muted, small, p {
                         color: #A0AEC0 !important;
@@ -389,29 +466,57 @@ namespace BUGrockLauncher {
                 }
 
                 function cleanBottomContent() {
-                    var iframes = document.querySelectorAll('iframe, embed, video, .embed-responsive');
-                    iframes.forEach(function(el) { el.remove(); });
-
-                    var pag = document.querySelector('.pagination, ul.pagination');
-                    if (pag) {
-                        var curr = pag.nextElementSibling;
-                        while (curr) {
-                            var next = curr.nextElementSibling;
-                            curr.remove();
-                            curr = next;
+                    // 1. Remove all YouTube videos, wrappers, and trailer links
+                    document.querySelectorAll('lite-youtube, .lite-youtube, iframe[src*=""youtube""], iframe[src*=""youtu.be""], .fa-youtube-play').forEach(function(el) {
+                        var container = el.closest('.row, .col-md-4, .form-group, h2');
+                        if (container && container !== document.body && container !== document.documentElement) {
+                            container.remove();
+                        } else {
+                            el.remove();
                         }
-                        var pagParent = pag.closest('.row, .col-12, nav, .d-flex');
-                        if (pagParent && pagParent.parentElement) {
-                            var pcurr = pagParent.nextElementSibling;
-                            while (pcurr) {
-                                var pnext = pcurr.nextElementSibling;
-                                pcurr.remove();
-                                pcurr = pnext;
+                    });
+
+                    document.querySelectorAll('h2, h3').forEach(function(h) {
+                        var txt = (h.textContent || '');
+                        if (txt.indexOf('Gameplay Videos') !== -1 || txt.indexOf('YouTube') !== -1 || txt.indexOf('Videos') !== -1) {
+                            h.remove();
+                        }
+                    });
+
+                    // 2. Format and center pagination
+                    document.querySelectorAll('.pagination, ul.pagination').forEach(function(pag) {
+                        pag.style.setProperty('display', 'flex', 'important');
+                        pag.style.setProperty('flex-wrap', 'wrap', 'important');
+                        pag.style.setProperty('justify-content', 'center', 'important');
+                        pag.style.setProperty('visibility', 'visible', 'important');
+                        pag.style.setProperty('opacity', '1', 'important');
+
+                        var floatDiv = pag.closest('.float-right');
+                        if (floatDiv) {
+                            floatDiv.classList.remove('float-right');
+                            floatDiv.style.setProperty('float', 'none', 'important');
+                            floatDiv.style.setProperty('display', 'flex', 'important');
+                            floatDiv.style.setProperty('justify-content', 'center', 'important');
+                            floatDiv.style.setProperty('width', '100%', 'important');
+                        }
+                    });
+
+                    // 3. Remove all footer / articles / content after the bottom pagination
+                    var allPag = document.querySelectorAll('.pagination, ul.pagination');
+                    if (allPag.length > 0) {
+                        var lastPag = allPag[allPag.length - 1];
+                        var lastRow = lastPag.closest('.row');
+                        if (lastRow && lastRow.parentElement) {
+                            var nextSibling = lastRow.nextElementSibling;
+                            while (nextSibling) {
+                                var toRemove = nextSibling;
+                                nextSibling = nextSibling.nextElementSibling;
+                                toRemove.remove();
                             }
                         }
                     }
 
-                    document.querySelectorAll('footer, #footer, .footer, section.my-4, section.my-5, article').forEach(function(el) {
+                    document.querySelectorAll('footer, #footer, .footer, section, article').forEach(function(el) {
                         el.remove();
                     });
 
