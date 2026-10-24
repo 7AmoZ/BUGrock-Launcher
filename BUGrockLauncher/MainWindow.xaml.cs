@@ -132,17 +132,60 @@ namespace BUGrockLauncher {
         #region Community Hub & DDFW Downloads
         private const string ANTI_COOKIE_AND_POPUP_SCRIPT = @"
             (function() {
+                // 1. Enforce Strict Privacy & Do Not Track
                 try {
-                    localStorage.setItem('cookie_consent', 'true');
-                    localStorage.setItem('gdpr_consent', 'true');
-                    localStorage.setItem('OptanonAlertBoxClosed', new Date().toISOString());
-                    localStorage.setItem('cf_chl_opt', 'true');
-                    document.cookie = 'OptanonAlertBoxClosed=' + new Date().toISOString() + '; path=/; max-age=31536000';
-                    document.cookie = 'cookie_consent=true; path=/; max-age=31536000';
-                    document.cookie = 'cookieconsent_status=dismiss; path=/; max-age=31536000';
+                    Object.defineProperty(navigator, 'doNotTrack', { get: function() { return '1'; }, configurable: true });
+                    Object.defineProperty(navigator, 'globalPrivacyControl', { get: function() { return true; }, configurable: true });
                 } catch(e) {}
 
-                function removePopups() {
+                // 2. Neutralize Analytics & Tracking Handlers to dummy functions (no data sent)
+                try {
+                    window.ga = function() {};
+                    window.gtag = function() {};
+                    window.dataLayer = { push: function() {} };
+                    window.fbq = function() {};
+                } catch(e) {}
+
+                // 3. Set Strict Cookie Rejection / Opt-Out Flags
+                try {
+                    localStorage.setItem('cookie_consent', 'false');
+                    localStorage.setItem('gdpr_consent', 'false');
+                    localStorage.setItem('tracking_consent', 'denied');
+                    localStorage.setItem('OptanonAlertBoxClosed', new Date().toISOString());
+                    document.cookie = 'OptanonAlertBoxClosed=' + new Date().toISOString() + '; path=/; max-age=31536000';
+                    document.cookie = 'cookie_consent=false; path=/; max-age=31536000';
+                    document.cookie = 'cookieconsent_status=deny; path=/; max-age=31536000';
+                    document.cookie = 'gdpr_consent=0; path=/; max-age=31536000';
+                } catch(e) {}
+
+                // 4. Actively find and trigger any 'Reject All' / 'Decline' buttons & purge banners
+                function rejectAllAndPurge() {
+                    // Specific known Reject buttons
+                    var rejectSelectors = [
+                        '#onetrust-reject-all-handler',
+                        'button#didomi-notice-disagree-button',
+                        'button[aria-label=""Reject all""]',
+                        'button[aria-label=""Decline all""]',
+                        '.qc-cmp2-buttons-desktop button:last-child',
+                        'button.cmp-button-reject'
+                    ];
+                    for (var k = 0; k < rejectSelectors.length; k++) {
+                        var rBtn = document.querySelector(rejectSelectors[k]);
+                        if (rBtn && typeof rBtn.click === 'function') {
+                            try { rBtn.click(); } catch(e) {}
+                        }
+                    }
+
+                    // Scan general buttons for reject/decline text
+                    var btns = document.querySelectorAll('button, a[role=""button""], input[type=""button""]');
+                    for (var b = 0; b < btns.length; b++) {
+                        var text = (btns[b].innerText || btns[b].value || '').trim().toLowerCase();
+                        if (text === 'reject all' || text === 'decline all' || text === 'reject' || text === 'decline' || text === 'disagree' || text === 'رفض الكل' || text === 'رفض') {
+                            try { btns[b].click(); } catch(e) {}
+                        }
+                    }
+
+                    // Purge banner containers and overlays
                     var selectors = [
                         '#onetrust-consent-sdk',
                         '#onetrust-banner-sdk',
@@ -171,6 +214,8 @@ namespace BUGrockLauncher {
                             } catch(e) {}
                         }
                     }
+
+                    // Ensure document scrolling is not locked by consent overlays
                     if (document.body) {
                         document.body.style.setProperty('overflow', 'auto', 'important');
                         document.body.style.setProperty('pointer-events', 'auto', 'important');
@@ -181,11 +226,11 @@ namespace BUGrockLauncher {
                 }
 
                 if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', removePopups);
+                    document.addEventListener('DOMContentLoaded', rejectAllAndPurge);
                 } else {
-                    removePopups();
+                    rejectAllAndPurge();
                 }
-                setInterval(removePopups, 500);
+                setInterval(rejectAllAndPurge, 400);
             })();
         ";
 
@@ -266,6 +311,26 @@ namespace BUGrockLauncher {
             })();
         ";
 
+        private static bool IsTrackerOrTelemetry(string uri) {
+            if (string.IsNullOrEmpty(uri)) return false;
+            string lower = uri.ToLowerInvariant();
+            return lower.Contains("google-analytics.com") ||
+                   lower.Contains("googletagmanager.com") ||
+                   lower.Contains("doubleclick.net") ||
+                   lower.Contains("adservice.google.") ||
+                   lower.Contains("pagead2.googlesyndication.com") ||
+                   lower.Contains("facebook.net") ||
+                   lower.Contains("connect.facebook.net") ||
+                   lower.Contains("criteo.com") ||
+                   lower.Contains("outbrain.com") ||
+                   lower.Contains("taboola.com") ||
+                   lower.Contains("scorecardresearch.com") ||
+                   lower.Contains("hotjar.com") ||
+                   lower.Contains("clarity.ms") ||
+                   lower.Contains("quantserve.com") ||
+                   lower.Contains("moatads.com");
+        }
+
         private string? _lastDownloadedFilePath;
         private string? _lastDownloadedFolder;
 
@@ -279,6 +344,14 @@ namespace BUGrockLauncher {
                     if (ServersWebView.CoreWebView2 != null) {
                         ServersWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
                         ServersWebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
+                        ServersWebView.CoreWebView2.Settings.IsGeneralAutofillEnabled = false;
+                        ServersWebView.CoreWebView2.Settings.IsPasswordAutosaveEnabled = false;
+                        ServersWebView.CoreWebView2.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
+                        ServersWebView.CoreWebView2.WebResourceRequested += (s, args) => {
+                            if (IsTrackerOrTelemetry(args.Request.Uri)) {
+                                args.Response = ServersWebView.CoreWebView2.Environment.CreateWebResourceResponse(new MemoryStream(), 403, "Blocked by BUGrock Privacy Shield", "");
+                            }
+                        };
                         await ServersWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(SERVERS_VIEW_POLISH_SCRIPT);
                         ServersWebView.NavigationCompleted += (s, e) => {
                             try {
@@ -293,6 +366,14 @@ namespace BUGrockLauncher {
                     await BrowserWebView.EnsureCoreWebView2Async();
                     if (BrowserWebView.CoreWebView2 != null) {
                         BrowserWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
+                        BrowserWebView.CoreWebView2.Settings.IsGeneralAutofillEnabled = false;
+                        BrowserWebView.CoreWebView2.Settings.IsPasswordAutosaveEnabled = false;
+                        BrowserWebView.CoreWebView2.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
+                        BrowserWebView.CoreWebView2.WebResourceRequested += (s, args) => {
+                            if (IsTrackerOrTelemetry(args.Request.Uri)) {
+                                args.Response = BrowserWebView.CoreWebView2.Environment.CreateWebResourceResponse(new MemoryStream(), 403, "Blocked by BUGrock Privacy Shield", "");
+                            }
+                        };
                         await BrowserWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
                         BrowserWebView.CoreWebView2.SourceChanged += (s, e) => {
                             if (BrowserUrlText != null) {
