@@ -467,7 +467,16 @@ namespace BUGrockLauncher {
                 function killPopupsAndModals() {
                     var badEls = document.querySelectorAll('.modal, .modal-backdrop, div[role=""dialog""], div[aria-modal=""true""], .fc-dialog-container, .fc-consent-root, .fc-ab-root, div[class*=""admiral"" i], div[id*=""admiral"" i], iframe[id*=""admiral"" i], div[class*=""cookie"" i], div[class*=""consent"" i]');
                     for (var i = 0; i < badEls.length; i++) {
-                        badEls[i].remove();
+                        var el = badEls[i];
+                        if (el.id && el.id.toLowerCase().indexOf('connect') !== -1) {
+                            el.style.setProperty('display', 'none', 'important');
+                            continue;
+                        }
+                        if (el.querySelector('input')) {
+                            el.style.setProperty('display', 'none', 'important');
+                            continue;
+                        }
+                        el.remove();
                     }
                     if (document.body) {
                         document.body.classList.remove('modal-open');
@@ -577,6 +586,149 @@ namespace BUGrockLauncher {
                     }
                 }
 
+                function getServerConnectionInfo() {
+                    var name = '';
+                    var addr = '';
+                    var port = '19132';
+
+                    // 1. Try server name from heading or title
+                    var titleEl = document.querySelector('h1, .server-title, .server-title-responsive, .server-name');
+                    if (titleEl && titleEl.textContent) {
+                        name = titleEl.textContent.trim().split('|')[0].split('-')[0].trim();
+                    }
+                    if (!name) {
+                        var docTitle = document.title || '';
+                        if (docTitle) name = docTitle.split('|')[0].split('-')[0].trim();
+                    }
+                    if (!name) name = 'Minecraft Server';
+                    name = name.replace(/\|/g, ' - ').trim();
+
+                    // 2. Try #connectModal inputs
+                    var connectModal = document.querySelector('#connectModal, div[id*=""connect""]');
+                    if (connectModal) {
+                        var inputs = connectModal.querySelectorAll('input');
+                        for (var i = 0; i < inputs.length; i++) {
+                            var val = (inputs[i].value || '').trim();
+                            if (!val) continue;
+                            if (/^\d{3,5}$/.test(val)) {
+                                port = val;
+                            } else if (val.indexOf('.') !== -1 || val.indexOf(':') !== -1) {
+                                if (val.indexOf(':') !== -1) {
+                                    var parts = val.split(':');
+                                    addr = parts[0].trim();
+                                    port = parts[1].trim();
+                                } else {
+                                    addr = val;
+                                }
+                            }
+                        }
+                    }
+
+                    // 3. Try data-clipboard-text or server IP elements
+                    if (!addr) {
+                        var clipEls = document.querySelectorAll('[data-clipboard-text], .btn-server-ip, button.btn-server-ip, a.btn-server-ip, .clipboard');
+                        for (var j = 0; j < clipEls.length; j++) {
+                            var clipVal = clipEls[j].getAttribute('data-clipboard-text') || clipEls[j].textContent || '';
+                            clipVal = clipVal.trim().replace(/^ip\s*:\s*/i, '');
+                            if (clipVal.indexOf('.') !== -1) {
+                                var p = clipVal.split(':');
+                                addr = p[0].trim();
+                                if (p.length > 1 && /^\d+$/.test(p[1].trim())) {
+                                    port = p[1].trim();
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    // 4. Try table rows or detail cards
+                    if (!addr) {
+                        var rows = document.querySelectorAll('tr, li, .list-group-item');
+                        for (var k = 0; k < rows.length; k++) {
+                            var rowTxt = (rows[k].textContent || '').toLowerCase();
+                            if ((rowTxt.indexOf('ip') !== -1 || rowTxt.indexOf('address') !== -1 || rowTxt.indexOf('host') !== -1) && !addr) {
+                                var cells = rows[k].querySelectorAll('td, span, strong, code');
+                                for (var c = 0; c < cells.length; c++) {
+                                    var cellTxt = cells[c].textContent.trim();
+                                    if (cellTxt.indexOf('.') !== -1 && cellTxt.indexOf(' ') === -1) {
+                                        addr = cellTxt;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (rowTxt.indexOf('port') !== -1 && port === '19132') {
+                                var cells2 = rows[k].querySelectorAll('td, span, strong, code');
+                                for (var c2 = 0; c2 < cells2.length; c2++) {
+                                    var pCandidate = cells2[c2].textContent.trim();
+                                    if (/^\d{3,5}$/.test(pCandidate)) {
+                                        port = pCandidate;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 5. Fallback regex on page body
+                    if (!addr && document.body) {
+                        var bodyMatch = document.body.innerHTML.match(/([a-zA-Z0-9\-\.]+\.(?:net|com|org|io|gg|me|fun|xyz|club|online|co|us|uk|de|ru|fr)):(\d{4,5})/i);
+                        if (bodyMatch) {
+                            addr = bodyMatch[1];
+                            port = bodyMatch[2];
+                        }
+                    }
+
+                    return { name: name, addr: addr, port: port };
+                }
+
+                // Intercept 'Connect' button clicks to launch Minecraft Bedrock and add the server
+                document.addEventListener('click', function(e) {
+                    var targetEl = e.target;
+                    var btn = targetEl ? targetEl.closest('button, a, .btn, [data-target], [data-toggle]') : null;
+                    if (!btn) return;
+
+                    var txt = (btn.textContent || '').trim().toLowerCase();
+                    var dataTarget = (btn.getAttribute('data-target') || '').toLowerCase();
+                    var href = (btn.getAttribute('href') || '').toLowerCase();
+                    var btnId = (btn.id || '').toLowerCase();
+
+                    var isConnectBtn = (dataTarget.indexOf('connect') !== -1) ||
+                                       (btnId.indexOf('connect') !== -1) ||
+                                       (txt === 'connect' || txt.indexOf('connect ') === 0 || txt.indexOf(' connect') !== -1 || txt.indexOf('connect\n') !== -1) ||
+                                       (href.indexOf('connect') !== -1 || href.indexOf('minecraft:') !== -1);
+
+                    if (isConnectBtn) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+
+                        // Hide any modal backdrop or popup
+                        var modals = document.querySelectorAll('.modal, .modal-backdrop');
+                        for (var m = 0; m < modals.length; m++) {
+                            modals[m].style.setProperty('display', 'none', 'important');
+                            modals[m].classList.remove('show');
+                        }
+                        if (document.body) {
+                            document.body.classList.remove('modal-open');
+                            document.body.style.removeProperty('overflow');
+                        }
+
+                        var info = getServerConnectionInfo();
+                        if (info.addr) {
+                            var uri = 'minecraft://?addExternalServer=' + encodeURIComponent(info.name) + '|' + info.addr + ':' + info.port;
+                            try {
+                                if (window.chrome && window.chrome.webview && window.chrome.webview.postMessage) {
+                                    window.chrome.webview.postMessage(uri);
+                                }
+                            } catch(ex) {}
+                            try {
+                                window.location.href = uri;
+                            } catch(ex) {}
+                        }
+                        return false;
+                    }
+                }, true);
+
                 cleanBottomContent();
                 jumpToFirstServer();
                 setTimeout(function() { cleanBottomContent(); jumpToFirstServer(); }, 150);
@@ -597,6 +749,22 @@ namespace BUGrockLauncher {
                 }
             })();
         ";
+
+        private DateTime _lastMinecraftLaunchTime = DateTime.MinValue;
+        private void LaunchMinecraftUri(string? uri) {
+            if (string.IsNullOrWhiteSpace(uri) || !uri.StartsWith("minecraft:", StringComparison.OrdinalIgnoreCase)) return;
+            if ((DateTime.Now - _lastMinecraftLaunchTime).TotalSeconds < 2) return;
+            _lastMinecraftLaunchTime = DateTime.Now;
+
+            Dispatcher.Invoke(() => {
+                try {
+                    Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true });
+                } catch (Exception ex) {
+                    Trace.WriteLine("Failed to launch Minecraft protocol: " + ex.Message);
+                    ThemedMessageBox.Show("Could not launch Minecraft Bedrock Edition.\nPlease ensure Minecraft Bedrock is installed.", "Minecraft Launch Error");
+                }
+            });
+        }
 
         private string? _lastDownloadedFilePath;
         private string? _lastDownloadedFolder;
@@ -666,11 +834,26 @@ namespace BUGrockLauncher {
                             e.Accept();
                         };
 
+                        ServersWebView.CoreWebView2.WebMessageReceived += (s, e) => {
+                            try {
+                                string msg = e.TryGetWebMessageAsString();
+                                if (!string.IsNullOrEmpty(msg) && msg.StartsWith("minecraft:", StringComparison.OrdinalIgnoreCase)) {
+                                    LaunchMinecraftUri(msg);
+                                }
+                            } catch { }
+                        };
+
                         ServersWebView.SizeChanged += (s, e) => UpdateServersZoom();
 
                         ServersWebView.NavigationStarting += (s, e) => {
                             string navUri = (e.Uri ?? "").ToLowerInvariant();
                             if (string.IsNullOrWhiteSpace(navUri) || navUri == "about:blank") return;
+
+                            if (navUri.StartsWith("minecraft:")) {
+                                e.Cancel = true;
+                                LaunchMinecraftUri(e.Uri);
+                                return;
+                            }
 
                             if (navUri.Contains("minecraftpocket-servers.com") || navUri.Contains("cloudflare.com")) {
                                 Dispatcher.Invoke(() => {
@@ -736,10 +919,25 @@ namespace BUGrockLauncher {
                     BrowserWebView.SizeChanged += (s, e) => UpdateBrowserZoom();
                     await BrowserWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
 
+                    BrowserWebView.CoreWebView2.WebMessageReceived += (s, e) => {
+                        try {
+                            string msg = e.TryGetWebMessageAsString();
+                            if (!string.IsNullOrEmpty(msg) && msg.StartsWith("minecraft:", StringComparison.OrdinalIgnoreCase)) {
+                                LaunchMinecraftUri(msg);
+                            }
+                        } catch { }
+                    };
+
                     // Domain Whitelist & Bedrock Guard (100% English warnings)
                     BrowserWebView.CoreWebView2.NavigationStarting += (s, args) => {
                         string navUri = (args.Uri ?? "").ToLowerInvariant();
                         if (string.IsNullOrWhiteSpace(navUri) || navUri == "about:blank") return;
+
+                        if (navUri.StartsWith("minecraft:")) {
+                            args.Cancel = true;
+                            LaunchMinecraftUri(args.Uri);
+                            return;
+                        }
 
                         // Allow Cloudflare verification & file downloads
                         if (navUri.Contains("challenges.cloudflare.com") || navUri.Contains("cloudflare.com") ||
@@ -2618,18 +2816,24 @@ namespace BUGrockLauncher {
             bool isBrowserOpen = (InAppBrowserOverlay != null && InAppBrowserOverlay.Visibility == Visibility.Visible);
             if (!isBrowserOpen) return;
 
-            // Check if clicked twice in a row (double click count >= 2 or two consecutive clicks within 800ms)
+            // When the in-app browser is open, double-clicking (two clicks in rapid succession)
+            // is required to close the browser and switch views.
+            // On the FIRST click, we set e.Handled = true to completely prevent WPF from toggling IsChecked,
+            // so the green indicator line stays firmly on the current active tab until the second click!
             bool isSecondClick = (e.ClickCount >= 2) || 
                                  (_lastNavTabClicked == tab && (DateTime.Now - _lastNavTabClickTime).TotalMilliseconds <= 800);
 
-            _lastNavTabClicked = tab;
-            _lastNavTabClickTime = DateTime.Now;
-
             if (isSecondClick) {
+                _lastNavTabClicked = null;
+                _lastNavTabClickTime = DateTime.MinValue;
                 e.Handled = true;
                 tab.IsChecked = true;
                 CloseInAppBrowser();
                 TabNav_Checked(tab, new RoutedEventArgs());
+            } else {
+                _lastNavTabClicked = tab;
+                _lastNavTabClickTime = DateTime.Now;
+                e.Handled = true;
             }
         }
 
