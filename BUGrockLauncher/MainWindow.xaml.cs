@@ -140,30 +140,30 @@ namespace BUGrockLauncher {
         #region Community Hub & DDFW Downloads
         private const string ANTI_COOKIE_AND_POPUP_SCRIPT = @"
             (function() {
-                // 1. Enforce MCPEDL Dark Mode & Remove White Sidebars
-                try {
-                    if (window.location.hostname.indexOf('mcpedl.com') !== -1) {
-                        try { localStorage.setItem('nuxt-color-mode', 'dark'); } catch(e) {}
-                        try { localStorage.setItem('theme', 'dark'); } catch(e) {}
-                        document.cookie = 'color-mode=dark; path=/; max-age=31536000';
+                // 1. Enable Native Dark Mode on MCPEDL using the site's own preferences and toggle
+                function applyNativeSiteDarkMode() {
+                    try {
+                        localStorage.setItem('nuxt-color-mode', 'dark');
+                        localStorage.setItem('color-mode', 'dark');
+                        localStorage.setItem('theme', 'dark');
                         document.cookie = 'nuxt-color-mode=dark; path=/; max-age=31536000';
-                        var root = document.documentElement;
-                        if (root) {
-                            root.classList.add('dark-mode');
-                            root.classList.add('dark');
-                            root.classList.remove('light-mode');
-                            root.classList.remove('light');
-                            root.setAttribute('data-theme', 'dark');
-                            root.style.setProperty('background-color', '#161C23', 'important');
-                            root.style.setProperty('background', '#161C23', 'important');
-                            root.style.colorScheme = 'dark';
-                        }
-                        if (document.body) {
-                            document.body.style.setProperty('background-color', '#161C23', 'important');
-                            document.body.style.setProperty('background', '#161C23', 'important');
+                        document.cookie = 'color-mode=dark; path=/; max-age=31536000';
+                    } catch(e) {}
+
+                    var root = document.documentElement;
+                    // If MCPEDL is in light mode, activate its native toggle button (moon icon)
+                    if (root && root.classList.contains('light-mode')) {
+                        var moonEl = document.querySelector('button .fa-moon, button i[class*=""moon""], button svg[class*=""moon""], .theme-toggle, button[aria-label*=""theme"" i], button[aria-label*=""dark"" i]');
+                        if (moonEl) {
+                            var btn = moonEl.closest('button, a') || moonEl;
+                            try { btn.click(); } catch(e) {}
                         }
                     }
-                } catch(e) {}
+                }
+
+                if (window.location.hostname.indexOf('mcpedl.com') !== -1) {
+                    applyNativeSiteDarkMode();
+                }
 
                 // 2. Bypass Adblock Detectors (Fake ad properties so CurseForge/MCPEDL never show disable adblock banners)
                 try {
@@ -174,7 +174,7 @@ namespace BUGrockLauncher {
                     window.adsbygoogle = { push: function() {}, loaded: true };
                 } catch(e) {}
 
-                // 3. Inject Safe CSS to Hide Ads, Sidebars, Floating Videos, Cookie Banners & Fix Colors
+                // 3. Inject CSS for Ads, Empty Sidebar & Cookie Banners ONLY (NO manual color or text overrides!)
                 var style = document.createElement('style');
                 style.innerHTML = `
                     #onetrust-consent-sdk, #onetrust-banner-sdk, .qc-cmp2-container, #cmpbox,
@@ -232,28 +232,6 @@ namespace BUGrockLauncher {
                         margin-right: 0 !important;
                         padding-right: 0 !important;
                     }
-                    /* Bright readable text ONLY for Introduction and Description bodies on MCPEDL */
-                    .post__description, .post__description p, .post__description span, .post__description div, .post__description li,
-                    .post-description, .post-description p, .post-description span,
-                    .article__content, .article__content p, .article__content span, .article__content div, .article__content li,
-                    .post__content, .post__content p, .post__content span,
-                    .entry-content, .entry-content p, .entry-content span,
-                    div[class*='description'] p, div[class*='description'] span {
-                        color: #E2E8F0 !important;
-                    }
-                    .post__description h1, .post__description h2, .post__description h3, .post__description h4,
-                    .article__content h1, .article__content h2, .article__content h3, .article__content h4 {
-                        color: #FFFFFF !important;
-                    }
-                    /* Preserve native colors and styles of all buttons and nav links */
-                    button, .btn, a.btn, a.button, [role='button'], .nav-link, .menu-link {
-                        color: inherit;
-                    }
-                    html, body, #__nuxt, #__layout, div#app {
-                        background-color: #161C23 !important;
-                        background: #161C23 !important;
-                        overflow: auto !important;
-                    }
                 `;
                 if (document.head) document.head.appendChild(style);
 
@@ -305,28 +283,8 @@ namespace BUGrockLauncher {
                         }
                     }
 
-                    if (document.body) {
-                        document.body.style.setProperty('overflow', 'auto', 'important');
-                        document.body.style.setProperty('background-color', '#161C23', 'important');
-                    }
-                    if (document.documentElement) {
-                        document.documentElement.style.setProperty('background-color', '#161C23', 'important');
-                    }
                     if (window.location.hostname.indexOf('mcpedl.com') !== -1) {
-                        var r = document.documentElement;
-                        if (r && !r.classList.contains('dark-mode')) {
-                            r.classList.add('dark-mode');
-                            r.classList.remove('light-mode');
-                        }
-                        var descEls = document.querySelectorAll('.post__description, .article__content, .post-content, .entry-content');
-                        for (var d = 0; d < descEls.length; d++) {
-                            var kids = descEls[d].querySelectorAll('p, span, li');
-                            for (var c = 0; c < kids.length; c++) {
-                                if (!kids[c].closest('button, .btn, a, [role=""button""]')) {
-                                    kids[c].style.setProperty('color', '#E2E8F0', 'important');
-                                }
-                            }
-                        }
+                        applyNativeSiteDarkMode();
                     }
                 }
 
@@ -335,9 +293,9 @@ namespace BUGrockLauncher {
                 } else {
                     dismissOverlays();
                 }
-                setTimeout(dismissOverlays, 400);
-                setTimeout(dismissOverlays, 1000);
-                setTimeout(dismissOverlays, 2500);
+                setTimeout(dismissOverlays, 300);
+                setTimeout(dismissOverlays, 800);
+                setTimeout(dismissOverlays, 2000);
 
                 if (window.MutationObserver) {
                     try {
@@ -1101,6 +1059,13 @@ namespace BUGrockLauncher {
                     BrowserWebView.CoreWebView2.Settings.IsZoomControlEnabled = true;
 
                     BrowserWebView.SizeChanged += (s, e) => UpdateBrowserZoom();
+                    try {
+                        var cm = BrowserWebView.CoreWebView2.CookieManager;
+                        var c1 = cm.CreateCookie("nuxt-color-mode", "dark", ".mcpedl.com", "/");
+                        cm.AddOrUpdateCookie(c1);
+                        var c2 = cm.CreateCookie("color-mode", "dark", ".mcpedl.com", "/");
+                        cm.AddOrUpdateCookie(c2);
+                    } catch { }
                     await BrowserWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
 
                     BrowserWebView.CoreWebView2.WebMessageReceived += (s, e) => {
