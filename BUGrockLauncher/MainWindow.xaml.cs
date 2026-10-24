@@ -246,76 +246,147 @@ namespace BUGrockLauncher {
                     .pagination ~ *, ul.pagination ~ *, nav[aria-label*='pagination'] ~ * {
                         display: none !important;
                     }
-                    html, body {
+                    html, body, .content, .container, .container-fluid, .row, .col, div[class*='col'] {
                         background-color: #12131A !important;
                         background: #12131A !important;
                         color: #E2E8F0 !important;
                         margin: 0 !important;
-                        padding: 0 !important;
-                        overflow-x: hidden !important;
-                    }
-                    .container, .container-fluid, .row, .col, div[class*='col'] {
-                        background-color: #12131A !important;
-                        background: #12131A !important;
                         padding-left: 2px !important;
                         padding-right: 2px !important;
                         padding-top: 0 !important;
-                        margin: 0 !important;
                         max-width: 100% !important;
+                        overflow-x: hidden !important;
                     }
-                    /* Cards & Server Rows & Boxes */
+                    /* Cards & Server Containers */
                     .card, .card-header, .card-body, .card-footer, .list-group, .list-group-item,
-                    .bg-white, .bg-light, div[class*='server'], div[class*='box'], div[class*='item'] {
+                    .bg-white, .bg-light, div[class*='server'], div[class*='box'], div[class*='item'],
+                    .server-card, .server-banner-wrap {
                         background-color: #151720 !important;
                         background: #151720 !important;
                         color: #E2E8F0 !important;
                         border-color: #232530 !important;
                     }
-                    /* Input boxes (Server IPs like bedrock.bosscraft.net) */
-                    input, input.form-control, .form-control, .input-group, .input-group-text, .input-group-append, .input-group-prepend,
-                    code, pre, .copy-ip, .btn-outline-secondary, .btn-secondary {
+                    /* Server IP boxes & buttons (bedrock.bosscraft.net:19132) */
+                    .btn-server-ip, .btn-server-ip[href], a.btn-server-ip, button.btn-server-ip,
+                    .clipboard, .btn-group, .btn-group > .btn,
+                    input, input.form-control, .form-control, .input-group, .input-group-text,
+                    .input-group-append, .input-group-prepend, code, pre, .copy-ip,
+                    .btn-outline-secondary, .btn-secondary {
                         background-color: #1A1C28 !important;
                         background: #1A1C28 !important;
                         color: #48BB78 !important;
+                        border: 1px solid #2D3748 !important;
                         border-color: #2D3748 !important;
+                        box-shadow: none !important;
                     }
-                    .table, .servers-table, table {
+                    .btn-server-ip:hover, .btn-server-ip:focus, .btn-server-ip:active,
+                    a.btn-server-ip:hover, button.btn-server-ip:hover, .btn-server-ip[href]:hover {
+                        background-color: #222638 !important;
+                        background: #222638 !important;
+                        color: #68D391 !important;
+                        border-color: #4A5568 !important;
+                    }
+                    /* Server Name & Titles & Headings */
+                    .server-title, .server-title a,
+                    .server-title-responsive, .server-title-responsive a,
+                    .server-about-m h3, .server-about-m h3 a,
+                    .server-about, .server-about h3,
+                    a.text-dark, .text-dark,
+                    h1, h2, h3, h4, h5, h6,
+                    .server-card a, .server-about a {
+                        color: #F7FAFC !important;
+                        background-color: transparent !important;
+                        background: transparent !important;
+                        font-weight: 700 !important;
+                    }
+                    .server-title a:hover,
+                    .server-title-responsive a:hover,
+                    .server-about-m h3 a:hover,
+                    a.text-dark:hover {
+                        color: #48BB78 !important;
+                        text-decoration: underline !important;
+                    }
+                    /* Tables */
+                    .table, .servers-table, table, thead, tbody, tr {
                         background-color: #151720 !important;
+                        background: #151720 !important;
                         color: #E2E8F0 !important;
                         border-color: #232530 !important;
                         margin-top: 0 !important;
                         width: 100% !important;
                     }
-                    .table td, .table th, table td, table th {
+                    .table td, .table th, table td, table th,
+                    .table-bordered td, .table-bordered th {
                         background-color: #151720 !important;
+                        background: #151720 !important;
                         color: #E2E8F0 !important;
                         border-color: #232530 !important;
                         padding: 4px 6px !important;
                     }
-                    .table-striped tbody tr:nth-of-type(odd) {
+                    .table-striped tbody tr:nth-of-type(odd),
+                    .table-striped tbody tr:nth-of-type(odd) td {
                         background-color: #191B26 !important;
+                        background: #191B26 !important;
                     }
-                    a {
-                        color: #48BB78 !important;
+                    /* Secondary Buttons like online, stars, player count, versions */
+                    .btn-light2, .btn-light2[href], .btn-version-fade, .page-link {
+                        background-color: #1A1C28 !important;
+                        background: #1A1C28 !important;
+                        color: #CBD5E0 !important;
+                        border: 1px solid #2D3748 !important;
+                        border-color: #2D3748 !important;
                     }
-                    .text-dark, h1, h2, h3, h4, h5, h6, p, span, strong, b {
-                        color: #E2E8F0 !important;
-                    }
-                    .text-muted {
-                        color: #8E92A4 !important;
-                    }
-                    .btn-light2, .page-link {
-                        background-color: #212433 !important;
-                        color: #E2E8F0 !important;
-                        border: 1px solid #2B2F42 !important;
+                    .btn-light2:hover, .btn-light2:focus, .btn-light2:active {
+                        background-color: #222638 !important;
+                        background: #222638 !important;
+                        color: #FFFFFF !important;
+                        border-color: #4A5568 !important;
                     }
                     .page-item.active .page-link {
                         background-color: #38A169 !important;
                         border-color: #38A169 !important;
                         color: #FFFFFF !important;
                     }
+                    .server-description, .server-description-responsive, .text-muted, small, p {
+                        color: #A0AEC0 !important;
+                    }
+                    a {
+                        color: #48BB78 !important;
+                    }
                 `;
                 if (document.head) document.head.appendChild(style);
+
+                function applyDarkStylesDirectly() {
+                    var ipEls = document.querySelectorAll('.btn-server-ip, a.btn-server-ip, button.btn-server-ip, .clipboard, .btn-group, input, .form-control');
+                    for (var i = 0; i < ipEls.length; i++) {
+                        ipEls[i].style.setProperty('background-color', '#1A1C28', 'important');
+                        ipEls[i].style.setProperty('background', '#1A1C28', 'important');
+                        ipEls[i].style.setProperty('color', '#48BB78', 'important');
+                        ipEls[i].style.setProperty('border-color', '#2D3748', 'important');
+                    }
+
+                    var titleEls = document.querySelectorAll('.server-title-responsive a, .server-about-m h3 a, .server-title a, a.text-dark, h3 a, .server-about a');
+                    for (var j = 0; j < titleEls.length; j++) {
+                        titleEls[j].style.setProperty('color', '#F7FAFC', 'important');
+                        titleEls[j].style.setProperty('background-color', 'transparent', 'important');
+                        titleEls[j].style.setProperty('background', 'transparent', 'important');
+                    }
+
+                    var lightBtnEls = document.querySelectorAll('.btn-light2, .btn-version-fade');
+                    for (var k = 0; k < lightBtnEls.length; k++) {
+                        lightBtnEls[k].style.setProperty('background-color', '#1A1C28', 'important');
+                        lightBtnEls[k].style.setProperty('background', '#1A1C28', 'important');
+                        lightBtnEls[k].style.setProperty('color', '#CBD5E0', 'important');
+                        lightBtnEls[k].style.setProperty('border-color', '#2D3748', 'important');
+                    }
+
+                    var bgEls = document.querySelectorAll('.content, .card, .card-body, .server-card, .table, td, th, tr, .bg-white, .bg-light');
+                    for (var m = 0; m < bgEls.length; m++) {
+                        bgEls[m].style.setProperty('background-color', '#151720', 'important');
+                        bgEls[m].style.setProperty('background', '#151720', 'important');
+                        bgEls[m].style.setProperty('border-color', '#232530', 'important');
+                    }
+                }
 
                 function cleanBottomContent() {
                     var iframes = document.querySelectorAll('iframe, embed, video, .embed-responsive');
@@ -344,12 +415,7 @@ namespace BUGrockLauncher {
                         el.remove();
                     });
 
-                    // Force dark styling on all input fields, boxes, and white backgrounds
-                    document.querySelectorAll('input, .form-control, .bg-white, .card, .card-body, .list-group-item').forEach(function(el) {
-                        el.style.setProperty('background-color', '#1A1C28', 'important');
-                        el.style.setProperty('color', '#E2E8F0', 'important');
-                        el.style.setProperty('border-color', '#2D3748', 'important');
-                    });
+                    applyDarkStylesDirectly();
                 }
 
                 function jumpToFirstServer() {
@@ -361,8 +427,21 @@ namespace BUGrockLauncher {
 
                 cleanBottomContent();
                 jumpToFirstServer();
-                setTimeout(function() { cleanBottomContent(); jumpToFirstServer(); }, 300);
+                setTimeout(function() { cleanBottomContent(); jumpToFirstServer(); }, 150);
+                setTimeout(function() { cleanBottomContent(); jumpToFirstServer(); }, 400);
                 setTimeout(function() { cleanBottomContent(); jumpToFirstServer(); }, 1000);
+                setTimeout(function() { cleanBottomContent(); jumpToFirstServer(); }, 2500);
+
+                if (window.MutationObserver) {
+                    try {
+                        var observer = new MutationObserver(function() {
+                            applyDarkStylesDirectly();
+                        });
+                        if (document.body) {
+                            observer.observe(document.body, { childList: true, subtree: true });
+                        }
+                    } catch(e) {}
+                }
             })();
         ";
 
@@ -561,6 +640,9 @@ namespace BUGrockLauncher {
                         UpdateBrowserZoom();
                         try {
                             BrowserWebView.CoreWebView2?.ExecuteScriptAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
+                            if ((BrowserWebView.Source?.ToString() ?? "").Contains("minecraftpocket-servers.com")) {
+                                BrowserWebView.CoreWebView2?.ExecuteScriptAsync(SERVERS_VIEW_POLISH_SCRIPT);
+                            }
                         } catch { }
                     };
 
