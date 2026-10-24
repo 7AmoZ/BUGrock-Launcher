@@ -663,7 +663,6 @@ namespace BUGrockLauncher {
                         };
 
                         ServersWebView.CoreWebView2.ScriptDialogOpening += (s, e) => {
-                            e.Handled = true;
                             e.Accept();
                         };
 
