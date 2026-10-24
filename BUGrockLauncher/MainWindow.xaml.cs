@@ -130,6 +130,142 @@ namespace BUGrockLauncher {
         }
 
         #region Community Hub & DDFW Downloads
+        private const string ANTI_COOKIE_AND_POPUP_SCRIPT = @"
+            (function() {
+                try {
+                    localStorage.setItem('cookie_consent', 'true');
+                    localStorage.setItem('gdpr_consent', 'true');
+                    localStorage.setItem('OptanonAlertBoxClosed', new Date().toISOString());
+                    localStorage.setItem('cf_chl_opt', 'true');
+                    document.cookie = 'OptanonAlertBoxClosed=' + new Date().toISOString() + '; path=/; max-age=31536000';
+                    document.cookie = 'cookie_consent=true; path=/; max-age=31536000';
+                    document.cookie = 'cookieconsent_status=dismiss; path=/; max-age=31536000';
+                } catch(e) {}
+
+                function removePopups() {
+                    var selectors = [
+                        '#onetrust-consent-sdk',
+                        '#onetrust-banner-sdk',
+                        '.qc-cmp2-container',
+                        '#cmpbox',
+                        '#cmpbox2',
+                        '.cookie-banner',
+                        '.cookie-notice',
+                        '.cookieConsent',
+                        'div[class*=""cookie""]',
+                        'div[id*=""cookie""]',
+                        'div[class*=""consent""]',
+                        'div[id*=""consent""]',
+                        'div[class*=""didomi""]',
+                        'div[class*=""sp_message_container""]',
+                        '.fc-consent-root',
+                        '#sp_message_container'
+                    ];
+                    for (var i = 0; i < selectors.length; i++) {
+                        var els = document.querySelectorAll(selectors[i]);
+                        for (var j = 0; j < els.length; j++) {
+                            try {
+                                els[j].style.setProperty('display', 'none', 'important');
+                                els[j].style.setProperty('pointer-events', 'none', 'important');
+                                els[j].remove();
+                            } catch(e) {}
+                        }
+                    }
+                    if (document.body) {
+                        document.body.style.setProperty('overflow', 'auto', 'important');
+                        document.body.style.setProperty('pointer-events', 'auto', 'important');
+                    }
+                    if (document.documentElement) {
+                        document.documentElement.style.setProperty('overflow', 'auto', 'important');
+                    }
+                }
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', removePopups);
+                } else {
+                    removePopups();
+                }
+                setInterval(removePopups, 500);
+            })();
+        ";
+
+        private const string SERVERS_VIEW_POLISH_SCRIPT = @"
+            (function() {
+                try {
+                    localStorage.setItem('cookie_consent', 'true');
+                    localStorage.setItem('gdpr_consent', 'true');
+                } catch(e) {}
+
+                var style = document.createElement('style');
+                style.innerHTML = `
+                    header, footer, nav, .navbar, h1, .card.bg-light, .alert, .adsbygoogle, .banner-ads, #navbar,
+                    #onetrust-consent-sdk, .qc-cmp2-container, div[class*='cookie'], div[id*='cookie'], div[class*='consent'] {
+                        display: none !important;
+                    }
+                    html, body {
+                        background-color: #12131A !important;
+                        color: #E2E8F0 !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        overflow-x: hidden !important;
+                    }
+                    .container, .container-fluid, .row, .col-12 {
+                        padding-left: 2px !important;
+                        padding-right: 2px !important;
+                        margin-left: 0 !important;
+                        margin-right: 0 !important;
+                        max-width: 100% !important;
+                    }
+                    .table, .servers-table, table {
+                        background-color: #151720 !important;
+                        color: #E2E8F0 !important;
+                        border-color: #232530 !important;
+                        margin-top: 0 !important;
+                    }
+                    .table td, .table th, table td, table th {
+                        background-color: #151720 !important;
+                        color: #E2E8F0 !important;
+                        border-color: #232530 !important;
+                        padding: 4px 6px !important;
+                    }
+                    .table-striped tbody tr:nth-of-type(odd) {
+                        background-color: #191B26 !important;
+                    }
+                    a {
+                        color: #48BB78 !important;
+                    }
+                    .text-dark {
+                        color: #E2E8F0 !important;
+                    }
+                    .text-muted {
+                        color: #8E92A4 !important;
+                    }
+                    .btn-light2 {
+                        background-color: #212433 !important;
+                        color: #E2E8F0 !important;
+                        border: 1px solid #2B2F42 !important;
+                    }
+                `;
+                document.head.appendChild(style);
+
+                function scrollToFirstServer() {
+                    var serverTable = document.querySelector('.servers-table');
+                    if (serverTable) {
+                        serverTable.scrollIntoView({ behavior: 'instant', block: 'start' });
+                    }
+                }
+
+                if (document.readyState === 'complete') {
+                    scrollToFirstServer();
+                } else {
+                    window.addEventListener('load', scrollToFirstServer);
+                }
+                setTimeout(scrollToFirstServer, 200);
+                setTimeout(scrollToFirstServer, 800);
+                setTimeout(scrollToFirstServer, 2000);
+            })();
+        ";
+
         private string? _lastDownloadedFilePath;
         private string? _lastDownloadedFolder;
 
@@ -143,15 +279,10 @@ namespace BUGrockLauncher {
                     if (ServersWebView.CoreWebView2 != null) {
                         ServersWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
                         ServersWebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
+                        await ServersWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(SERVERS_VIEW_POLISH_SCRIPT);
                         ServersWebView.NavigationCompleted += (s, e) => {
                             try {
-                                ServersWebView.CoreWebView2?.ExecuteScriptAsync(@"
-                                    (function() {
-                                        var style = document.createElement('style');
-                                        style.innerHTML = 'header, footer, .adsbygoogle, .banner-ads, #navbar { display: none !important; } body { background-color: #12131A !important; color: #E2E8F0 !important; }';
-                                        document.head.appendChild(style);
-                                    })();
-                                ");
+                                ServersWebView.CoreWebView2?.ExecuteScriptAsync(SERVERS_VIEW_POLISH_SCRIPT);
                             } catch { }
                         };
                     }
@@ -162,10 +293,20 @@ namespace BUGrockLauncher {
                     await BrowserWebView.EnsureCoreWebView2Async();
                     if (BrowserWebView.CoreWebView2 != null) {
                         BrowserWebView.CoreWebView2.Settings.IsStatusBarEnabled = false;
+                        await BrowserWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
                         BrowserWebView.CoreWebView2.SourceChanged += (s, e) => {
                             if (BrowserUrlText != null) {
                                 BrowserUrlText.Text = BrowserWebView.Source?.ToString() ?? "";
                             }
+                        };
+                        BrowserWebView.CoreWebView2.NavigationCompleted += (s, e) => {
+                            try {
+                                BrowserWebView.CoreWebView2?.ExecuteScriptAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
+                            } catch { }
+                        };
+                        BrowserWebView.CoreWebView2.NewWindowRequested += (s, e) => {
+                            e.Handled = true;
+                            BrowserWebView.CoreWebView2.Navigate(e.Uri);
                         };
                         BrowserWebView.CoreWebView2.DownloadStarting += Browser_DownloadStarting;
                     }
@@ -238,6 +379,10 @@ namespace BUGrockLauncher {
 
         private void OpenInAppBrowser(string url) {
             if (InAppBrowserOverlay == null || BrowserWebView == null) return;
+            if (PlayViewGrid != null) PlayViewGrid.Visibility = Visibility.Collapsed;
+            if (ServerCardBorder != null) ServerCardBorder.Visibility = Visibility.Collapsed;
+            if (ServersWebView != null) ServersWebView.Visibility = Visibility.Collapsed;
+
             InAppBrowserOverlay.Visibility = Visibility.Visible;
             if (BrowserWebView.CoreWebView2 != null) {
                 BrowserWebView.CoreWebView2.Navigate(url);
@@ -307,6 +452,11 @@ namespace BUGrockLauncher {
             }
             if (DownloadToastBar != null) {
                 DownloadToastBar.Visibility = Visibility.Collapsed;
+            }
+            if (TabNavPlay?.IsChecked == true) {
+                if (PlayViewGrid != null) PlayViewGrid.Visibility = Visibility.Visible;
+                if (ServerCardBorder != null) ServerCardBorder.Visibility = Visibility.Visible;
+                if (ServersWebView != null) ServersWebView.Visibility = Visibility.Visible;
             }
         }
         #endregion
@@ -1844,7 +1994,13 @@ namespace BUGrockLauncher {
 
         private void TabNav_Checked(object sender, RoutedEventArgs e) {
             if (PlayViewGrid == null || InstallationsViewGrid == null || PatchNotesViewGrid == null) return;
-            PlayViewGrid.Visibility = (TabNavPlay.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
+            bool isPlay = (TabNavPlay?.IsChecked == true);
+            bool isBrowserOpen = (InAppBrowserOverlay != null && InAppBrowserOverlay.Visibility == Visibility.Visible);
+
+            PlayViewGrid.Visibility = (isPlay && !isBrowserOpen) ? Visibility.Visible : Visibility.Collapsed;
+            if (ServerCardBorder != null) ServerCardBorder.Visibility = (isPlay && !isBrowserOpen) ? Visibility.Visible : Visibility.Collapsed;
+            if (ServersWebView != null) ServersWebView.Visibility = (isPlay && !isBrowserOpen) ? Visibility.Visible : Visibility.Collapsed;
+
             InstallationsViewGrid.Visibility = (TabNavInstallations.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
             PatchNotesViewGrid.Visibility = (TabNavPatchNotes.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
         }
