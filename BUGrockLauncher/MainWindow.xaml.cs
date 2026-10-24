@@ -746,7 +746,17 @@ namespace BUGrockLauncher {
                     }
                 }
 
+                var hasScrolledInitially = false;
+                window.addEventListener('wheel', function() { hasScrolledInitially = true; }, { passive: true });
+                window.addEventListener('touchmove', function() { hasScrolledInitially = true; }, { passive: true });
+                window.addEventListener('keydown', function(e) {
+                    if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') hasScrolledInitially = true;
+                }, { passive: true });
+
                 function jumpToFirstServer() {
+                    if (hasScrolledInitially) return;
+                    hasScrolledInitially = true;
+
                     if (window.location.pathname.indexOf('/server/') !== -1) {
                         window.scrollTo(0, 0);
                         if (document.documentElement) document.documentElement.scrollTop = 0;
@@ -905,10 +915,10 @@ namespace BUGrockLauncher {
                 cleanBottomContent();
                 removeTopSpacing();
                 jumpToFirstServer();
-                setTimeout(function() { cleanBottomContent(); removeTopSpacing(); jumpToFirstServer(); }, 150);
-                setTimeout(function() { cleanBottomContent(); removeTopSpacing(); jumpToFirstServer(); }, 400);
-                setTimeout(function() { cleanBottomContent(); removeTopSpacing(); jumpToFirstServer(); }, 1000);
-                setTimeout(function() { cleanBottomContent(); removeTopSpacing(); jumpToFirstServer(); }, 2500);
+                setTimeout(function() { cleanBottomContent(); removeTopSpacing(); }, 150);
+                setTimeout(function() { cleanBottomContent(); removeTopSpacing(); }, 400);
+                setTimeout(function() { cleanBottomContent(); removeTopSpacing(); }, 1000);
+                setTimeout(function() { cleanBottomContent(); removeTopSpacing(); }, 2500);
 
                 if (window.MutationObserver) {
                     try {
@@ -1055,9 +1065,6 @@ namespace BUGrockLauncher {
                                     try {
                                         ServersWebView.CoreWebView2?.ExecuteScriptAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
                                         ServersWebView.CoreWebView2?.ExecuteScriptAsync(SERVERS_VIEW_POLISH_SCRIPT);
-                                        if ((ServersWebView.Source?.ToString() ?? "").Contains("/server/")) {
-                                            ServersWebView.CoreWebView2?.ExecuteScriptAsync("window.scrollTo(0,0); if(document.documentElement) document.documentElement.scrollTop=0; if(document.body) document.body.scrollTop=0;");
-                                        }
                                     } catch { }
                                 }
                                 _serversReadyTcs.TrySetResult(true);
@@ -1175,9 +1182,6 @@ namespace BUGrockLauncher {
                             BrowserWebView.CoreWebView2?.ExecuteScriptAsync(ANTI_COOKIE_AND_POPUP_SCRIPT);
                             if ((BrowserWebView.Source?.ToString() ?? "").Contains("minecraftpocket-servers.com")) {
                                 BrowserWebView.CoreWebView2?.ExecuteScriptAsync(SERVERS_VIEW_POLISH_SCRIPT);
-                                if ((BrowserWebView.Source?.ToString() ?? "").Contains("/server/")) {
-                                    BrowserWebView.CoreWebView2?.ExecuteScriptAsync("window.scrollTo(0,0); if(document.documentElement) document.documentElement.scrollTop=0; if(document.body) document.body.scrollTop=0;");
-                                }
                             }
                         } catch { }
                     };
